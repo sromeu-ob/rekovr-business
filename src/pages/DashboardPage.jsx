@@ -1,76 +1,205 @@
 import { useEffect, useState } from 'react';
-import { Package, GitCompare, CheckCircle, TrendingUp } from 'lucide-react';
-import api from '../api';
+import { useNavigate } from 'react-router-dom';
+import { Package, GitCompare, CheckCircle, TrendingUp, Clock, ArrowRight, Sparkles } from 'lucide-react';
+import api, { photoUrl } from '../api';
 
-function StatCard({ icon: Icon, label, value, sub }) {
+function StatCard({ icon: Icon, label, value, sub, accent }) {
   return (
-    <div className="bg-white rounded-2xl border border-zinc-100 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[12px] font-medium text-zinc-400 uppercase tracking-wider">{label}</span>
-        <div className="w-8 h-8 rounded-lg bg-zinc-50 flex items-center justify-center">
-          <Icon size={15} className="text-zinc-400" />
+    <div className="bg-white rounded-2xl border border-zinc-100 p-5">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{label}</span>
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${accent || 'bg-zinc-50'}`}>
+          <Icon size={15} className={accent ? 'text-white' : 'text-zinc-400'} />
         </div>
       </div>
-      <p className="text-[32px] font-extrabold text-zinc-900 leading-none">{value ?? '—'}</p>
-      {sub && <p className="text-[12px] text-zinc-400 mt-1">{sub}</p>}
+      <p className="text-[28px] font-extrabold text-zinc-900 leading-none">{value ?? '—'}</p>
+      {sub && <p className="text-[11px] text-zinc-400 mt-1.5">{sub}</p>}
     </div>
   );
 }
 
+const STATUS_DOT = {
+  pending: 'bg-amber-400',
+  accepted: 'bg-green-500',
+  rejected: 'bg-red-400',
+  recovered: 'bg-green-500',
+  paid: 'bg-purple-500',
+};
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export default function DashboardPage({ auth }) {
-  const [stats, setStats] = useState(null);
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [itemsRes, matchesRes] = await Promise.all([
-          api.get('/business/items?limit=1'),
-          api.get('/business/items/matches/list?limit=1'),
-        ]);
-        setStats({
-          totalItems: itemsRes.data.total,
-          totalMatches: matchesRes.data.total,
-          activeItems: null,
-          recovered: null,
-        });
-      } catch {
-        setStats({ totalItems: 0, totalMatches: 0 });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
+    api.get('/business/items/dashboard/stats')
+      .then(res => setData(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const orgName = auth?.organization?.name || 'Your organization';
 
   return (
     <div>
-      <div className="mb-8">
+      {/* Header */}
+      <div className="mb-6">
         <h2 className="text-[22px] font-extrabold text-zinc-900">Dashboard</h2>
-        <p className="text-[13px] text-zinc-400 mt-1">Overview of your organization's lost & found activity.</p>
+        <p className="text-[13px] text-zinc-400 mt-1">{orgName} — lost & found overview</p>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <StatCard
+          icon={Package}
+          label="Found items"
+          value={data?.total_items ?? 0}
+          sub={data?.items_this_week ? `+${data.items_this_week} this week` : 'No new items this week'}
+          accent="bg-zinc-900"
+        />
+        <StatCard
+          icon={GitCompare}
+          label="Matches"
+          value={data?.total_matches ?? 0}
+          sub={data?.pending_matches ? `${data.pending_matches} pending review` : 'No pending matches'}
+        />
+        <StatCard
+          icon={CheckCircle}
+          label="Recovered"
+          value={data?.recovered ?? 0}
+          sub={data?.accepted_matches ? `${data.accepted_matches} accepted` : null}
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Recovery rate"
+          value={`${data?.recovery_rate ?? 0}%`}
+          sub={data?.total_items ? `of ${data.total_items} items` : null}
+        />
+      </div>
+
+      {/* Two columns: recent items + recent matches */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+        {/* Recent items */}
+        <div className="bg-white rounded-2xl border border-zinc-100 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[13px] font-bold text-zinc-900">Recent items</p>
+            <button
+              onClick={() => navigate('/items')}
+              className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 flex items-center gap-1 transition"
+            >
+              View all <ArrowRight size={12} />
+            </button>
+          </div>
+
+          {!data?.recent_items?.length ? (
+            <div className="text-center py-8">
+              <Package size={20} className="text-zinc-200 mx-auto mb-2" />
+              <p className="text-[12px] text-zinc-400">No items registered yet</p>
+              <button
+                onClick={() => navigate('/items/new')}
+                className="mt-3 text-[12px] font-semibold text-zinc-900 hover:underline"
+              >
+                Register first item
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {data.recent_items.map((item) => (
+                <div key={item.item_id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-zinc-50 transition">
+                  {item.photos?.length > 0 ? (
+                    <img src={photoUrl(item.photos[0])} alt="" className="w-9 h-9 rounded-lg object-cover bg-zinc-100 flex-shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                      <Package size={14} className="text-zinc-300" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-zinc-800 truncate">{item.title}</p>
+                    <p className="text-[11px] text-zinc-400 capitalize">{item.category}</p>
+                  </div>
+                  <span className="text-[10px] text-zinc-300 flex-shrink-0">{timeAgo(item.created_at)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard icon={Package} label="Total items" value={stats?.totalItems} sub="registered found items" />
-          <StatCard icon={GitCompare} label="Matches" value={stats?.totalMatches} sub="total matches found" />
-          <StatCard icon={CheckCircle} label="Recovered" value="—" sub="coming soon" />
-          <StatCard icon={TrendingUp} label="Recovery rate" value="—" sub="coming soon" />
+
+        {/* Recent matches */}
+        <div className="bg-white rounded-2xl border border-zinc-100 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[13px] font-bold text-zinc-900">Recent matches</p>
+            <button
+              onClick={() => navigate('/matches')}
+              className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 flex items-center gap-1 transition"
+            >
+              View all <ArrowRight size={12} />
+            </button>
+          </div>
+
+          {!data?.recent_matches?.length ? (
+            <div className="text-center py-8">
+              <Sparkles size={20} className="text-zinc-200 mx-auto mb-2" />
+              <p className="text-[12px] text-zinc-400">No matches found yet</p>
+              <p className="text-[11px] text-zinc-300 mt-1">Matches appear automatically when lost reports fit your items</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {data.recent_matches.map((m) => (
+                <button
+                  key={m.match_id}
+                  onClick={() => navigate(`/matches/${m.found_item_id}`)}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-zinc-50 transition text-left"
+                >
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${STATUS_DOT[m.status] || 'bg-zinc-300'}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-zinc-800 truncate">
+                      {m.found_title} <span className="text-zinc-300 font-normal">↔</span> {m.lost_title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[11px] text-zinc-400 capitalize">{m.status}</span>
+                      {m.score != null && (
+                        <span className="text-[11px] text-zinc-300">· {m.score}% match</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-zinc-300 flex-shrink-0">{timeAgo(m.created_at)}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quick tip */}
+      {data?.total_items === 0 && (
+        <div className="mt-6 bg-zinc-50 rounded-2xl border border-zinc-100 p-5">
+          <p className="text-[13px] font-semibold text-zinc-800 mb-1">Getting started</p>
+          <p className="text-[12px] text-zinc-500">
+            Register found items using the <strong>Found Items</strong> section. The AI will automatically
+            generate a title, description and category from a photo. Matches with lost item reports are
+            created automatically in the background.
+          </p>
         </div>
       )}
-
-      <div className="mt-8 bg-white rounded-2xl border border-zinc-100 p-6">
-        <p className="text-[13px] font-semibold text-zinc-900 mb-1">Getting started</p>
-        <p className="text-[12px] text-zinc-500">
-          Register found items using the <strong>Found Items</strong> section. The AI will automatically
-          generate a title, description and category from a photo. Matches with lost item reports are
-          created automatically in the background.
-        </p>
-      </div>
     </div>
   );
 }
