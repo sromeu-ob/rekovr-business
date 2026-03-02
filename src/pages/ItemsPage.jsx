@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Package } from 'lucide-react';
 import api from '../api';
 
@@ -9,6 +10,7 @@ const STATUS_COLORS = {
 };
 
 export default function ItemsPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function ItemsPage() {
         </div>
         <button
           className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
-          onClick={() => alert('New item form — coming in next sprint')}
+          onClick={() => navigate('/items/new')}
         >
           <Plus size={15} />
           New item
