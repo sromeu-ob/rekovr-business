@@ -197,10 +197,10 @@ export default function ItemMatchesPage() {
                     </div>
                   </div>
 
-                  {/* AI reasoning (if available) */}
-                  {match.ai_reasoning && (
+                  {/* AI reasoning (if available) — stored per language */}
+                  {(match.reasoning_en || match.reasoning) && (
                     <p className="text-[11px] text-zinc-400 italic bg-zinc-50 rounded-lg px-3 py-2">
-                      {match.ai_reasoning}
+                      {match.reasoning_en || match.reasoning}
                     </p>
                   )}
 
