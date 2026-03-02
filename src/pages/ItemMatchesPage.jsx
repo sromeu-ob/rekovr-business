@@ -119,7 +119,7 @@ export default function ItemMatchesPage() {
           <div className="lg:sticky lg:top-8 bg-white border border-zinc-100 rounded-2xl p-5 space-y-4">
             <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Your found item</p>
 
-            {foundItem?.photos?.length > 0 ? (
+            {foundItem?.photos?.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {foundItem.photos.slice(0, 4).map((photo, i) => (
                   <img
@@ -129,10 +129,6 @@ export default function ItemMatchesPage() {
                     className="w-full aspect-square rounded-xl object-cover bg-zinc-100"
                   />
                 ))}
-              </div>
-            ) : (
-              <div className="w-full h-32 rounded-xl bg-zinc-50 flex items-center justify-center">
-                <Package size={28} className="text-zinc-200" />
               </div>
             )}
 
