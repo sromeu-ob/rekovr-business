@@ -210,9 +210,7 @@ export default function NewItemPage({ auth }) {
     setLng(savedLng);
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     mapInitializedRef.current = false;
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    setDateTime(now.toISOString().slice(0, 16));
+    // Keep dateTime from previous item (useful for batch entry)
     setSuccess(null);
   };
 
