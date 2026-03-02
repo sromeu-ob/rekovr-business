@@ -13,6 +13,9 @@ export default function NewItemPage({ auth }) {
   const navigate = useNavigate();
   const geocoderRef = useRef(null);
   const geocoderContainerRef = useRef(null);
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -68,6 +71,37 @@ export default function NewItemPage({ auth }) {
 
     return () => { geocoder.onRemove(); geocoderRef.current = null; };
   }, [success]); // re-init after success reset
+
+  // ── Mini-map ───────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!lat || !lng) {
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+      if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
+      return;
+    }
+    if (!mapContainerRef.current) return;
+
+    if (!mapRef.current) {
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [lng, lat],
+        zoom: 14,
+        interactive: false,
+        attributionControl: false,
+      });
+      mapRef.current = map;
+
+      const marker = new mapboxgl.Marker({ color: '#18181b' })
+        .setLngLat([lng, lat])
+        .addTo(map);
+      markerRef.current = marker;
+    } else {
+      mapRef.current.setCenter([lng, lat]);
+      markerRef.current.setLngLat([lng, lat]);
+    }
+  }, [lat, lng]);
 
   // ── Photo handling ───────────────────────────────────────────────────────────
 
@@ -157,6 +191,8 @@ export default function NewItemPage({ auth }) {
     setAddress(savedAddress);
     setLat(savedLat);
     setLng(savedLng);
+    if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+    if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     setDateTime(now.toISOString().slice(0, 16));
@@ -247,23 +283,23 @@ export default function NewItemPage({ auth }) {
 
             {/* Photo buttons */}
             <div className="flex gap-2">
-              {/* Camera (mainly for mobile) */}
+              {/* Camera — only on mobile (capture attribute only works on touch devices) */}
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
+                className="flex-1 lg:hidden flex items-center justify-center gap-2 py-3 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
               >
                 <Camera size={16} />
-                <span className="sm:inline">Take photo</span>
+                Take photo
               </button>
-              {/* File picker (mainly for desktop) */}
+              {/* File picker — always visible, full width on desktop */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-100 text-zinc-700 rounded-xl text-[13px] font-medium hover:bg-zinc-200 transition"
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-100 lg:bg-zinc-900 lg:text-white text-zinc-700 rounded-xl text-[13px] font-medium lg:font-semibold hover:bg-zinc-200 lg:hover:bg-zinc-800 transition"
               >
                 <Upload size={16} />
-                <span className="sm:inline">Upload</span>
+                Upload photos
               </button>
             </div>
 
@@ -335,6 +371,13 @@ export default function NewItemPage({ auth }) {
                 Location *
               </label>
               <div ref={geocoderContainerRef} className="geocoder-business" />
+              {/* Mini-map preview */}
+              <div
+                ref={mapContainerRef}
+                className={`mt-2 rounded-xl overflow-hidden transition-all duration-300 ${
+                  lat && lng ? 'h-[160px] opacity-100' : 'h-0 opacity-0'
+                }`}
+              />
             </div>
 
             <div>
