@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import ItemsPage from './pages/ItemsPage';
 import NewItemPage from './pages/NewItemPage';
 import MatchesPage from './pages/MatchesPage';
+import ItemMatchesPage from './pages/ItemMatchesPage';
 import TeamPage from './pages/TeamPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 
@@ -90,6 +91,14 @@ export default function App() {
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>
               <MatchesPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/matches/:itemId" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <ItemMatchesPage auth={auth} />
             </AppShell>
           </ProtectedRoute>
         } />
