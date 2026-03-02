@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, X, MessageSquare, Package, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, X, MessageSquare, Package, Loader2, MapPin } from 'lucide-react';
 import api, { photoUrl } from '../api';
 
 const STATUS_STYLES = {
@@ -29,6 +29,18 @@ function StatusBadge({ status }) {
   return (
     <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${s.bg} ${s.text}`}>
       {s.label}
+    </span>
+  );
+}
+
+function DistanceBadge({ km }) {
+  if (km == null) return null;
+  const label = km < 1 ? `${Math.round(km * 1000)} m` : `${km} km`;
+  const color = km <= 1 ? 'text-green-600 bg-green-50' : km <= 5 ? 'text-amber-600 bg-amber-50' : 'text-zinc-500 bg-zinc-100';
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${color}`}>
+      <MapPin size={11} />
+      {label}
     </span>
   );
 }
@@ -155,9 +167,12 @@ export default function ItemMatchesPage() {
                   key={match.match_id}
                   className="bg-white border border-zinc-100 rounded-2xl p-5 space-y-4"
                 >
-                  {/* Top row: score + status */}
+                  {/* Top row: score + distance + status */}
                   <div className="flex items-center justify-between">
-                    <ScoreBar score={match.score} />
+                    <div className="flex items-center gap-3">
+                      <ScoreBar score={match.score} />
+                      <DistanceBadge km={match.distance_km} />
+                    </div>
                     <StatusBadge status={match.status} />
                   </div>
 
