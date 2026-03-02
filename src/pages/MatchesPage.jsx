@@ -3,27 +3,54 @@ import { useNavigate } from 'react-router-dom';
 import { GitCompare, ChevronRight, Package } from 'lucide-react';
 import api, { photoUrl } from '../api';
 
+const FILTERS = [
+  { key: 'pending', label: 'With pending' },
+  { key: 'all',     label: 'All' },
+];
+
 export default function MatchesPage() {
   const navigate = useNavigate();
-  const [items, setItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('pending');
 
   useEffect(() => {
     api.get('/business/items/matches/summary')
-      .then(res => setItems(res.data))
+      .then(res => setAllItems(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const totalPending = items.reduce((s, i) => s + (i.match_pending || 0), 0);
+  const items = filter === 'pending'
+    ? allItems.filter(i => (i.match_pending || 0) > 0)
+    : allItems;
+
+  const totalPending = allItems.reduce((s, i) => s + (i.match_pending || 0), 0);
 
   return (
     <div>
       <div className="mb-6">
         <h2 className="text-[20px] font-extrabold text-zinc-900">Matches</h2>
         <p className="text-[13px] text-zinc-400 mt-1">
-          {items.length} items with matches{totalPending > 0 && ` · ${totalPending} pending review`}
+          {allItems.length} items with matches{totalPending > 0 && ` · ${totalPending} pending review`}
         </p>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-1 bg-zinc-50 rounded-lg p-0.5 w-fit mb-6">
+        {FILTERS.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-colors ${
+              filter === f.key
+                ? 'bg-white text-zinc-900 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-600'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -35,9 +62,13 @@ export default function MatchesPage() {
           <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center mb-4">
             <GitCompare size={20} className="text-zinc-400" />
           </div>
-          <p className="text-[14px] font-semibold text-zinc-700">No matches yet</p>
+          <p className="text-[14px] font-semibold text-zinc-700">
+            {filter === 'pending' ? 'No pending matches' : 'No matches yet'}
+          </p>
           <p className="text-[12px] text-zinc-400 mt-1 max-w-xs">
-            Matches are created automatically when a lost item report fits one of your registered items.
+            {filter === 'pending'
+              ? 'All matches have been reviewed. Switch to "All" to see past matches.'
+              : 'Matches are created automatically when a lost item report fits one of your registered items.'}
           </p>
         </div>
       ) : (
@@ -48,7 +79,6 @@ export default function MatchesPage() {
               onClick={() => navigate(`/matches/${item.item_id}`)}
               className="w-full flex items-center gap-4 p-4 bg-white border border-zinc-100 rounded-2xl hover:border-zinc-200 hover:shadow-sm transition text-left"
             >
-              {/* Thumbnail */}
               {item.photos?.length > 0 ? (
                 <img
                   src={photoUrl(item.photos[0])}
@@ -61,13 +91,11 @@ export default function MatchesPage() {
                 </div>
               )}
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="text-[14px] font-semibold text-zinc-900 truncate">{item.title}</p>
                 <p className="text-[12px] text-zinc-400 capitalize">{item.category}</p>
               </div>
 
-              {/* Match counts */}
               <div className="flex items-center gap-3 flex-shrink-0">
                 {item.match_pending > 0 && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-[11px] font-semibold">

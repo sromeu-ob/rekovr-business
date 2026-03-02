@@ -22,6 +22,7 @@ const STATUS_DOT = {
   pending: 'bg-amber-400',
   accepted: 'bg-green-500',
   rejected: 'bg-red-400',
+  dismissed: 'bg-zinc-300',
   recovered: 'bg-green-500',
   paid: 'bg-purple-500',
 };
