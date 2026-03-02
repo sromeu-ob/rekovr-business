@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Upload, X, Sparkles, MapPin, CheckCircle, Plus, ArrowLeft, Loader2 } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
@@ -11,19 +11,18 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function NewItemPage({ auth }) {
   const navigate = useNavigate();
-  const geocoderRef = useRef(null);
-  const geocoderContainerRef = useRef(null);
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const mapInitializedRef = useRef(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
-  const [photos, setPhotos] = useState([]);         // [{ file, preview, url }]
+  const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(null);       // { title } or null
+  const [success, setSuccess] = useState(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -36,72 +35,90 @@ export default function NewItemPage({ auth }) {
     return now.toISOString().slice(0, 16);
   });
 
-  // Persist location across "register another" resets
   const [savedAddress, setSavedAddress] = useState('');
   const [savedLat, setSavedLat] = useState(null);
   const [savedLng, setSavedLng] = useState(null);
 
-  // ── Mapbox Geocoder ──────────────────────────────────────────────────────────
+  const orgDefaultLocation = auth?.organization?.default_location;
+
+  // ── Update location state from map interactions ────────────────────────────
+
+  const updateLocationFromCoords = useCallback((newLat, newLng, newAddress) => {
+    setLat(newLat);
+    setLng(newLng);
+    setAddress(newAddress || `${newLat.toFixed(5)}, ${newLng.toFixed(5)}`);
+  }, []);
+
+  // ── Interactive map with geocoder, drag, click, geolocation ────────────────
 
   useEffect(() => {
-    if (!geocoderContainerRef.current || geocoderRef.current) return;
+    if (!mapContainerRef.current || mapInitializedRef.current) return;
+    mapInitializedRef.current = true;
+
+    const defaultCenter = orgDefaultLocation
+      ? [orgDefaultLocation.longitude, orgDefaultLocation.latitude]
+      : [2.1734, 41.3851]; // Barcelona fallback
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: defaultCenter,
+      zoom: 13,
+    });
+    mapRef.current = map;
 
     const geocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      types: 'address,poi,place',
-      placeholder: 'Search location...',
-      limit: 5,
+      mapboxgl,
+      marker: false,
+      placeholder: 'Search for an address...',
     });
+    map.addControl(geocoder, 'top-left');
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    geocoder.addTo(geocoderContainerRef.current);
-    geocoderRef.current = geocoder;
+    const marker = new mapboxgl.Marker({ color: '#18181b', draggable: true })
+      .setLngLat(defaultCenter)
+      .addTo(map);
+    markerRef.current = marker;
+
+    if (orgDefaultLocation) {
+      updateLocationFromCoords(
+        orgDefaultLocation.latitude,
+        orgDefaultLocation.longitude,
+        orgDefaultLocation.address || null,
+      );
+    }
 
     geocoder.on('result', (e) => {
-      const { center, place_name } = e.result;
-      setLng(center[0]);
-      setLat(center[1]);
-      setAddress(place_name);
+      const [gLng, gLat] = e.result.center;
+      marker.setLngLat([gLng, gLat]);
+      updateLocationFromCoords(gLat, gLng, e.result.place_name);
     });
 
-    geocoder.on('clear', () => {
-      setLng(null);
-      setLat(null);
-      setAddress('');
+    marker.on('dragend', () => {
+      const { lat: mLat, lng: mLng } = marker.getLngLat();
+      updateLocationFromCoords(mLat, mLng, null);
     });
 
-    return () => { geocoder.onRemove(); geocoderRef.current = null; };
-  }, [success]); // re-init after success reset
+    map.on('click', (e) => {
+      marker.setLngLat([e.lngLat.lng, e.lngLat.lat]);
+      updateLocationFromCoords(e.lngLat.lat, e.lngLat.lng, null);
+    });
 
-  // ── Mini-map ───────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!lat || !lng) {
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
-      if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
-      return;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude: geoLat, longitude: geoLng } = pos.coords;
+          map.flyTo({ center: [geoLng, geoLat], zoom: 14 });
+          marker.setLngLat([geoLng, geoLat]);
+          updateLocationFromCoords(geoLat, geoLng, null);
+        },
+        () => {} // denied or error — keep default
+      );
     }
-    if (!mapContainerRef.current) return;
 
-    if (!mapRef.current) {
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        center: [lng, lat],
-        zoom: 14,
-        interactive: false,
-        attributionControl: false,
-      });
-      mapRef.current = map;
-
-      const marker = new mapboxgl.Marker({ color: '#18181b' })
-        .setLngLat([lng, lat])
-        .addTo(map);
-      markerRef.current = marker;
-    } else {
-      mapRef.current.setCenter([lng, lat]);
-      markerRef.current.setLngLat([lng, lat]);
-    }
-  }, [lat, lng]);
+    return () => { map.remove(); mapRef.current = null; mapInitializedRef.current = false; };
+  }, [success]); // re-init after "register another" reset
 
   // ── Photo handling ───────────────────────────────────────────────────────────
 
@@ -192,7 +209,7 @@ export default function NewItemPage({ auth }) {
     setLat(savedLat);
     setLng(savedLng);
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
-    if (markerRef.current) { markerRef.current.remove(); markerRef.current = null; }
+    mapInitializedRef.current = false;
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     setDateTime(now.toISOString().slice(0, 16));
@@ -370,14 +387,13 @@ export default function NewItemPage({ auth }) {
                 <MapPin size={12} className="inline mr-1" />
                 Location *
               </label>
-              <div ref={geocoderContainerRef} className="geocoder-business" />
-              {/* Mini-map preview */}
               <div
                 ref={mapContainerRef}
-                className={`mt-2 rounded-xl overflow-hidden transition-all duration-300 ${
-                  lat && lng ? 'h-[160px] opacity-100' : 'h-0 opacity-0'
-                }`}
+                className="w-full h-[220px] lg:h-[260px] rounded-xl overflow-hidden"
               />
+              {address && (
+                <p className="mt-1.5 text-[11px] text-zinc-400 truncate">{address}</p>
+              )}
             </div>
 
             <div>

@@ -1,25 +1,12 @@
 @import "tailwindcss";
 
-/* Mapbox Geocoder inside the business form */
-.geocoder-business .mapboxgl-ctrl-geocoder {
-  width: 100%;
-  max-width: 100%;
-  font-size: 13px;
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
-  box-shadow: none;
-  background: #fafafa;
-  min-height: 44px;
+/* Mapbox Geocoder inside the map control */
+.mapboxgl-ctrl-geocoder {
+  font-size: 13px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+  min-width: 220px !important;
 }
-.geocoder-business .mapboxgl-ctrl-geocoder:focus-within {
-  border-color: #a1a1aa;
-}
-.geocoder-business .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--input {
-  height: 42px;
-  padding: 0 12px 0 36px;
-}
-.geocoder-business .mapboxgl-ctrl-geocoder .suggestions {
-  border-radius: 12px;
-  border: 1px solid #e4e4e7;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+@media (min-width: 480px) {
+  .mapboxgl-ctrl-geocoder { min-width: 300px !important; }
 }
