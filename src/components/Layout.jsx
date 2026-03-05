@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, GitCompare, Users, CreditCard, LogOut, Building2, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, GitCompare, Users, CreditCard, LogOut, Building2, Menu, X, Settings } from 'lucide-react';
 import api from '../api';
 
 const NAV = [
@@ -9,6 +9,7 @@ const NAV = [
   { to: '/matches', icon: GitCompare,      label: 'Matches' },
   { to: '/team',    icon: Users,           label: 'Team' },
   { to: '/subscription', icon: CreditCard, label: 'Subscription' },
+  { to: '/settings',     icon: Settings,    label: 'Settings',     adminOnly: true },
 ];
 
 export default function Layout({ children, auth, onLogout }) {
@@ -41,7 +42,7 @@ export default function Layout({ children, auth, onLogout }) {
       </div>
 
       <nav className="flex-1 p-3 space-y-0.5">
-        {NAV.map(({ to, icon: Icon, label }) => (
+        {NAV.filter(n => !n.adminOnly || org_role === 'admin').map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}

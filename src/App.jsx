@@ -11,6 +11,7 @@ import MatchesPage from './pages/MatchesPage';
 import ItemMatchesPage from './pages/ItemMatchesPage';
 import TeamPage from './pages/TeamPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute({ children, auth }) {
   if (!auth) return <Navigate to="/login" replace />;
@@ -115,6 +116,14 @@ export default function App() {
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>
               <SubscriptionPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/settings" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <SettingsPage auth={auth} />
             </AppShell>
           </ProtectedRoute>
         } />
