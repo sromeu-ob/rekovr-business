@@ -19,12 +19,25 @@ function StatCard({ icon: Icon, label, value, sub, accent }) {
 }
 
 const STATUS_DOT = {
+  pending_verification: 'bg-indigo-400',
+  pending_review: 'bg-blue-400',
   pending: 'bg-amber-400',
   accepted: 'bg-green-500',
   rejected: 'bg-red-400',
   dismissed: 'bg-zinc-300',
   recovered: 'bg-green-500',
   paid: 'bg-purple-500',
+};
+
+const STATUS_LABEL = {
+  pending_verification: 'Verification',
+  pending_review: 'Under review',
+  pending: 'Pending',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  dismissed: 'Dismissed',
+  recovered: 'Recovered',
+  paid: 'Paid',
 };
 
 function timeAgo(dateStr) {
@@ -176,9 +189,9 @@ export default function DashboardPage({ auth }) {
                       {m.found_title} <span className="text-zinc-300 font-normal">↔</span> {m.lost_title}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] text-zinc-400 capitalize">{m.status}</span>
+                      <span className="text-[11px] text-zinc-400">{STATUS_LABEL[m.status] || m.status}</span>
                       {m.score != null && (
-                        <span className="text-[11px] text-zinc-300">· {m.score}% match</span>
+                        <span className="text-[11px] text-zinc-300">· {m.score <= 1 ? Math.round(m.score * 100) : Math.round(m.score)}% match</span>
                       )}
                     </div>
                   </div>
