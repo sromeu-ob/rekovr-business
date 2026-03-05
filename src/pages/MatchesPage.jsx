@@ -109,7 +109,7 @@ export default function MatchesPage() {
                 )}
                 {item.best_score != null && (
                   <span className="text-[12px] text-zinc-400 hidden sm:inline">
-                    Best: {item.best_score}%
+                    Best: {item.best_score <= 1 ? Math.round(item.best_score * 100) : Math.round(item.best_score)}%
                   </span>
                 )}
                 <span className="text-[12px] font-medium text-zinc-500">
