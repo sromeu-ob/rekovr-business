@@ -94,7 +94,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
   };
 
   return (
-    <div className="bg-white border border-zinc-100 rounded-2xl p-5 space-y-4">
+    <div data-testid={`match-card-${match.match_id}`} className="bg-white border border-zinc-100 rounded-2xl p-5 space-y-4">
       {/* Top row: score + verification + distance + status */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -200,6 +200,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
       {canAct && (
         <div className="flex gap-2 pt-1">
           <button
+            data-testid={`accept-btn-${match.match_id}`}
             onClick={() => onAction('accept')}
             disabled={isActioning}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-zinc-900 text-white rounded-xl text-[12px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
@@ -208,6 +209,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
             Accept
           </button>
           <button
+            data-testid={`reject-btn-${match.match_id}`}
             onClick={() => onAction('reject')}
             disabled={isActioning}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-zinc-100 text-zinc-700 rounded-xl text-[12px] font-medium hover:bg-zinc-200 transition disabled:opacity-50"
@@ -217,6 +219,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
           </button>
           {!match.info_requested && (
             <button
+              data-testid={`request-info-btn-${match.match_id}`}
               onClick={() => onAction('request-info')}
               disabled={isActioning}
               className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-zinc-100 text-zinc-700 rounded-xl text-[12px] font-medium hover:bg-zinc-200 transition disabled:opacity-50"
@@ -319,7 +322,7 @@ export default function ItemMatchesPage() {
           <ArrowLeft size={16} className="text-zinc-600" />
         </button>
         <div>
-          <h2 className="text-[20px] font-extrabold text-zinc-900">Match candidates</h2>
+          <h2 data-testid="item-matches-heading" className="text-[20px] font-extrabold text-zinc-900">Match candidates</h2>
           <p className="text-[12px] text-zinc-400">
             {total} candidate{total !== 1 ? 's' : ''} for this item{filter !== 'all' ? ` (${filter})` : ''}
           </p>
@@ -331,6 +334,7 @@ export default function ItemMatchesPage() {
         {FILTERS.map(f => (
           <button
             key={f.key}
+            data-testid={`filter-${f.key}`}
             onClick={() => handleFilterChange(f.key)}
             className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-colors ${
               filter === f.key
@@ -346,7 +350,7 @@ export default function ItemMatchesPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* LEFT: Found item (org's item) — sticky on desktop */}
         <div className="w-full lg:w-[340px] flex-shrink-0">
-          <div className="lg:sticky lg:top-8 bg-white border border-zinc-100 rounded-2xl p-5 space-y-4">
+          <div data-testid="found-item-detail" className="lg:sticky lg:top-8 bg-white border border-zinc-100 rounded-2xl p-5 space-y-4">
             <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Your found item</p>
 
             {foundItem?.photos?.length > 0 && (

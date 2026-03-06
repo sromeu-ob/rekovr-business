@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Package, GitCompare, CheckCircle, TrendingUp, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import api, { photoUrl } from '../api';
 
-function StatCard({ icon: Icon, label, value, sub, accent }) {
+function StatCard({ icon: Icon, label, value, sub, accent, testId }) {
   return (
-    <div className="bg-white rounded-2xl border border-zinc-100 p-5">
+    <div data-testid={testId} className="bg-white rounded-2xl border border-zinc-100 p-5">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{label}</span>
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${accent || 'bg-zinc-50'}`}>
@@ -77,7 +77,7 @@ export default function DashboardPage({ auth }) {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-[22px] font-extrabold text-zinc-900">Dashboard</h2>
+        <h2 data-testid="dashboard-heading" className="text-[22px] font-extrabold text-zinc-900">Dashboard</h2>
         <p className="text-[13px] text-zinc-400 mt-1">{orgName} — lost & found overview</p>
       </div>
 
@@ -89,34 +89,39 @@ export default function DashboardPage({ auth }) {
           value={data?.total_items ?? 0}
           sub={data?.items_this_week ? `+${data.items_this_week} this week` : 'No new items this week'}
           accent="bg-zinc-900"
+          testId="stat-found-items"
         />
         <StatCard
           icon={GitCompare}
           label="Matches"
           value={data?.total_matches ?? 0}
           sub={data?.pending_matches ? `${data.pending_matches} pending review` : 'No pending matches'}
+          testId="stat-matches"
         />
         <StatCard
           icon={CheckCircle}
           label="Recovered"
           value={data?.recovered ?? 0}
           sub={data?.accepted_matches ? `${data.accepted_matches} accepted` : null}
+          testId="stat-recovered"
         />
         <StatCard
           icon={TrendingUp}
           label="Recovery rate"
           value={`${data?.recovery_rate ?? 0}%`}
           sub={data?.total_items ? `of ${data.total_items} items` : null}
+          testId="stat-recovery-rate"
         />
       </div>
 
       {/* Two columns: recent items + recent matches */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
         {/* Recent items */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-5">
+        <div data-testid="recent-items" className="bg-white rounded-2xl border border-zinc-100 p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[13px] font-bold text-zinc-900">Recent items</p>
             <button
+              data-testid="view-all-items-btn"
               onClick={() => navigate('/items')}
               className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 flex items-center gap-1 transition"
             >
@@ -158,10 +163,11 @@ export default function DashboardPage({ auth }) {
         </div>
 
         {/* Recent matches */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-5">
+        <div data-testid="recent-matches" className="bg-white rounded-2xl border border-zinc-100 p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[13px] font-bold text-zinc-900">Recent matches</p>
             <button
+              data-testid="view-all-matches-btn"
               onClick={() => navigate('/matches')}
               className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 flex items-center gap-1 transition"
             >

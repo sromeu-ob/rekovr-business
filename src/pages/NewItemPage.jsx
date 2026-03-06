@@ -218,7 +218,7 @@ export default function NewItemPage({ auth }) {
 
   if (success) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <div data-testid="item-success" className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
             <CheckCircle size={28} className="text-green-600" />
@@ -230,6 +230,7 @@ export default function NewItemPage({ auth }) {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
+              data-testid="register-another-btn"
               onClick={handleRegisterAnother}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
             >
@@ -237,6 +238,7 @@ export default function NewItemPage({ auth }) {
               Register another
             </button>
             <button
+              data-testid="view-items-btn"
               onClick={() => navigate('/items')}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-100 text-zinc-700 rounded-xl text-[13px] font-medium hover:bg-zinc-200 transition"
             >
@@ -258,6 +260,7 @@ export default function NewItemPage({ auth }) {
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
+          data-testid="back-btn"
           onClick={() => navigate('/items')}
           className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition"
         >
@@ -360,6 +363,7 @@ export default function NewItemPage({ auth }) {
             <div>
               <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Title *</label>
               <input
+                data-testid="item-title-input"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -372,6 +376,7 @@ export default function NewItemPage({ auth }) {
             <div>
               <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Description</label>
               <textarea
+                data-testid="item-description-input"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the item in detail..."
@@ -386,6 +391,7 @@ export default function NewItemPage({ auth }) {
                 Location *
               </label>
               <div
+                data-testid="map-container"
                 ref={mapContainerRef}
                 className="w-full h-[220px] lg:h-[260px] rounded-xl overflow-hidden"
               />
@@ -397,6 +403,7 @@ export default function NewItemPage({ auth }) {
             <div>
               <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Date & Time found</label>
               <input
+                data-testid="item-datetime-input"
                 type="datetime-local"
                 value={dateTime}
                 onChange={(e) => setDateTime(e.target.value)}
@@ -407,6 +414,7 @@ export default function NewItemPage({ auth }) {
             {/* Submit - sticky on mobile */}
             <div className="pt-2 pb-4">
               <button
+                data-testid="publish-item-btn"
                 type="submit"
                 disabled={!canSubmit}
                 className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-bold transition ${

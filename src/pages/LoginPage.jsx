@@ -62,6 +62,7 @@ export default function LoginPage({ onLogin }) {
                 key={org.organization_id}
                 onClick={() => handleOrgSelect(org.organization_id)}
                 disabled={loading}
+                data-testid={`org-select-${org.organization_id}`}
                 className="w-full flex items-center justify-between px-4 py-3 border border-zinc-200 rounded-xl hover:border-zinc-400 hover:bg-zinc-50 transition text-left disabled:opacity-50"
               >
                 <div>
@@ -104,6 +105,7 @@ export default function LoginPage({ onLogin }) {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoFocus
+            data-testid="login-email-input"
             className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-[13px] outline-none focus:border-zinc-400 transition"
           />
           <input
@@ -112,11 +114,12 @@ export default function LoginPage({ onLogin }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            data-testid="login-password-input"
             className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-[13px] outline-none focus:border-zinc-400 transition"
           />
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-100 rounded-lg">
+            <div data-testid="login-error" className="p-3 bg-red-50 border border-red-100 rounded-lg">
               <p className="text-[12px] text-red-600">{error}</p>
             </div>
           )}
@@ -124,6 +127,7 @@ export default function LoginPage({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
+            data-testid="login-submit-btn"
             className="w-full h-11 bg-zinc-900 text-white rounded-lg text-[13px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
           >
             {loading ? 'Signing in...' : 'Sign in'}

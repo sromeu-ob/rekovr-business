@@ -59,7 +59,7 @@ export default function TeamPage({ auth }) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-[20px] font-extrabold text-zinc-900">Team</h2>
+          <h2 data-testid="team-heading" className="text-[20px] font-extrabold text-zinc-900">Team</h2>
           <p className="text-[13px] text-zinc-400 mt-1">
             {members.length} member{members.length !== 1 ? 's' : ''}
             {invites.length > 0 && ` · ${invites.length} pending`}
@@ -67,6 +67,7 @@ export default function TeamPage({ auth }) {
         </div>
         {isAdmin && (
           <button
+            data-testid="invite-member-btn"
             onClick={() => { setShowInvite(!showInvite); setInviteResult(null); }}
             className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
           >
@@ -83,6 +84,7 @@ export default function TeamPage({ auth }) {
           <form onSubmit={handleInvite} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
+                data-testid="invite-name-input"
                 type="text"
                 placeholder="Name"
                 value={inviteForm.name}
@@ -91,6 +93,7 @@ export default function TeamPage({ auth }) {
                 className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
               />
               <input
+                data-testid="invite-email-input"
                 type="email"
                 placeholder="Email"
                 value={inviteForm.email}
@@ -104,6 +107,7 @@ export default function TeamPage({ auth }) {
                 {['operator', 'admin'].map((r) => (
                   <button
                     key={r}
+                    data-testid={`invite-role-${r}`}
                     type="button"
                     onClick={() => setInviteForm({ ...inviteForm, role: r })}
                     className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition ${
@@ -117,6 +121,7 @@ export default function TeamPage({ auth }) {
                 ))}
               </div>
               <button
+                data-testid="send-invite-btn"
                 type="submit"
                 disabled={inviting}
                 className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
@@ -158,7 +163,7 @@ export default function TeamPage({ auth }) {
                 const rc = ROLE_CONFIG[m.role] || ROLE_CONFIG.operator;
                 const RoleIcon = rc.icon;
                 return (
-                  <div key={m.user_id} className="flex items-center gap-4 px-5 py-4">
+                  <div key={m.user_id} data-testid={`member-${m.user_id}`} className="flex items-center gap-4 px-5 py-4">
                     {m.picture ? (
                       <img src={m.picture} alt="" className="w-9 h-9 rounded-full object-cover bg-zinc-100" />
                     ) : (

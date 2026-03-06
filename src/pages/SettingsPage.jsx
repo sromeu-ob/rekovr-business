@@ -126,16 +126,19 @@ function PickupSection({ s }) {
               Generate QR codes for paid matches so customers can pick up items at your venue
             </p>
           </div>
-          <Toggle
-            enabled={s.config.pickup_qr_enabled}
-            onChange={(v) => s.setConfig(c => ({ ...c, pickup_qr_enabled: v }))}
-          />
+          <span data-testid="pickup-qr-toggle">
+            <Toggle
+              enabled={s.config.pickup_qr_enabled}
+              onChange={(v) => s.setConfig(c => ({ ...c, pickup_qr_enabled: v }))}
+            />
+          </span>
         </div>
 
         <div>
           <label className="block text-[13px] font-semibold text-zinc-800 mb-1.5">QR code expiry (hours)</label>
           <p className="text-[11px] text-zinc-400 mb-2">How long the pickup QR code remains valid after payment</p>
           <input
+            data-testid="pickup-qr-expiry"
             type="number"
             min={1}
             max={720}
@@ -152,6 +155,7 @@ function PickupSection({ s }) {
             Instructions shown to the customer when they arrive at your venue (visible on the QR pickup page)
           </p>
           <textarea
+            data-testid="pickup-instructions"
             value={s.config.pickup_instructions}
             onChange={(e) => s.setConfig(c => ({ ...c, pickup_instructions: e.target.value }))}
             placeholder="e.g. Go to the front desk and show this QR code to our staff."
@@ -226,6 +230,7 @@ function OrgSection({ s }) {
             }`}
           >
             <input
+              data-testid={`visibility-${opt.value}`}
               type="radio"
               name="operator_visibility"
               value={opt.value}
@@ -258,10 +263,12 @@ function OrgSection({ s }) {
               Claimants must answer AI-generated questions before a match is accepted
             </p>
           </div>
-          <Toggle
-            enabled={s.config.verification_enabled}
-            onChange={(v) => s.setConfig(c => ({ ...c, verification_enabled: v }))}
-          />
+          <span data-testid="verification-toggle">
+            <Toggle
+              enabled={s.config.verification_enabled}
+              onChange={(v) => s.setConfig(c => ({ ...c, verification_enabled: v }))}
+            />
+          </span>
         </div>
       </div>
 
@@ -282,10 +289,12 @@ function OrgSection({ s }) {
               Matches exceeding both thresholds are accepted without manual review
             </p>
           </div>
-          <Toggle
-            enabled={s.config.auto_accept_enabled}
-            onChange={(v) => s.setConfig(c => ({ ...c, auto_accept_enabled: v }))}
-          />
+          <span data-testid="auto-accept-toggle">
+            <Toggle
+              enabled={s.config.auto_accept_enabled}
+              onChange={(v) => s.setConfig(c => ({ ...c, auto_accept_enabled: v }))}
+            />
+          </span>
         </div>
 
         {s.config.auto_accept_enabled && (
@@ -361,7 +370,7 @@ export default function SettingsPage({ auth }) {
           <Settings className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-extrabold text-zinc-900 tracking-tight">Settings</h1>
+          <h1 data-testid="settings-heading" className="text-xl font-extrabold text-zinc-900 tracking-tight">Settings</h1>
           <p className="text-[12px] text-zinc-400">Manage your organisation's configuration</p>
         </div>
       </div>

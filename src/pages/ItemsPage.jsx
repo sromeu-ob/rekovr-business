@@ -54,10 +54,11 @@ export default function ItemsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-[22px] font-extrabold text-zinc-900">Found Items</h2>
-          <p className="text-[13px] text-zinc-400 mt-1">{total} items{filter !== 'all' ? ` (${filter})` : ''}</p>
+          <h2 data-testid="items-heading" className="text-[22px] font-extrabold text-zinc-900">Found Items</h2>
+          <p data-testid="items-count" className="text-[13px] text-zinc-400 mt-1">{total} items{filter !== 'all' ? ` (${filter})` : ''}</p>
         </div>
         <button
+          data-testid="new-item-btn"
           className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
           onClick={() => navigate('/items/new')}
         >
@@ -71,6 +72,7 @@ export default function ItemsPage() {
         {FILTERS.map(f => (
           <button
             key={f.key}
+            data-testid={`filter-${f.key}`}
             onClick={() => setFilter(f.key)}
             className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-colors ${
               filter === f.key
@@ -88,7 +90,7 @@ export default function ItemsPage() {
           <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div data-testid="items-empty" className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center mb-4">
             <Package size={20} className="text-zinc-400" />
           </div>
@@ -102,7 +104,7 @@ export default function ItemsPage() {
       ) : (
         <>
           <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden">
-            <table className="w-full">
+            <table data-testid="items-table" className="w-full">
               <thead>
                 <tr className="border-b border-zinc-100">
                   <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Item</th>
@@ -113,7 +115,7 @@ export default function ItemsPage() {
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item.item_id} className="border-b border-zinc-50 hover:bg-zinc-50 transition">
+                  <tr key={item.item_id} data-testid={`item-row-${item.item_id}`} className="border-b border-zinc-50 hover:bg-zinc-50 transition cursor-pointer" onClick={() => navigate(`/items/${item.item_id}`)}>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         {item.photos?.[0] ? (

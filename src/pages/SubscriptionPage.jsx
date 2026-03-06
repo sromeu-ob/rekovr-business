@@ -13,7 +13,7 @@ export default function SubscriptionPage({ auth }) {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-[22px] font-extrabold text-zinc-900">Subscription</h2>
+        <h2 data-testid="subscription-heading" className="text-[22px] font-extrabold text-zinc-900">Subscription</h2>
         <p className="text-[13px] text-zinc-400 mt-1">Your current plan and billing details.</p>
       </div>
 
@@ -23,10 +23,10 @@ export default function SubscriptionPage({ auth }) {
             <CreditCard size={16} className="text-white" />
           </div>
           <div>
-            <p className="text-[14px] font-bold text-zinc-900">
+            <p data-testid="subscription-plan" className="text-[14px] font-bold text-zinc-900">
               {PLAN_LABELS[org?.subscription_plan] || org?.subscription_plan || '—'} Plan
             </p>
-            <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_COLORS[org?.subscription_status] || 'bg-zinc-100 text-zinc-500'}`}>
+            <span data-testid="subscription-status" className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_COLORS[org?.subscription_status] || 'bg-zinc-100 text-zinc-500'}`}>
               {org?.subscription_status || '—'}
             </span>
           </div>

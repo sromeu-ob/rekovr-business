@@ -36,7 +36,7 @@ export default function Layout({ children, auth, onLogout }) {
           <Building2 size={14} className="text-white" />
         </div>
         <div className="min-w-0">
-          <p className="text-[12px] font-semibold text-zinc-900 truncate">{organization?.name}</p>
+          <p data-testid="sidebar-org-name" className="text-[12px] font-semibold text-zinc-900 truncate">{organization?.name}</p>
           <p className="text-[10px] text-zinc-400 capitalize truncate">{organization?.type}</p>
         </div>
       </div>
@@ -48,6 +48,7 @@ export default function Layout({ children, auth, onLogout }) {
             to={to}
             end={to === '/'}
             onClick={closeMobile}
+            data-testid={`nav-${to === '/' ? 'dashboard' : to.replace('/', '')}`}
             className={({ isActive }) =>
               `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
                 isActive
@@ -68,12 +69,13 @@ export default function Layout({ children, auth, onLogout }) {
             {user?.name?.charAt(0)?.toUpperCase() || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-medium text-zinc-900 truncate">{user?.name}</p>
+            <p data-testid="sidebar-user-name" className="text-[12px] font-medium text-zinc-900 truncate">{user?.name}</p>
             <p className="text-[10px] text-zinc-400 truncate capitalize">{org_role}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
+          data-testid="logout-btn"
           className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-[12px] text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-colors"
         >
           <LogOut size={14} />
@@ -87,7 +89,7 @@ export default function Layout({ children, auth, onLogout }) {
     <div className="min-h-screen bg-zinc-50 flex">
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-zinc-100 flex items-center h-14 px-4">
-        <button onClick={() => setMobileOpen(true)} className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center">
+        <button data-testid="mobile-menu-btn" onClick={() => setMobileOpen(true)} className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center">
           <Menu size={18} className="text-zinc-700" />
         </button>
         <span className="ml-3 text-[14px] font-bold text-zinc-900">{organization?.name || 'Rekovr'}</span>

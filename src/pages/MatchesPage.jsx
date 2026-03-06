@@ -30,7 +30,7 @@ export default function MatchesPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-[20px] font-extrabold text-zinc-900">Matches</h2>
+        <h2 data-testid="matches-heading" className="text-[20px] font-extrabold text-zinc-900">Matches</h2>
         <p className="text-[13px] text-zinc-400 mt-1">
           {allItems.length} items with matches{totalPending > 0 && ` · ${totalPending} pending review`}
         </p>
@@ -41,6 +41,7 @@ export default function MatchesPage() {
         {FILTERS.map(f => (
           <button
             key={f.key}
+            data-testid={`filter-${f.key}`}
             onClick={() => setFilter(f.key)}
             className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-colors ${
               filter === f.key
@@ -58,7 +59,7 @@ export default function MatchesPage() {
           <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div data-testid="matches-empty" className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center mb-4">
             <GitCompare size={20} className="text-zinc-400" />
           </div>
@@ -76,6 +77,7 @@ export default function MatchesPage() {
           {items.map((item) => (
             <button
               key={item.item_id}
+              data-testid={`match-item-${item.item_id}`}
               onClick={() => navigate(`/matches/${item.item_id}`)}
               className="w-full flex items-center gap-4 p-4 bg-white border border-zinc-100 rounded-2xl hover:border-zinc-200 hover:shadow-sm transition text-left"
             >
