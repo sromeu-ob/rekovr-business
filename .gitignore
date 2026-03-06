@@ -1,4 +1,11 @@
 node_modules
 dist
 .env
+.env.test
 .DS_Store
+
+# Playwright
+tests/.auth/
+tests/.test-state.json
+playwright-report/
+test-results/
