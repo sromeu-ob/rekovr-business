@@ -156,7 +156,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
           {showVerification && verificationData && (
             <div className="mt-3 border border-indigo-100 rounded-xl overflow-hidden divide-y divide-indigo-50">
               {(verificationData.questions || []).map((q, i) => {
-                const ans = (verificationData.answers || []).find(a => a.question === q.question);
+                const ans = (verificationData.answers || [])[i];
                 const score = ans?.score;
                 const scorePct = score != null ? Math.round(score * 100) : null;
                 const scoreStyle = scorePct >= 85
