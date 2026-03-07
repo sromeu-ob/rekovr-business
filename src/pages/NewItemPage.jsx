@@ -26,6 +26,8 @@ export default function NewItemPage({ auth }) {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [publicTitle, setPublicTitle] = useState('');
+  const [publicDescription, setPublicDescription] = useState('');
   const [address, setAddress] = useState('');
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
@@ -164,6 +166,8 @@ export default function NewItemPage({ auth }) {
       const res = await api.post('/business/items/describe', formData);
       if (res.data.title) setTitle(res.data.title);
       if (res.data.description) setDescription(res.data.description);
+      if (res.data.public_title) setPublicTitle(res.data.public_title);
+      if (res.data.public_description) setPublicDescription(res.data.public_description);
     } catch (err) {
       console.error('AI describe failed:', err);
     } finally {
@@ -186,6 +190,8 @@ export default function NewItemPage({ auth }) {
         address,
         date_time: dateTime || null,
         photos: photos.map((p) => p.url),
+        ...(publicTitle && { public_title: publicTitle }),
+        ...(publicDescription && { public_description: publicDescription }),
       });
       setSavedAddress(address);
       setSavedLat(lat);
