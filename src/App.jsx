@@ -7,6 +7,7 @@ import AcceptInvitePage from './pages/AcceptInvitePage';
 import DashboardPage from './pages/DashboardPage';
 import ItemsPage from './pages/ItemsPage';
 import NewItemPage from './pages/NewItemPage';
+import ItemDetailPage from './pages/ItemDetailPage';
 import MatchesPage from './pages/MatchesPage';
 import ItemMatchesPage from './pages/ItemMatchesPage';
 import TeamPage from './pages/TeamPage';
@@ -84,6 +85,14 @@ export default function App() {
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>
               <NewItemPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/items/:itemId" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <ItemDetailPage auth={auth} />
             </AppShell>
           </ProtectedRoute>
         } />
