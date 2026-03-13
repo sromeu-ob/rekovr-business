@@ -12,7 +12,7 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function NewItemPage({ auth }) {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -164,7 +164,7 @@ export default function NewItemPage({ auth }) {
       for (const p of photos) {
         if (p.file) formData.append('files', p.file);
       }
-      formData.append('language', 'en');
+      formData.append('language', language);
       const res = await api.post('/business/items/describe', formData);
       if (res.data.title) setTitle(res.data.title);
       if (res.data.description) setDescription(res.data.description);

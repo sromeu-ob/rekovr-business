@@ -5,6 +5,9 @@ import ImageViewer from '../components/ImageViewer';
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
+const getLocalizedReasoning = (match, lang) =>
+  match?.[`reasoning_${lang}`] || match?.reasoning_en || match?.reasoning || '';
+
 const MATCH_LIMIT = 10;
 const ACTIVE_STATUSES = 'pending,pending_verification,pending_review';
 
@@ -30,7 +33,7 @@ const MATCH_STATUS_STYLE = {
 export default function ItemDetailPage() {
   const { itemId } = useParams();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   const MATCH_STATUS_LABEL = {
     pending_verification: t('statusVerification'),
@@ -251,8 +254,8 @@ export default function ItemDetailPage() {
                       <p className="text-[11px] text-zinc-400">
                         {t('matchScore')}: <span className="font-semibold text-zinc-900">{Math.round(match.score * 100)}%</span>
                       </p>
-                      {(match.reasoning_en || match.reasoning) && (
-                        <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{match.reasoning_en || match.reasoning}</p>
+                      {getLocalizedReasoning(match, language) && (
+                        <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{getLocalizedReasoning(match, language)}</p>
                       )}
                     </div>
                     <ChevronRight className="w-4 h-4 text-zinc-200 flex-shrink-0" />

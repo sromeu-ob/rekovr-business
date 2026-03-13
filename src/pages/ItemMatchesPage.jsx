@@ -4,6 +4,9 @@ import { ArrowLeft, Check, X, MessageSquare, Package, Loader2, MapPin, ShieldQue
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
+const getLocalizedReasoning = (match, lang) =>
+  match?.[`reasoning_${lang}`] || match?.reasoning_en || match?.reasoning || '';
+
 const PENDING_STATUSES = 'pending,pending_verification,pending_review';
 
 const FILTERS = [
@@ -66,7 +69,7 @@ function DistanceBadge({ km }) {
   );
 }
 
-function MatchCard({ match, lost, canAct, isActioning, onAction, t, statusStyles }) {
+function MatchCard({ match, lost, canAct, isActioning, onAction, t, statusStyles, language }) {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationData, setVerificationData] = useState(null);
   const [loadingVerification, setLoadingVerification] = useState(false);
@@ -76,7 +79,9 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, t, statusStyles
     if (verificationData) { setShowVerification(v => !v); return; }
     setLoadingVerification(true);
     try {
-      const res = await api.get(`/business/items/matches/${match.match_id}/verification`);
+      const res = await api.get(`/business/items/matches/${match.match_id}/verification`, {
+        params: { lang: language },
+      });
       setVerificationData(res.data);
       setShowVerification(true);
     } catch { setShowVerification(false); }
@@ -121,9 +126,9 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, t, statusStyles
       </div>
 
       {/* AI reasoning */}
-      {(match.reasoning_en || match.reasoning || match.ai_reasoning) && (
+      {getLocalizedReasoning(match, language) && (
         <p className="text-[11px] text-zinc-400 italic bg-zinc-50 rounded-lg px-3 py-2">
-          {match.reasoning_en || match.reasoning || match.ai_reasoning}
+          {getLocalizedReasoning(match, language)}
         </p>
       )}
 
@@ -227,7 +232,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, t, statusStyles
 export default function ItemMatchesPage() {
   const { itemId } = useParams();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   const STATUS_STYLES = {
     pending_verification: { bg: 'bg-indigo-50', text: 'text-indigo-700', label: t('statusVerification') },
@@ -415,6 +420,7 @@ export default function ItemMatchesPage() {
                     onAction={(action) => handleAction(match.match_id, action)}
                     t={t}
                     statusStyles={STATUS_STYLES}
+                    language={language}
                   />
                 );
               })}
