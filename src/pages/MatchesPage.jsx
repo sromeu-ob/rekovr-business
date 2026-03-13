@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GitCompare, ChevronRight, Package } from 'lucide-react';
 import api, { photoUrl } from '../api';
-
-const FILTERS = [
-  { key: 'pending', label: 'With pending' },
-  { key: 'all',     label: 'All' },
-];
+import { useI18n } from '../contexts/I18nContext';
 
 export default function MatchesPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
+
+  const FILTERS = [
+    { key: 'pending', labelKey: 'filterWithPending' },
+    { key: 'all',     labelKey: 'filterAll' },
+  ];
 
   useEffect(() => {
     api.get('/business/items/matches/summary')
@@ -30,9 +32,9 @@ export default function MatchesPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 data-testid="matches-heading" className="text-[20px] font-extrabold text-zinc-900">Matches</h2>
+        <h2 data-testid="matches-heading" className="text-[20px] font-extrabold text-zinc-900">{t('navMatches')}</h2>
         <p className="text-[13px] text-zinc-400 mt-1">
-          {allItems.length} items with matches{totalPending > 0 && ` · ${totalPending} pending review`}
+          {allItems.length} {t('itemsWithMatches')}{totalPending > 0 && ` · ${totalPending} ${t('pendingReviewCount')}`}
         </p>
       </div>
 
@@ -49,7 +51,7 @@ export default function MatchesPage() {
                 : 'text-zinc-400 hover:text-zinc-600'
             }`}
           >
-            {f.label}
+            {t(f.labelKey)}
           </button>
         ))}
       </div>
@@ -64,12 +66,10 @@ export default function MatchesPage() {
             <GitCompare size={20} className="text-zinc-400" />
           </div>
           <p className="text-[14px] font-semibold text-zinc-700">
-            {filter === 'pending' ? 'No pending matches' : 'No matches yet'}
+            {filter === 'pending' ? t('noPendingMatches') : t('noMatchesYet')}
           </p>
           <p className="text-[12px] text-zinc-400 mt-1 max-w-xs">
-            {filter === 'pending'
-              ? 'All matches have been reviewed. Switch to "All" to see past matches.'
-              : 'Matches are created automatically when a lost item report fits one of your registered items.'}
+            {filter === 'pending' ? t('noPendingMatchesDesc') : t('noMatchesYetDesc')}
           </p>
         </div>
       ) : (
@@ -101,17 +101,17 @@ export default function MatchesPage() {
               <div className="flex items-center gap-3 flex-shrink-0">
                 {item.match_pending > 0 && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-[11px] font-semibold">
-                    {item.match_pending} pending
+                    {item.match_pending} {t('pending')}
                   </span>
                 )}
                 {item.match_accepted > 0 && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-[11px] font-semibold">
-                    {item.match_accepted} accepted
+                    {item.match_accepted} {t('accepted')}
                   </span>
                 )}
                 {item.best_score != null && (
                   <span className="text-[12px] text-zinc-400 hidden sm:inline">
-                    Best: {item.best_score <= 1 ? Math.round(item.best_score * 100) : Math.round(item.best_score)}%
+                    {t('best')}: {item.best_score <= 1 ? Math.round(item.best_score * 100) : Math.round(item.best_score)}%
                   </span>
                 )}
                 <span className="text-[12px] font-medium text-zinc-500">

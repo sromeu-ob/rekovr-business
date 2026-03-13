@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from './api';
+import { I18nProvider } from './contexts/I18nContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import AcceptInvitePage from './pages/AcceptInvitePage';
@@ -55,6 +56,7 @@ export default function App() {
   };
 
   return (
+    <I18nProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={
@@ -140,5 +142,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </I18nProvider>
   );
 }

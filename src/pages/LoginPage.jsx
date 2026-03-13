@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import api from '../api';
+import { useI18n } from '../contexts/I18nContext';
 
 export default function LoginPage({ onLogin }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ export default function LoginPage({ onLogin }) {
 
       onLogin(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Check your credentials.');
+      setError(err.response?.data?.detail || t('loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -39,7 +41,7 @@ export default function LoginPage({ onLogin }) {
       });
       onLogin(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed.');
+      setError(err.response?.data?.detail || t('loginFailedShort'));
     } finally {
       setLoading(false);
     }
@@ -51,10 +53,10 @@ export default function LoginPage({ onLogin }) {
         <div className="w-full max-w-[360px]">
           <div className="mb-8">
             <h1 className="text-[28px] font-extrabold tracking-tight text-zinc-900">Rekovr</h1>
-            <p className="text-[13px] text-zinc-400 mt-1">Business</p>
+            <p className="text-[13px] text-zinc-400 mt-1">{t('business')}</p>
           </div>
           <p className="text-[13px] font-medium text-zinc-700 mb-4">
-            Select the organization you want to access:
+            {t('selectOrganization')}
           </p>
           <div className="space-y-2">
             {orgList.orgs.map((org) => (
@@ -82,7 +84,7 @@ export default function LoginPage({ onLogin }) {
             onClick={() => setOrgList(null)}
             className="mt-4 text-[12px] text-zinc-400 hover:text-zinc-600 transition"
           >
-            ← Back to login
+            {t('backToLogin')}
           </button>
         </div>
       </div>
@@ -94,13 +96,13 @@ export default function LoginPage({ onLogin }) {
       <div className="w-full max-w-[320px]">
         <div className="mb-10">
           <h1 className="text-[32px] font-extrabold tracking-tight text-zinc-900">Rekovr</h1>
-          <p className="text-[13px] text-zinc-400 mt-1">Business</p>
+          <p className="text-[13px] text-zinc-400 mt-1">{t('business')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="email"
-            placeholder="Work email"
+            placeholder={t('workEmail')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -110,7 +112,7 @@ export default function LoginPage({ onLogin }) {
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t('password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -130,12 +132,12 @@ export default function LoginPage({ onLogin }) {
             data-testid="login-submit-btn"
             className="w-full h-11 bg-zinc-900 text-white rounded-lg text-[13px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? t('signingIn') : t('signIn')}
           </button>
         </form>
 
         <p className="text-[11px] text-zinc-300 text-center mt-6">
-          Access is by invitation only. Contact your organization admin.
+          {t('invitationOnly')}
         </p>
       </div>
     </div>

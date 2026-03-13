@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, GitCompare, CheckCircle, TrendingUp, Clock, ArrowRight, Sparkles } from 'lucide-react';
+import { Package, GitCompare, CheckCircle, TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
 import api, { photoUrl } from '../api';
+import { useI18n } from '../contexts/I18nContext';
 
 function StatCard({ icon: Icon, label, value, sub, accent, testId }) {
   return (
@@ -29,30 +30,20 @@ const STATUS_DOT = {
   paid: 'bg-purple-500',
 };
 
-const STATUS_LABEL = {
-  pending_verification: 'Verification',
-  pending_review: 'Under review',
-  pending: 'Pending',
-  accepted: 'Accepted',
-  rejected: 'Rejected',
-  dismissed: 'Dismissed',
-  recovered: 'Recovered',
-  paid: 'Paid',
-};
-
-function timeAgo(dateStr) {
+function timeAgo(dateStr, t) {
   if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}${t('minutesAgo')}`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}${t('hoursAgo')}`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${days}${t('daysAgo')}`;
 }
 
 export default function DashboardPage({ auth }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -71,43 +62,54 @@ export default function DashboardPage({ auth }) {
     );
   }
 
+  const STATUS_LABEL = {
+    pending_verification: t('statusVerification'),
+    pending_review: t('statusUnderReview'),
+    pending: t('statusPending'),
+    accepted: t('statusAccepted'),
+    rejected: t('statusRejected'),
+    dismissed: t('statusDismissed'),
+    recovered: t('statusRecovered'),
+    paid: t('statusPaid'),
+  };
+
   const orgName = auth?.organization?.name || 'Your organization';
 
   return (
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h2 data-testid="dashboard-heading" className="text-[22px] font-extrabold text-zinc-900">Dashboard</h2>
-        <p className="text-[13px] text-zinc-400 mt-1">{orgName} — lost & found overview</p>
+        <h2 data-testid="dashboard-heading" className="text-[22px] font-extrabold text-zinc-900">{t('dashboard')}</h2>
+        <p className="text-[13px] text-zinc-400 mt-1">{orgName} — {t('lostFoundOverview')}</p>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <StatCard
           icon={Package}
-          label="Found items"
+          label={t('foundItems')}
           value={data?.total_items ?? 0}
-          sub={data?.items_this_week ? `+${data.items_this_week} this week` : 'No new items this week'}
+          sub={data?.items_this_week ? `+${data.items_this_week} ${t('thisWeek')}` : t('noNewItemsThisWeek')}
           accent="bg-zinc-900"
           testId="stat-found-items"
         />
         <StatCard
           icon={GitCompare}
-          label="Matches"
+          label={t('navMatches')}
           value={data?.total_matches ?? 0}
-          sub={data?.pending_matches ? `${data.pending_matches} pending review` : 'No pending matches'}
+          sub={data?.pending_matches ? `${data.pending_matches} ${t('pendingReview')}` : t('noPendingMatches')}
           testId="stat-matches"
         />
         <StatCard
           icon={CheckCircle}
-          label="Recovered"
+          label={t('recovered')}
           value={data?.recovered ?? 0}
-          sub={data?.accepted_matches ? `${data.accepted_matches} accepted` : null}
+          sub={data?.accepted_matches ? `${data.accepted_matches} ${t('accepted')}` : null}
           testId="stat-recovered"
         />
         <StatCard
           icon={TrendingUp}
-          label="Recovery rate"
+          label={t('recoveryRate')}
           value={`${data?.recovery_rate ?? 0}%`}
           sub={data?.total_items ? `of ${data.total_items} items` : null}
           testId="stat-recovery-rate"
@@ -119,25 +121,25 @@ export default function DashboardPage({ auth }) {
         {/* Recent items */}
         <div data-testid="recent-items" className="bg-white rounded-2xl border border-zinc-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[13px] font-bold text-zinc-900">Recent items</p>
+            <p className="text-[13px] font-bold text-zinc-900">{t('recentItems')}</p>
             <button
               data-testid="view-all-items-btn"
               onClick={() => navigate('/items')}
               className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 flex items-center gap-1 transition"
             >
-              View all <ArrowRight size={12} />
+              {t('viewAll')} <ArrowRight size={12} />
             </button>
           </div>
 
           {!data?.recent_items?.length ? (
             <div className="text-center py-8">
               <Package size={20} className="text-zinc-200 mx-auto mb-2" />
-              <p className="text-[12px] text-zinc-400">No items registered yet</p>
+              <p className="text-[12px] text-zinc-400">{t('noItemsRegistered')}</p>
               <button
                 onClick={() => navigate('/items/new')}
                 className="mt-3 text-[12px] font-semibold text-zinc-900 hover:underline"
               >
-                Register first item
+                {t('registerFirstItem')}
               </button>
             </div>
           ) : (
@@ -155,7 +157,7 @@ export default function DashboardPage({ auth }) {
                     <p className="text-[13px] font-medium text-zinc-800 truncate">{item.title}</p>
                     <p className="text-[11px] text-zinc-400 capitalize">{item.category}</p>
                   </div>
-                  <span className="text-[10px] text-zinc-300 flex-shrink-0">{timeAgo(item.created_at)}</span>
+                  <span className="text-[10px] text-zinc-300 flex-shrink-0">{timeAgo(item.created_at, t)}</span>
                 </div>
               ))}
             </div>
@@ -165,21 +167,21 @@ export default function DashboardPage({ auth }) {
         {/* Recent matches */}
         <div data-testid="recent-matches" className="bg-white rounded-2xl border border-zinc-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[13px] font-bold text-zinc-900">Recent matches</p>
+            <p className="text-[13px] font-bold text-zinc-900">{t('recentMatches')}</p>
             <button
               data-testid="view-all-matches-btn"
               onClick={() => navigate('/matches')}
               className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 flex items-center gap-1 transition"
             >
-              View all <ArrowRight size={12} />
+              {t('viewAll')} <ArrowRight size={12} />
             </button>
           </div>
 
           {!data?.recent_matches?.length ? (
             <div className="text-center py-8">
               <Sparkles size={20} className="text-zinc-200 mx-auto mb-2" />
-              <p className="text-[12px] text-zinc-400">No matches found yet</p>
-              <p className="text-[11px] text-zinc-300 mt-1">Matches appear automatically when lost reports fit your items</p>
+              <p className="text-[12px] text-zinc-400">{t('noMatchesFound')}</p>
+              <p className="text-[11px] text-zinc-300 mt-1">{t('matchesAppearAutomatically')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -197,11 +199,11 @@ export default function DashboardPage({ auth }) {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[11px] text-zinc-400">{STATUS_LABEL[m.status] || m.status}</span>
                       {m.score != null && (
-                        <span className="text-[11px] text-zinc-300">· {m.score <= 1 ? Math.round(m.score * 100) : Math.round(m.score)}% match</span>
+                        <span className="text-[11px] text-zinc-300">· {m.score <= 1 ? Math.round(m.score * 100) : Math.round(m.score)}{t('matchPct')}</span>
                       )}
                     </div>
                   </div>
-                  <span className="text-[10px] text-zinc-300 flex-shrink-0">{timeAgo(m.created_at)}</span>
+                  <span className="text-[10px] text-zinc-300 flex-shrink-0">{timeAgo(m.created_at, t)}</span>
                 </button>
               ))}
             </div>
@@ -212,12 +214,8 @@ export default function DashboardPage({ auth }) {
       {/* Quick tip */}
       {data?.total_items === 0 && (
         <div className="mt-6 bg-zinc-50 rounded-2xl border border-zinc-100 p-5">
-          <p className="text-[13px] font-semibold text-zinc-800 mb-1">Getting started</p>
-          <p className="text-[12px] text-zinc-500">
-            Register found items using the <strong>Found Items</strong> section. The AI will automatically
-            generate a title, description and category from a photo. Matches with lost item reports are
-            created automatically in the background.
-          </p>
+          <p className="text-[13px] font-semibold text-zinc-800 mb-1">{t('gettingStarted')}</p>
+          <p className="text-[12px] text-zinc-500">{t('gettingStartedDescription')}</p>
         </div>
       )}
     </div>

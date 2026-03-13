@@ -6,11 +6,13 @@ import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import api from '../api';
+import { useI18n } from '../contexts/I18nContext';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function NewItemPage({ auth }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -73,7 +75,7 @@ export default function NewItemPage({ auth }) {
       accessToken: mapboxgl.accessToken,
       mapboxgl,
       marker: false,
-      placeholder: 'Search for an address...',
+      placeholder: t('searchForAddress'),
     });
     map.addControl(geocoder, 'top-left');
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -229,10 +231,10 @@ export default function NewItemPage({ auth }) {
           <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
             <CheckCircle size={28} className="text-green-600" />
           </div>
-          <h2 className="text-[18px] font-bold text-zinc-900 mb-1">Item registered</h2>
+          <h2 className="text-[18px] font-bold text-zinc-900 mb-1">{t('itemRegistered')}</h2>
           <p className="text-[13px] text-zinc-500 mb-8">
-            "<span className="font-medium text-zinc-700">{success.title}</span>" has been registered.
-            The AI is looking for matches in the background.
+            "<span className="font-medium text-zinc-700">{success.title}</span>" {t('isBeingRegistered')}
+            {' '}{t('aiLookingForMatches')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
@@ -241,14 +243,14 @@ export default function NewItemPage({ auth }) {
               className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
             >
               <Plus size={15} />
-              Register another
+              {t('registerAnother')}
             </button>
             <button
               data-testid="view-items-btn"
               onClick={() => navigate('/items')}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-100 text-zinc-700 rounded-xl text-[13px] font-medium hover:bg-zinc-200 transition"
             >
-              View items
+              {t('viewItems')}
             </button>
           </div>
         </div>
@@ -273,8 +275,8 @@ export default function NewItemPage({ auth }) {
           <ArrowLeft size={16} className="text-zinc-600" />
         </button>
         <div>
-          <h2 className="text-[20px] font-extrabold text-zinc-900">Register found item</h2>
-          <p className="text-[12px] text-zinc-400">Take a photo and let the AI do the rest.</p>
+          <h2 className="text-[20px] font-extrabold text-zinc-900">{t('registerFoundItem')}</h2>
+          <p className="text-[12px] text-zinc-400">{t('takePhotoAndAI')}</p>
         </div>
       </div>
 
@@ -314,7 +316,7 @@ export default function NewItemPage({ auth }) {
                 className="flex-1 lg:hidden flex items-center justify-center gap-2 py-3 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
               >
                 <Camera size={16} />
-                Take photo
+                {t('takePhoto')}
               </button>
               {/* File picker — always visible, full width on desktop */}
               <button
@@ -323,7 +325,7 @@ export default function NewItemPage({ auth }) {
                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-100 lg:bg-zinc-900 lg:text-white text-zinc-700 rounded-xl text-[13px] font-medium lg:font-semibold hover:bg-zinc-200 lg:hover:bg-zinc-800 transition"
               >
                 <Upload size={16} />
-                Upload photos
+                {t('uploadPhotos')}
               </button>
             </div>
 
@@ -360,14 +362,14 @@ export default function NewItemPage({ auth }) {
               ) : (
                 <Sparkles size={15} />
               )}
-              {aiLoading ? 'Generating...' : 'Auto-fill title & description'}
+              {aiLoading ? t('generating') : t('autoFillTitleDescription')}
             </button>
           </div>
 
           {/* RIGHT: Form fields */}
           <div className="flex-1 space-y-4">
             <div>
-              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Title *</label>
+              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('titleLabel')} *</label>
               <input
                 data-testid="item-title-input"
                 type="text"
@@ -380,7 +382,7 @@ export default function NewItemPage({ auth }) {
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Description</label>
+              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('descriptionLabel')}</label>
               <textarea
                 data-testid="item-description-input"
                 value={description}
@@ -394,7 +396,7 @@ export default function NewItemPage({ auth }) {
             <div>
               <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
                 <MapPin size={12} className="inline mr-1" />
-                Location *
+                {t('locationRequired')} *
               </label>
               <div
                 data-testid="map-container"
@@ -407,7 +409,7 @@ export default function NewItemPage({ auth }) {
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Date & Time found</label>
+              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('dateTimeFound')}</label>
               <input
                 data-testid="item-datetime-input"
                 type="datetime-local"
@@ -434,7 +436,7 @@ export default function NewItemPage({ auth }) {
                 ) : (
                   <CheckCircle size={16} />
                 )}
-                {submitting ? 'Publishing...' : 'Publish item'}
+                {submitting ? t('publishing') : t('publishItem')}
               </button>
             </div>
           </div>

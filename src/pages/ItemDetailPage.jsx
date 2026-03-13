@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, Tag, Package, Sparkles, ChevronRight } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
 import api, { photoUrl } from '../api';
+import { useI18n } from '../contexts/I18nContext';
 
 const MATCH_LIMIT = 10;
 const ACTIVE_STATUSES = 'pending,pending_verification,pending_review';
@@ -26,20 +27,21 @@ const MATCH_STATUS_STYLE = {
   recovered: 'bg-green-50 text-green-600',
 };
 
-const MATCH_STATUS_LABEL = {
-  pending_verification: 'Verification',
-  pending_review:       'Under Review',
-  pending:   'Pending',
-  accepted:  'Accepted',
-  rejected:  'Rejected',
-  dismissed: 'Dismissed',
-  paid:      'Paid',
-  recovered: 'Recovered',
-};
-
 export default function ItemDetailPage() {
   const { itemId } = useParams();
   const navigate = useNavigate();
+  const { t } = useI18n();
+
+  const MATCH_STATUS_LABEL = {
+    pending_verification: t('statusVerification'),
+    pending_review:       t('statusUnderReview'),
+    pending:   t('statusPending'),
+    accepted:  t('statusAccepted'),
+    rejected:  t('statusRejected'),
+    dismissed: t('statusDismissed'),
+    paid:      t('statusPaid'),
+    recovered: t('statusRecovered'),
+  };
 
   const [item, setItem] = useState(null);
   const [matches, setMatches] = useState([]);
@@ -115,7 +117,7 @@ export default function ItemDetailPage() {
   if (!item) {
     return (
       <div className="text-center py-20">
-        <p className="text-[13px] text-zinc-400">Item not found</p>
+        <p className="text-[13px] text-zinc-400">{t('itemNotFound')}</p>
       </div>
     );
   }
@@ -131,7 +133,7 @@ export default function ItemDetailPage() {
           <ArrowLeft size={16} className="text-zinc-600" />
         </button>
         <span className="text-[10px] font-semibold px-2 py-1 rounded bg-teal-50 text-teal-600">
-          Found
+          {t('foundBadge')}
         </span>
         <span className={`text-[10px] font-semibold px-2 py-1 rounded ${STATUS_STYLE[item.status] || 'bg-zinc-50 text-zinc-400'}`}>
           {item.status}
@@ -175,14 +177,14 @@ export default function ItemDetailPage() {
           <div className="border border-zinc-100 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
               <MapPin className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">Location</span>
+              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('locationLabel')}</span>
             </div>
-            <p className="text-[12px] font-medium text-zinc-900">{item.address || 'On map'}</p>
+            <p className="text-[12px] font-medium text-zinc-900">{item.address || t('onMap')}</p>
           </div>
           <div className="border border-zinc-100 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">Date & Time</span>
+              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('dateTimeLabel')}</span>
             </div>
             <p className="text-[12px] font-medium text-zinc-900">
               {item.date_time ? new Date(item.date_time).toLocaleString() : '-'}
@@ -191,7 +193,7 @@ export default function ItemDetailPage() {
           <div className="border border-zinc-100 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-1">
               <Tag className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">Category</span>
+              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('categoryLabel')}</span>
             </div>
             <p className="text-[12px] font-medium text-zinc-900 capitalize">{item.category || '-'}</p>
           </div>
@@ -203,7 +205,7 @@ export default function ItemDetailPage() {
         <div className="flex items-center justify-between mb-4">
           <p className="text-[11px] font-semibold text-zinc-300 uppercase tracking-[0.15em] flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-zinc-300" strokeWidth={1.5} />
-            Matches {matchTotal > 0 && <span className="text-zinc-400">({matchTotal})</span>}
+            {t('navMatches')} {matchTotal > 0 && <span className="text-zinc-400">({matchTotal})</span>}
           </p>
           <div className="flex bg-zinc-50 rounded-lg p-0.5 gap-0.5">
             {['active', 'all'].map(f => (
@@ -216,7 +218,7 @@ export default function ItemDetailPage() {
                     : 'text-zinc-400 hover:text-zinc-600'
                 }`}
               >
-                {f === 'active' ? 'Active' : 'All'}
+                {f === 'active' ? t('filterActive') : t('filterAll')}
               </button>
             ))}
           </div>
@@ -240,14 +242,14 @@ export default function ItemDetailPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[13px] font-semibold text-zinc-900 truncate">
-                          {otherItem?.title || 'Possible match'}
+                          {otherItem?.title || t('possibleMatch')}
                         </span>
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 ${MATCH_STATUS_STYLE[match.status] || 'bg-zinc-50 text-zinc-400'}`}>
                           {MATCH_STATUS_LABEL[match.status] || match.status}
                         </span>
                       </div>
                       <p className="text-[11px] text-zinc-400">
-                        Match score: <span className="font-semibold text-zinc-900">{Math.round(match.score * 100)}%</span>
+                        {t('matchScore')}: <span className="font-semibold text-zinc-900">{Math.round(match.score * 100)}%</span>
                       </p>
                       {(match.reasoning_en || match.reasoning) && (
                         <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{match.reasoning_en || match.reasoning}</p>
@@ -269,7 +271,7 @@ export default function ItemDetailPage() {
                     <span className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-transparent rounded-full animate-spin" />
                   </span>
                 ) : (
-                  `Load more (${matchTotal - matches.length})`
+                  `${t('loadMore')} (${matchTotal - matches.length})`
                 )}
               </button>
             )}
@@ -277,8 +279,8 @@ export default function ItemDetailPage() {
         ) : (
           <div className="text-center py-12 border border-zinc-100 rounded-lg">
             <Package className="w-8 h-8 text-zinc-200 mx-auto mb-3" strokeWidth={1.5} />
-            <p className="text-[13px] text-zinc-400">No matches yet</p>
-            <p className="text-[11px] text-zinc-300 mt-1">We'll notify you when a candidate appears</p>
+            <p className="text-[13px] text-zinc-400">{t('noMatchesYet')}</p>
+            <p className="text-[11px] text-zinc-300 mt-1">{t('notifyWhenCandidate')}</p>
           </div>
         )}
       </div>

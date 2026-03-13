@@ -2,20 +2,22 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Package, GitCompare, Users, CreditCard, LogOut, Building2, Menu, X, Settings } from 'lucide-react';
 import api from '../api';
-
-const NAV = [
-  { to: '/',        icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/items',   icon: Package,         label: 'Found Items' },
-  { to: '/matches', icon: GitCompare,      label: 'Matches' },
-  { to: '/team',    icon: Users,           label: 'Team' },
-  { to: '/subscription', icon: CreditCard, label: 'Subscription' },
-  { to: '/settings',     icon: Settings,    label: 'Settings',     adminOnly: true },
-];
+import { useI18n } from '../contexts/I18nContext';
 
 export default function Layout({ children, auth, onLogout }) {
   const { user, organization, org_role } = auth;
+  const { t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+
+  const NAV = [
+    { to: '/',        icon: LayoutDashboard, labelKey: 'navDashboard' },
+    { to: '/items',   icon: Package,         labelKey: 'navFoundItems' },
+    { to: '/matches', icon: GitCompare,      labelKey: 'navMatches' },
+    { to: '/team',    icon: Users,           labelKey: 'navTeam' },
+    { to: '/subscription', icon: CreditCard, labelKey: 'navSubscription' },
+    { to: '/settings',     icon: Settings,    labelKey: 'navSettings', adminOnly: true },
+  ];
 
   const handleLogout = async () => {
     try { await api.post('/business/auth/logout'); } catch {}
@@ -28,7 +30,7 @@ export default function Layout({ children, auth, onLogout }) {
     <>
       <div className="p-5 border-b border-zinc-100">
         <h1 className="text-lg font-extrabold tracking-tight text-zinc-900">Rekovr</h1>
-        <p className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest font-medium">Business</p>
+        <p className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest font-medium">{t('business')}</p>
       </div>
 
       <div className="px-4 py-3 border-b border-zinc-100 flex items-center gap-2.5">
@@ -42,7 +44,7 @@ export default function Layout({ children, auth, onLogout }) {
       </div>
 
       <nav className="flex-1 p-3 space-y-0.5">
-        {NAV.filter(n => !n.adminOnly || org_role === 'admin').map(({ to, icon: Icon, label }) => (
+        {NAV.filter(n => !n.adminOnly || org_role === 'admin').map(({ to, icon: Icon, labelKey }) => (
           <NavLink
             key={to}
             to={to}
@@ -58,7 +60,7 @@ export default function Layout({ children, auth, onLogout }) {
             }
           >
             <Icon size={16} />
-            {label}
+            {t(labelKey)}
           </NavLink>
         ))}
       </nav>
@@ -79,7 +81,7 @@ export default function Layout({ children, auth, onLogout }) {
           className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-[12px] text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-colors"
         >
           <LogOut size={14} />
-          Logout
+          {t('logout')}
         </button>
       </div>
     </>

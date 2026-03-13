@@ -2,23 +2,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, X, MessageSquare, Package, Loader2, MapPin, ShieldQuestion, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
 import api, { photoUrl } from '../api';
-
-const STATUS_STYLES = {
-  pending_verification: { bg: 'bg-indigo-50', text: 'text-indigo-700', label: 'Verification' },
-  pending_review:       { bg: 'bg-blue-50',   text: 'text-blue-700',   label: 'Under Review' },
-  pending:   { bg: 'bg-amber-50',  text: 'text-amber-700',  label: 'Pending' },
-  accepted:  { bg: 'bg-green-50',  text: 'text-green-700',  label: 'Accepted' },
-  rejected:  { bg: 'bg-red-50',    text: 'text-red-600',    label: 'Rejected' },
-  dismissed: { bg: 'bg-zinc-100',  text: 'text-zinc-500',   label: 'Dismissed' },
-  paid:      { bg: 'bg-purple-50', text: 'text-purple-700', label: 'Paid' },
-  recovered: { bg: 'bg-green-50',  text: 'text-green-700',  label: 'Recovered' },
-};
+import { useI18n } from '../contexts/I18nContext';
 
 const PENDING_STATUSES = 'pending,pending_verification,pending_review';
 
 const FILTERS = [
-  { key: 'active', label: 'Active',  statuses: PENDING_STATUSES },
-  { key: 'all',    label: 'All',     statuses: null },
+  { key: 'active', labelKey: 'filterActive', statuses: PENDING_STATUSES },
+  { key: 'all',    labelKey: 'filterAll',    statuses: null },
 ];
 
 const PAGE_SIZE = 20;
@@ -55,8 +45,8 @@ function VerificationBadge({ score }) {
   );
 }
 
-function StatusBadge({ status }) {
-  const s = STATUS_STYLES[status] || { bg: 'bg-zinc-100', text: 'text-zinc-500', label: status };
+function StatusBadge({ status, statusStyles }) {
+  const s = statusStyles[status] || { bg: 'bg-zinc-100', text: 'text-zinc-500', label: status };
   return (
     <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${s.bg} ${s.text}`}>
       {s.label}
@@ -76,7 +66,7 @@ function DistanceBadge({ km }) {
   );
 }
 
-function MatchCard({ match, lost, canAct, isActioning, onAction }) {
+function MatchCard({ match, lost, canAct, isActioning, onAction, t, statusStyles }) {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationData, setVerificationData] = useState(null);
   const [loadingVerification, setLoadingVerification] = useState(false);
@@ -98,11 +88,11 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
       {/* Top row: score + verification + distance + status */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ScoreBar score={match.score} label="Match" />
+          <ScoreBar score={match.score} label={t('match')} />
           {hasVerification && <VerificationBadge score={match.verification_score} />}
           <DistanceBadge km={match.distance_km} />
         </div>
-        <StatusBadge status={match.status} />
+        <StatusBadge status={match.status} statusStyles={statusStyles} />
       </div>
 
       {/* Lost item info */}
@@ -151,7 +141,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
             ) : (
               <ChevronDown size={12} />
             )}
-            {showVerification ? 'Hide verification details' : 'View verification details'}
+            {showVerification ? t('hideVerificationDetails') : t('viewVerificationDetails')}
           </button>
           {showVerification && verificationData && (
             <div className="mt-3 border border-indigo-100 rounded-xl overflow-hidden divide-y divide-indigo-50">
@@ -168,7 +158,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
                   <div key={i} className="px-4 py-3">
                     <p className="text-[12px] font-semibold text-zinc-700">{q.question}</p>
                     {q.answer_hint && (
-                      <p className="text-[10px] text-zinc-400 mt-0.5 italic">Expected: {q.answer_hint}</p>
+                      <p className="text-[10px] text-zinc-400 mt-0.5 italic">{t('expected')}: {q.answer_hint}</p>
                     )}
                     {ans && (
                       <div className="mt-2 flex items-start gap-2">
@@ -206,7 +196,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-zinc-900 text-white rounded-xl text-[12px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
           >
             {isActioning ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            Accept
+            {t('accept')}
           </button>
           <button
             data-testid={`reject-btn-${match.match_id}`}
@@ -215,7 +205,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-zinc-100 text-zinc-700 rounded-xl text-[12px] font-medium hover:bg-zinc-200 transition disabled:opacity-50"
           >
             <X size={14} />
-            Reject
+            {t('reject')}
           </button>
           {!match.info_requested && (
             <button
@@ -225,7 +215,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
               className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-zinc-100 text-zinc-700 rounded-xl text-[12px] font-medium hover:bg-zinc-200 transition disabled:opacity-50"
             >
               <MessageSquare size={14} />
-              <span className="hidden sm:inline">More info</span>
+              <span className="hidden sm:inline">{t('moreInfo')}</span>
             </button>
           )}
         </div>
@@ -237,6 +227,18 @@ function MatchCard({ match, lost, canAct, isActioning, onAction }) {
 export default function ItemMatchesPage() {
   const { itemId } = useParams();
   const navigate = useNavigate();
+  const { t } = useI18n();
+
+  const STATUS_STYLES = {
+    pending_verification: { bg: 'bg-indigo-50', text: 'text-indigo-700', label: t('statusVerification') },
+    pending_review:       { bg: 'bg-blue-50',   text: 'text-blue-700',   label: t('statusUnderReview') },
+    pending:   { bg: 'bg-amber-50',  text: 'text-amber-700',  label: t('statusPending') },
+    accepted:  { bg: 'bg-green-50',  text: 'text-green-700',  label: t('statusAccepted') },
+    rejected:  { bg: 'bg-red-50',    text: 'text-red-600',    label: t('statusRejected') },
+    dismissed: { bg: 'bg-zinc-100',  text: 'text-zinc-500',   label: t('statusDismissed') },
+    paid:      { bg: 'bg-purple-50', text: 'text-purple-700', label: t('statusPaid') },
+    recovered: { bg: 'bg-green-50',  text: 'text-green-700',  label: t('statusRecovered') },
+  };
 
   const [foundItem, setFoundItem] = useState(null);
   const [matches, setMatches] = useState([]);
@@ -322,9 +324,9 @@ export default function ItemMatchesPage() {
           <ArrowLeft size={16} className="text-zinc-600" />
         </button>
         <div>
-          <h2 data-testid="item-matches-heading" className="text-[20px] font-extrabold text-zinc-900">Match candidates</h2>
+          <h2 data-testid="item-matches-heading" className="text-[20px] font-extrabold text-zinc-900">{t('matchCandidates')}</h2>
           <p className="text-[12px] text-zinc-400">
-            {total} candidate{total !== 1 ? 's' : ''} for this item{filter !== 'all' ? ` (${filter})` : ''}
+            {total} {total !== 1 ? t('candidates') : t('candidate')} {t('forThisItem')}{filter !== 'all' ? ` (${filter})` : ''}
           </p>
         </div>
       </div>
@@ -342,7 +344,7 @@ export default function ItemMatchesPage() {
                 : 'text-zinc-400 hover:text-zinc-600'
             }`}
           >
-            {f.label}
+            {t(f.labelKey)}
           </button>
         ))}
       </div>
@@ -351,7 +353,7 @@ export default function ItemMatchesPage() {
         {/* LEFT: Found item (org's item) — sticky on desktop */}
         <div className="w-full lg:w-[340px] flex-shrink-0">
           <div data-testid="found-item-detail" className="lg:sticky lg:top-8 bg-white border border-zinc-100 rounded-2xl p-5 space-y-4">
-            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">Your found item</p>
+            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">{t('yourFoundItem')}</p>
 
             {foundItem?.photos?.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
@@ -385,14 +387,14 @@ export default function ItemMatchesPage() {
           {matches.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-[14px] text-zinc-500">
-                {filter === 'active' ? 'No pending matches for this item.' : 'No match candidates found.'}
+                {filter === 'active' ? t('noPendingMatchesForItem') : t('noMatchCandidates')}
               </p>
               {filter === 'active' && (
                 <button
                   onClick={() => handleFilterChange('all')}
                   className="mt-2 text-[12px] font-semibold text-zinc-900 hover:underline"
                 >
-                  View all matches
+                  {t('viewAllMatches')}
                 </button>
               )}
             </div>
@@ -411,6 +413,8 @@ export default function ItemMatchesPage() {
                     canAct={canAct}
                     isActioning={isActioning}
                     onAction={(action) => handleAction(match.match_id, action)}
+                    t={t}
+                    statusStyles={STATUS_STYLES}
                   />
                 );
               })}
@@ -426,7 +430,7 @@ export default function ItemMatchesPage() {
                       <span className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-transparent rounded-full animate-spin" />
                     </span>
                   ) : (
-                    `Load more (${total - matches.length} remaining)`
+                    `${t('loadMore')} (${total - matches.length} ${t('remaining')})`
                   )}
                 </button>
               )}

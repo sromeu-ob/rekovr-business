@@ -1,22 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Users, UserPlus, Mail, Clock, Shield, Wrench, Loader2 } from 'lucide-react';
 import api from '../api';
+import { useI18n } from '../contexts/I18nContext';
 
 const ROLE_CONFIG = {
-  admin: { icon: Shield, label: 'Admin', style: 'bg-zinc-900 text-white' },
-  operator: { icon: Wrench, label: 'Operator', style: 'bg-zinc-100 text-zinc-600' },
+  admin: { icon: Shield, style: 'bg-zinc-900 text-white' },
+  operator: { icon: Wrench, style: 'bg-zinc-100 text-zinc-600' },
 };
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr, t) {
   if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
   const days = Math.floor(diff / 86400000);
-  if (days < 1) return 'Today';
-  if (days === 1) return 'Yesterday';
-  return `${days}d ago`;
+  if (days < 1) return t('today');
+  if (days === 1) return t('yesterday');
+  return `${days}${t('daysAgo')}`;
 }
 
 export default function TeamPage({ auth }) {
+  const { t } = useI18n();
   const [members, setMembers] = useState([]);
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +28,11 @@ export default function TeamPage({ auth }) {
   const [inviteResult, setInviteResult] = useState(null);
 
   const isAdmin = auth?.org_role === 'admin';
+
+  const ROLE_LABELS = {
+    admin: 'Admin',
+    operator: 'Operator',
+  };
 
   const fetchTeam = () => {
     api.get('/business/auth/team')
@@ -49,7 +56,7 @@ export default function TeamPage({ auth }) {
       setInviteForm({ email: '', name: '', role: 'operator' });
       fetchTeam();
     } catch (err) {
-      setInviteResult({ ok: false, message: err.response?.data?.detail || 'Failed to send invitation' });
+      setInviteResult({ ok: false, message: err.response?.data?.detail || t('failedToSendInvitation') });
     } finally {
       setInviting(false);
     }
@@ -59,10 +66,10 @@ export default function TeamPage({ auth }) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 data-testid="team-heading" className="text-[20px] font-extrabold text-zinc-900">Team</h2>
+          <h2 data-testid="team-heading" className="text-[20px] font-extrabold text-zinc-900">{t('team')}</h2>
           <p className="text-[13px] text-zinc-400 mt-1">
-            {members.length} member{members.length !== 1 ? 's' : ''}
-            {invites.length > 0 && ` · ${invites.length} pending`}
+            {members.length} {members.length !== 1 ? t('members') : t('member')}
+            {invites.length > 0 && ` · ${invites.length} ${t('pending')}`}
           </p>
         </div>
         {isAdmin && (
@@ -72,7 +79,7 @@ export default function TeamPage({ auth }) {
             className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
           >
             <UserPlus size={15} />
-            Invite member
+            {t('inviteMember')}
           </button>
         )}
       </div>
@@ -80,13 +87,13 @@ export default function TeamPage({ auth }) {
       {/* Invite form */}
       {showInvite && (
         <div className="bg-white border border-zinc-100 rounded-2xl p-5 mb-6">
-          <p className="text-[13px] font-bold text-zinc-900 mb-4">New invitation</p>
+          <p className="text-[13px] font-bold text-zinc-900 mb-4">{t('newInvitation')}</p>
           <form onSubmit={handleInvite} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 data-testid="invite-name-input"
                 type="text"
-                placeholder="Name"
+                placeholder={t('namePlaceholder')}
                 value={inviteForm.name}
                 onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
                 required
@@ -95,7 +102,7 @@ export default function TeamPage({ auth }) {
               <input
                 data-testid="invite-email-input"
                 type="email"
-                placeholder="Email"
+                placeholder={t('emailPlaceholder')}
                 value={inviteForm.email}
                 onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                 required
@@ -127,7 +134,7 @@ export default function TeamPage({ auth }) {
                 className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
               >
                 {inviting ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
-                Send invitation
+                {inviting ? t('sending') : t('sendInvitation')}
               </button>
             </div>
           </form>
@@ -156,7 +163,7 @@ export default function TeamPage({ auth }) {
           {/* Members */}
           <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
             <div className="px-5 py-3.5 border-b border-zinc-100">
-              <p className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">Members</p>
+              <p className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">{t('membersSection')}</p>
             </div>
             <div className="divide-y divide-zinc-50">
               {members.map((m) => {
@@ -177,7 +184,7 @@ export default function TeamPage({ auth }) {
                     </div>
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold ${rc.style}`}>
                       <RoleIcon size={11} />
-                      {rc.label}
+                      {ROLE_LABELS[m.role] || m.role}
                     </span>
                   </div>
                 );
@@ -189,7 +196,7 @@ export default function TeamPage({ auth }) {
           {invites.length > 0 && (
             <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
               <div className="px-5 py-3.5 border-b border-zinc-100">
-                <p className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">Pending invitations</p>
+                <p className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">{t('pendingInvitations')}</p>
               </div>
               <div className="divide-y divide-zinc-50">
                 {invites.map((inv, i) => (
@@ -203,7 +210,7 @@ export default function TeamPage({ auth }) {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <span className="text-[11px] font-medium text-amber-600 capitalize">{inv.role}</span>
-                      <p className="text-[10px] text-zinc-300 mt-0.5">{timeAgo(inv.created_at)}</p>
+                      <p className="text-[10px] text-zinc-300 mt-0.5">{timeAgo(inv.created_at, t)}</p>
                     </div>
                   </div>
                 ))}

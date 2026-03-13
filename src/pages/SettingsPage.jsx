@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Settings, QrCode, Save, RotateCcw, Loader2, CheckCircle } from 'lucide-react';
+import { Settings, QrCode, Save, RotateCcw, Loader2, CheckCircle, Globe } from 'lucide-react';
 import api from '../api';
+import { useI18n } from '../contexts/I18nContext';
 
 function Toggle({ enabled, onChange }) {
   return (
@@ -18,7 +19,7 @@ function Toggle({ enabled, onChange }) {
   );
 }
 
-function SectionActions({ saving, saved, hasChanges, onSave, onReset, error }) {
+function SectionActions({ saving, saved, hasChanges, onSave, onReset, error, t }) {
   return (
     <>
       {error && (
@@ -33,23 +34,22 @@ function SectionActions({ saving, saved, hasChanges, onSave, onReset, error }) {
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 text-white text-[12px] font-semibold hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : saved ? <CheckCircle className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
-          {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Changes'}
+          {saving ? t('saving') : saved ? t('saved') : t('saveChanges')}
         </button>
         <button
           onClick={onReset}
           disabled={!hasChanges}
           className="flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 text-zinc-600 text-[12px] font-semibold hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          <RotateCcw className="w-3.5 h-3.5" /> Reset
+          <RotateCcw className="w-3.5 h-3.5" /> {t('reset')}
         </button>
       </div>
     </>
   );
 }
 
-// ── Pickup QR section ────────────────────────────────────────────────────────
-
 export default function SettingsPage({ auth }) {
+  const { t, language, changeLanguage } = useI18n();
   const [config, setConfig] = useState(null);
   const [original, setOriginal] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export default function SettingsPage({ auth }) {
   useEffect(() => {
     api.get('/business/items/settings/pickup')
       .then(res => { setConfig(res.data); setOriginal(res.data); })
-      .catch(() => setError('Failed to load settings'))
+      .catch(() => setError(t('failedToLoadSettings')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -87,7 +87,7 @@ export default function SettingsPage({ auth }) {
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       const detail = err?.response?.data?.detail;
-      setError(Array.isArray(detail) ? detail.join(', ') : detail || 'Failed to save');
+      setError(Array.isArray(detail) ? detail.join(', ') : detail || t('failedToSave'));
     } finally {
       setSaving(false);
     }
@@ -106,6 +106,12 @@ export default function SettingsPage({ auth }) {
     );
   }
 
+  const LANGUAGES = [
+    { code: 'en', label: t('english') },
+    { code: 'es', label: t('spanish') },
+    { code: 'ca', label: t('catalan') },
+  ];
+
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-8">
@@ -113,72 +119,103 @@ export default function SettingsPage({ auth }) {
           <Settings className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 data-testid="settings-heading" className="text-xl font-extrabold text-zinc-900 tracking-tight">Settings</h1>
-          <p className="text-[12px] text-zinc-400">Manage your organisation's configuration</p>
+          <h1 data-testid="settings-heading" className="text-xl font-extrabold text-zinc-900 tracking-tight">{t('settings')}</h1>
+          <p className="text-[12px] text-zinc-400">{t('manageConfiguration')}</p>
         </div>
       </div>
 
       <div className="space-y-6">
+        {/* Language */}
+        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+          <div className="flex items-center gap-3 p-5 border-b border-zinc-100">
+            <Globe className="w-5 h-5 text-zinc-500" />
+            <div>
+              <h2 className="text-[14px] font-bold text-zinc-900">{t('language')}</h2>
+              <p className="text-[11px] text-zinc-400">{t('languageDesc')}</p>
+            </div>
+          </div>
+          <div className="p-5">
+            <div className="flex gap-2">
+              {LANGUAGES.map(({ code, label }) => (
+                <button
+                  key={code}
+                  data-testid={`lang-${code}`}
+                  onClick={() => changeLanguage(code)}
+                  className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors ${
+                    language === code
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Pickup QR */}
         <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
           <div className="flex items-center gap-3 p-5 border-b border-zinc-100">
             <QrCode className="w-5 h-5 text-teal-600" />
             <div>
-              <h2 className="text-[14px] font-bold text-zinc-900">Pickup QR Code</h2>
-              <p className="text-[11px] text-zinc-400">Configure QR-based item handover for your venue</p>
+              <h2 className="text-[14px] font-bold text-zinc-900">{t('pickupQrCode')}</h2>
+              <p className="text-[11px] text-zinc-400">{t('configureQrHandover')}</p>
             </div>
           </div>
 
-          <div className="p-5 space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[13px] font-semibold text-zinc-800">Enable QR pickup</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5">
-                  Generate QR codes for paid matches so customers can pick up items at your venue
-                </p>
+          {config && (
+            <div className="p-5 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[13px] font-semibold text-zinc-800">{t('enableQrPickup')}</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    {t('generateQrCodes')}
+                  </p>
+                </div>
+                <span data-testid="pickup-qr-toggle">
+                  <Toggle
+                    enabled={config.pickup_qr_enabled}
+                    onChange={(v) => setConfig(c => ({ ...c, pickup_qr_enabled: v }))}
+                  />
+                </span>
               </div>
-              <span data-testid="pickup-qr-toggle">
-                <Toggle
-                  enabled={config.pickup_qr_enabled}
-                  onChange={(v) => setConfig(c => ({ ...c, pickup_qr_enabled: v }))}
+
+              <div>
+                <label className="block text-[13px] font-semibold text-zinc-800 mb-1.5">{t('qrExpiryHours')}</label>
+                <p className="text-[11px] text-zinc-400 mb-2">{t('qrExpiryDesc')}</p>
+                <input
+                  data-testid="pickup-qr-expiry"
+                  type="number"
+                  min={1}
+                  max={720}
+                  value={config.pickup_qr_expiry_hours}
+                  onChange={(e) => setConfig(c => ({ ...c, pickup_qr_expiry_hours: parseInt(e.target.value) || 1 }))}
+                  className="w-32 px-3 py-2 text-[13px] border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400"
                 />
-              </span>
-            </div>
+                <span className="ml-2 text-[11px] text-zinc-400">{t('hoursRange')}</span>
+              </div>
 
-            <div>
-              <label className="block text-[13px] font-semibold text-zinc-800 mb-1.5">QR code expiry (hours)</label>
-              <p className="text-[11px] text-zinc-400 mb-2">How long the pickup QR code remains valid after payment</p>
-              <input
-                data-testid="pickup-qr-expiry"
-                type="number"
-                min={1}
-                max={720}
-                value={config.pickup_qr_expiry_hours}
-                onChange={(e) => setConfig(c => ({ ...c, pickup_qr_expiry_hours: parseInt(e.target.value) || 1 }))}
-                className="w-32 px-3 py-2 text-[13px] border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400"
-              />
-              <span className="ml-2 text-[11px] text-zinc-400">hours (1-720)</span>
+              <div>
+                <label className="block text-[13px] font-semibold text-zinc-800 mb-1.5">{t('pickupInstructions')}</label>
+                <p className="text-[11px] text-zinc-400 mb-2">
+                  {t('pickupInstructionsDesc')}
+                </p>
+                <textarea
+                  data-testid="pickup-instructions"
+                  value={config.pickup_instructions}
+                  onChange={(e) => setConfig(c => ({ ...c, pickup_instructions: e.target.value }))}
+                  placeholder={t('pickupInstructionsPlaceholder')}
+                  maxLength={1000}
+                  rows={3}
+                  className="w-full px-3 py-2 text-[13px] border border-zinc-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400 placeholder:text-zinc-300"
+                />
+                <p className="text-[10px] text-zinc-300 mt-1 text-right">{config.pickup_instructions.length}/1000</p>
+              </div>
             </div>
+          )}
 
-            <div>
-              <label className="block text-[13px] font-semibold text-zinc-800 mb-1.5">Pickup instructions</label>
-              <p className="text-[11px] text-zinc-400 mb-2">
-                Instructions shown to the customer when they arrive at your venue (visible on the QR pickup page)
-              </p>
-              <textarea
-                data-testid="pickup-instructions"
-                value={config.pickup_instructions}
-                onChange={(e) => setConfig(c => ({ ...c, pickup_instructions: e.target.value }))}
-                placeholder="e.g. Go to the front desk and show this QR code to our staff."
-                maxLength={1000}
-                rows={3}
-                className="w-full px-3 py-2 text-[13px] border border-zinc-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400 placeholder:text-zinc-300"
-              />
-              <p className="text-[10px] text-zinc-300 mt-1 text-right">{config.pickup_instructions.length}/1000</p>
-            </div>
-          </div>
-
-          <SectionActions saving={saving} saved={saved} hasChanges={hasChanges} onSave={handleSave} onReset={handleReset} error={error} />
+          <SectionActions saving={saving} saved={saved} hasChanges={hasChanges} onSave={handleSave} onReset={handleReset} error={error} t={t} />
         </div>
       </div>
     </div>

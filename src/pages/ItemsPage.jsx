@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Package } from 'lucide-react';
 import api from '../api';
+import { useI18n } from '../contexts/I18nContext';
 
 const STATUS_COLORS = {
   active:    'bg-green-50 text-green-700',
@@ -10,20 +11,21 @@ const STATUS_COLORS = {
   expired:   'bg-zinc-100 text-zinc-500',
 };
 
-const FILTERS = [
-  { key: 'active',  label: 'Active',  params: { status: 'active' } },
-  { key: 'all',     label: 'All',     params: {} },
-];
-
 const PAGE_SIZE = 30;
 
 export default function ItemsPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [filter, setFilter] = useState('active');
+
+  const FILTERS = [
+    { key: 'active', labelKey: 'filterActive', params: { status: 'active' } },
+    { key: 'all',    labelKey: 'filterAll',    params: {} },
+  ];
 
   const fetchItems = useCallback(async (filterKey, offset = 0) => {
     const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
@@ -54,8 +56,10 @@ export default function ItemsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 data-testid="items-heading" className="text-[22px] font-extrabold text-zinc-900">Found Items</h2>
-          <p data-testid="items-count" className="text-[13px] text-zinc-400 mt-1">{total} items{filter !== 'all' ? ` (${filter})` : ''}</p>
+          <h2 data-testid="items-heading" className="text-[22px] font-extrabold text-zinc-900">{t('navFoundItems')}</h2>
+          <p data-testid="items-count" className="text-[13px] text-zinc-400 mt-1">
+            {total} items{filter !== 'all' ? ` (${filter})` : ''}
+          </p>
         </div>
         <button
           data-testid="new-item-btn"
@@ -63,7 +67,7 @@ export default function ItemsPage() {
           onClick={() => navigate('/items/new')}
         >
           <Plus size={15} />
-          New item
+          {t('newItem')}
         </button>
       </div>
 
@@ -80,7 +84,7 @@ export default function ItemsPage() {
                 : 'text-zinc-400 hover:text-zinc-600'
             }`}
           >
-            {f.label}
+            {t(f.labelKey)}
           </button>
         ))}
       </div>
@@ -95,10 +99,10 @@ export default function ItemsPage() {
             <Package size={20} className="text-zinc-400" />
           </div>
           <p className="text-[14px] font-semibold text-zinc-700">
-            {filter === 'active' ? 'No active items' : 'No items yet'}
+            {filter === 'active' ? t('noActiveItems') : t('noItemsYet')}
           </p>
           <p className="text-[12px] text-zinc-400 mt-1">
-            {filter === 'active' ? 'All items have been recovered or expired.' : 'Start by registering your first found item.'}
+            {filter === 'active' ? t('allItemsRecovered') : t('startRegistering')}
           </p>
         </div>
       ) : (
@@ -107,10 +111,10 @@ export default function ItemsPage() {
             <table data-testid="items-table" className="w-full">
               <thead>
                 <tr className="border-b border-zinc-100">
-                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Item</th>
-                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Category</th>
-                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Date</th>
-                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Status</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{t('colItem')}</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{t('colCategory')}</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{t('colDate')}</th>
+                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">{t('colStatus')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -161,7 +165,7 @@ export default function ItemsPage() {
                   <span className="w-3.5 h-3.5 border-2 border-zinc-300 border-t-transparent rounded-full animate-spin" />
                 </span>
               ) : (
-                `Load more (${total - items.length} remaining)`
+                `${t('loadMore')} (${total - items.length} ${t('remaining')})`
               )}
             </button>
           )}
