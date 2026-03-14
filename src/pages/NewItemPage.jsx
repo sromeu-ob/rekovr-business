@@ -197,12 +197,24 @@ export default function NewItemPage({ auth }) {
   // ── AI auto-fill ─────────────────────────────────────────────────────────────
 
   const handleAiFill = async () => {
-    const newPhotos = photos.filter(p => p.file);
-    if (!newPhotos.length || aiLoading) return;
+    if (!photos.length || aiLoading) return;
     setAiLoading(true);
     try {
       const formData = new FormData();
-      for (const p of newPhotos) formData.append('files', p.file);
+      for (const p of photos.slice(0, 3)) {
+        if (p.file) {
+          formData.append('files', p.file);
+        } else {
+          // Existing photo — fetch as blob and send as file
+          try {
+            const res = await fetch(p.preview);
+            const blob = await res.blob();
+            formData.append('files', blob, 'photo.jpg');
+          } catch {
+            // skip if fetch fails
+          }
+        }
+      }
       formData.append('language', language);
       const res = await api.post('/business/items/describe', formData);
       if (res.data.title) setTitle(res.data.title);
@@ -318,7 +330,7 @@ export default function NewItemPage({ auth }) {
 
   // ── Form ────────────────────────────────────────────────────────────────────
 
-  const hasNewPhotos = photos.some(p => p.file);
+  const hasPhotos = photos.length > 0;
   const canSubmit = title.trim() && lat && lng && !submitting && !uploading;
 
   return (
@@ -408,9 +420,9 @@ export default function NewItemPage({ auth }) {
             <button
               type="button"
               onClick={handleAiFill}
-              disabled={!hasNewPhotos || aiLoading}
+              disabled={!hasPhotos || aiLoading}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition ${
-                hasNewPhotos && !aiLoading
+                hasPhotos && !aiLoading
                   ? 'bg-zinc-900 text-white hover:bg-zinc-800'
                   : 'bg-zinc-100 text-zinc-300 cursor-not-allowed'
               }`}
