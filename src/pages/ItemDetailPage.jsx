@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, Tag, Package, Sparkles, ChevronRight, Pencil, Save, RotateCcw, Loader2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Tag, Package, Sparkles, ChevronRight, Pencil } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
@@ -55,54 +55,6 @@ export default function ItemDetailPage() {
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewerIndex, setViewerIndex] = useState(null);
-
-  // Edit state
-  const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState(null);
-
-  const startEdit = () => {
-    setEditForm({
-      title: item.title || '',
-      description: item.description || '',
-      date_time: item.date_time ? item.date_time.slice(0, 16) : '',
-      address: item.address || '',
-    });
-    setSaveError(null);
-    setSaved(false);
-    setEditing(true);
-  };
-
-  const cancelEdit = () => {
-    setEditing(false);
-    setSaveError(null);
-  };
-
-  const hasChanges = editing && item && (
-    editForm.title !== (item.title || '') ||
-    editForm.description !== (item.description || '') ||
-    editForm.date_time !== (item.date_time ? item.date_time.slice(0, 16) : '') ||
-    editForm.address !== (item.address || '')
-  );
-
-  const handleSave = async () => {
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await api.put(`/business/items/${itemId}`, editForm);
-      setItem(res.data);
-      setSaved(true);
-      setEditing(false);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      const detail = err.response?.data?.detail;
-      setSaveError(Array.isArray(detail) ? detail.join(', ') : detail || t('failedToUpdate'));
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const fetchMatches = async (filter, offset = 0, append = false) => {
     const params = { found_item_id: itemId, limit: MATCH_LIMIT, offset };
@@ -189,50 +141,14 @@ export default function ItemDetailPage() {
         <span className={`text-[10px] font-semibold px-2 py-1 rounded ${STATUS_STYLE[item.status] || 'bg-zinc-50 text-zinc-400'}`}>
           {item.status}
         </span>
-        <div className="ml-auto flex items-center gap-2">
-          {saved && !editing && (
-            <span className="flex items-center gap-1 text-[11px] text-green-600 font-medium">
-              <CheckCircle size={13} />
-              {t('saved')}
-            </span>
-          )}
-          {!editing ? (
-            <button
-              onClick={startEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-[12px] font-semibold transition"
-            >
-              <Pencil size={13} />
-              {t('editItem')}
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={cancelEdit}
-                disabled={saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-lg text-[12px] font-semibold transition disabled:opacity-50"
-              >
-                <RotateCcw size={13} />
-                {t('reset')}
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || !hasChanges}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-[12px] font-semibold transition disabled:opacity-50"
-              >
-                {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                {saving ? t('saving') : t('saveChanges')}
-              </button>
-            </>
-          )}
-        </div>
+        <button
+          onClick={() => navigate(`/items/${itemId}/edit`)}
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-[12px] font-semibold transition"
+        >
+          <Pencil size={13} />
+          {t('editItem')}
+        </button>
       </div>
-
-      {/* Edit error */}
-      {saveError && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-lg text-[12px] text-red-600">
-          {saveError}
-        </div>
-      )}
 
       {/* Photos */}
       {item.photos?.length > 0 && (
@@ -259,100 +175,39 @@ export default function ItemDetailPage() {
 
       {/* Item Info */}
       <div className="space-y-4">
-        {editing ? (
-          <>
-            <div>
-              <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                {t('titleLabel')}
-              </label>
-              <input
-                type="text"
-                value={editForm.title}
-                onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-                className={`w-full px-3 py-2 rounded-lg border text-[13px] font-medium text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 transition ${editForm.title !== (item.title || '') ? 'border-amber-400 bg-amber-50' : 'border-zinc-200 bg-white'}`}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                {t('descriptionLabel')}
-              </label>
-              <textarea
-                value={editForm.description}
-                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                rows={4}
-                className={`w-full px-3 py-2 rounded-lg border text-[13px] text-zinc-700 leading-relaxed focus:outline-none focus:ring-2 focus:ring-zinc-900 transition resize-none ${editForm.description !== (item.description || '') ? 'border-amber-400 bg-amber-50' : 'border-zinc-200 bg-white'}`}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                  {t('dateTimeLabel')}
-                </label>
-                <input
-                  type="datetime-local"
-                  value={editForm.date_time}
-                  onChange={e => setEditForm(f => ({ ...f, date_time: e.target.value }))}
-                  className={`w-full px-3 py-2 rounded-lg border text-[12px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 transition ${editForm.date_time !== (item.date_time ? item.date_time.slice(0, 16) : '') ? 'border-amber-400 bg-amber-50' : 'border-zinc-200 bg-white'}`}
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                  {t('locationLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={editForm.address}
-                  onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))}
-                  className={`w-full px-3 py-2 rounded-lg border text-[12px] text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 transition ${editForm.address !== (item.address || '') ? 'border-amber-400 bg-amber-50' : 'border-zinc-200 bg-white'}`}
-                />
-              </div>
-            </div>
-            <div className="border border-zinc-100 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Tag className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-                <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('categoryLabel')}</span>
-              </div>
-              <p className="text-[12px] font-medium text-zinc-900 capitalize">{item.category || '-'}</p>
-              <p className="text-[10px] text-zinc-300 mt-0.5">Auto-updated on save</p>
-            </div>
-          </>
-        ) : (
-          <>
-            <h1 className="text-[20px] font-extrabold text-zinc-900 tracking-tight">
-              {item.title}
-            </h1>
+        <h1 className="text-[20px] font-extrabold text-zinc-900 tracking-tight">
+          {item.title}
+        </h1>
 
-            <p className="text-[13px] text-zinc-500 leading-relaxed">
-              {item.description}
+        <p className="text-[13px] text-zinc-500 leading-relaxed">
+          {item.description}
+        </p>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="border border-zinc-100 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
+              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('locationLabel')}</span>
+            </div>
+            <p className="text-[12px] font-medium text-zinc-900">{item.address || t('onMap')}</p>
+          </div>
+          <div className="border border-zinc-100 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
+              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('dateTimeLabel')}</span>
+            </div>
+            <p className="text-[12px] font-medium text-zinc-900">
+              {item.date_time ? new Date(item.date_time).toLocaleString() : '-'}
             </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="border border-zinc-100 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-                  <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('locationLabel')}</span>
-                </div>
-                <p className="text-[12px] font-medium text-zinc-900">{item.address || t('onMap')}</p>
-              </div>
-              <div className="border border-zinc-100 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-                  <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('dateTimeLabel')}</span>
-                </div>
-                <p className="text-[12px] font-medium text-zinc-900">
-                  {item.date_time ? new Date(item.date_time).toLocaleString() : '-'}
-                </p>
-              </div>
-              <div className="border border-zinc-100 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Tag className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-                  <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('categoryLabel')}</span>
-                </div>
-                <p className="text-[12px] font-medium text-zinc-900 capitalize">{item.category || '-'}</p>
-              </div>
+          </div>
+          <div className="border border-zinc-100 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Tag className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
+              <span className="text-[9px] text-zinc-300 uppercase tracking-wider font-semibold">{t('categoryLabel')}</span>
             </div>
-          </>
-        )}
+            <p className="text-[12px] font-medium text-zinc-900 capitalize">{item.category || '-'}</p>
+          </div>
+        </div>
       </div>
 
       {/* Matches Section */}

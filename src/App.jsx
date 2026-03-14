@@ -91,6 +91,14 @@ export default function App() {
           </ProtectedRoute>
         } />
 
+        <Route path="/items/:itemId/edit" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <NewItemPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
         <Route path="/items/:itemId" element={
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>

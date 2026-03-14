@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Camera, Upload, X, Sparkles, MapPin, CheckCircle, Plus, ArrowLeft, Loader2 } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
-import api from '../api';
+import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function NewItemPage({ auth }) {
   const navigate = useNavigate();
+  const { itemId } = useParams();
+  const isEdit = Boolean(itemId);
   const { t, language } = useI18n();
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
@@ -20,11 +22,13 @@ export default function NewItemPage({ auth }) {
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
+  const [loadingItem, setLoadingItem] = useState(isEdit);
   const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -43,7 +47,37 @@ export default function NewItemPage({ auth }) {
   const [savedLat, setSavedLat] = useState(null);
   const [savedLng, setSavedLng] = useState(null);
 
+  // Initial map center: item coords (edit) or org default or Barcelona
+  const [initialCenter, setInitialCenter] = useState(null);
+
   const orgDefaultLocation = auth?.organization?.default_location;
+
+  // ── Load item in edit mode ───────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!isEdit) return;
+    api.get(`/business/items/${itemId}`)
+      .then(res => {
+        const item = res.data;
+        setTitle(item.title || '');
+        setDescription(item.description || '');
+        setPublicTitle(item.public_title || '');
+        setPublicDescription(item.public_description || '');
+        setAddress(item.address || '');
+        if (item.date_time) setDateTime(item.date_time.slice(0, 16));
+        if (item.location?.coordinates) {
+          const [iLng, iLat] = item.location.coordinates;
+          setLat(iLat);
+          setLng(iLng);
+          setInitialCenter([iLng, iLat]);
+        }
+        if (item.photos?.length) {
+          setPhotos(item.photos.map(url => ({ preview: photoUrl(url), url })));
+        }
+      })
+      .catch(err => console.error('Failed to load item:', err))
+      .finally(() => setLoadingItem(false));
+  }, [itemId, isEdit]);
 
   // ── Update location state from map interactions ────────────────────────────
 
@@ -56,12 +90,14 @@ export default function NewItemPage({ auth }) {
   // ── Interactive map with geocoder, drag, click, geolocation ────────────────
 
   useEffect(() => {
+    if (loadingItem) return; // wait until item is loaded in edit mode
     if (!mapContainerRef.current || mapInitializedRef.current) return;
     mapInitializedRef.current = true;
 
-    const defaultCenter = orgDefaultLocation
-      ? [orgDefaultLocation.longitude, orgDefaultLocation.latitude]
-      : [2.1734, 41.3851]; // Barcelona fallback
+    const defaultCenter = initialCenter
+      || (orgDefaultLocation
+        ? [orgDefaultLocation.longitude, orgDefaultLocation.latitude]
+        : [2.1734, 41.3851]);
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
@@ -85,7 +121,10 @@ export default function NewItemPage({ auth }) {
       .addTo(map);
     markerRef.current = marker;
 
-    if (orgDefaultLocation) {
+    // Pre-set location state from initialCenter (edit) or orgDefault (create)
+    if (initialCenter) {
+      // location already set from item load — don't overwrite address
+    } else if (orgDefaultLocation) {
       updateLocationFromCoords(
         orgDefaultLocation.latitude,
         orgDefaultLocation.longitude,
@@ -109,7 +148,8 @@ export default function NewItemPage({ auth }) {
       updateLocationFromCoords(e.lngLat.lat, e.lngLat.lng, null);
     });
 
-    if (navigator.geolocation) {
+    // Only use geolocation in create mode (don't override item's location)
+    if (!isEdit && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude: geoLat, longitude: geoLng } = pos.coords;
@@ -117,12 +157,12 @@ export default function NewItemPage({ auth }) {
           marker.setLngLat([geoLng, geoLat]);
           updateLocationFromCoords(geoLat, geoLng, null);
         },
-        () => {} // denied or error — keep default
+        () => {}
       );
     }
 
     return () => { map.remove(); mapRef.current = null; mapInitializedRef.current = false; };
-  }, [success]); // re-init after "register another" reset
+  }, [success, loadingItem]); // re-init after "register another" reset or when item loaded
 
   // ── Photo handling ───────────────────────────────────────────────────────────
 
@@ -149,7 +189,7 @@ export default function NewItemPage({ auth }) {
   const removePhoto = (idx) => {
     setPhotos((prev) => {
       const removed = prev[idx];
-      if (removed?.preview) URL.revokeObjectURL(removed.preview);
+      if (removed?.preview && removed?.file) URL.revokeObjectURL(removed.preview);
       return prev.filter((_, i) => i !== idx);
     });
   };
@@ -157,13 +197,12 @@ export default function NewItemPage({ auth }) {
   // ── AI auto-fill ─────────────────────────────────────────────────────────────
 
   const handleAiFill = async () => {
-    if (!photos.length || aiLoading) return;
+    const newPhotos = photos.filter(p => p.file);
+    if (!newPhotos.length || aiLoading) return;
     setAiLoading(true);
     try {
       const formData = new FormData();
-      for (const p of photos) {
-        if (p.file) formData.append('files', p.file);
-      }
+      for (const p of newPhotos) formData.append('files', p.file);
       formData.append('language', language);
       const res = await api.post('/business/items/describe', formData);
       if (res.data.title) setTitle(res.data.title);
@@ -183,8 +222,9 @@ export default function NewItemPage({ auth }) {
     e.preventDefault();
     if (!title.trim() || !lat || !lng) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
-      await api.post('/business/items', {
+      const payload = {
         title: title.trim(),
         description: description.trim(),
         latitude: lat,
@@ -194,13 +234,22 @@ export default function NewItemPage({ auth }) {
         photos: photos.map((p) => p.url),
         ...(publicTitle && { public_title: publicTitle }),
         ...(publicDescription && { public_description: publicDescription }),
-      });
-      setSavedAddress(address);
-      setSavedLat(lat);
-      setSavedLng(lng);
-      setSuccess({ title: title.trim() });
+      };
+
+      if (isEdit) {
+        await api.put(`/business/items/${itemId}`, payload);
+        navigate(`/items/${itemId}`);
+      } else {
+        await api.post('/business/items', payload);
+        setSavedAddress(address);
+        setSavedLat(lat);
+        setSavedLng(lng);
+        setSuccess({ title: title.trim() });
+      }
     } catch (err) {
       console.error('Submit failed:', err);
+      const detail = err.response?.data?.detail;
+      setSubmitError(Array.isArray(detail) ? detail.join(', ') : detail || t('failedToSave'));
     } finally {
       setSubmitting(false);
     }
@@ -209,7 +258,7 @@ export default function NewItemPage({ auth }) {
   // ── Reset for "register another" ────────────────────────────────────────────
 
   const handleRegisterAnother = () => {
-    photos.forEach((p) => p.preview && URL.revokeObjectURL(p.preview));
+    photos.forEach((p) => p.file && p.preview && URL.revokeObjectURL(p.preview));
     setPhotos([]);
     setTitle('');
     setDescription('');
@@ -218,11 +267,20 @@ export default function NewItemPage({ auth }) {
     setLng(savedLng);
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     mapInitializedRef.current = false;
-    // Keep dateTime from previous item (useful for batch entry)
     setSuccess(null);
   };
 
-  // ── Success screen ──────────────────────────────────────────────────────────
+  // ── Loading state (edit mode) ────────────────────────────────────────────────
+
+  if (loadingItem) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="w-5 h-5 border-2 border-zinc-300 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Success screen (create mode only) ───────────────────────────────────────
 
   if (success) {
     return (
@@ -260,7 +318,7 @@ export default function NewItemPage({ auth }) {
 
   // ── Form ────────────────────────────────────────────────────────────────────
 
-  const hasPhotos = photos.length > 0;
+  const hasNewPhotos = photos.some(p => p.file);
   const canSubmit = title.trim() && lat && lng && !submitting && !uploading;
 
   return (
@@ -269,13 +327,15 @@ export default function NewItemPage({ auth }) {
       <div className="flex items-center gap-3 mb-6">
         <button
           data-testid="back-btn"
-          onClick={() => navigate('/items')}
+          onClick={() => navigate(isEdit ? `/items/${itemId}` : '/items')}
           className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition"
         >
           <ArrowLeft size={16} className="text-zinc-600" />
         </button>
         <div>
-          <h2 className="text-[20px] font-extrabold text-zinc-900">{t('registerFoundItem')}</h2>
+          <h2 className="text-[20px] font-extrabold text-zinc-900">
+            {isEdit ? t('editItem') : t('registerFoundItem')}
+          </h2>
           <p className="text-[12px] text-zinc-400">{t('takePhotoAndAI')}</p>
         </div>
       </div>
@@ -309,7 +369,6 @@ export default function NewItemPage({ auth }) {
 
             {/* Photo buttons */}
             <div className="flex gap-2">
-              {/* Camera — only on mobile (capture attribute only works on touch devices) */}
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
@@ -318,7 +377,6 @@ export default function NewItemPage({ auth }) {
                 <Camera size={16} />
                 {t('takePhoto')}
               </button>
-              {/* File picker — always visible, full width on desktop */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -350,9 +408,9 @@ export default function NewItemPage({ auth }) {
             <button
               type="button"
               onClick={handleAiFill}
-              disabled={!hasPhotos || aiLoading}
+              disabled={!hasNewPhotos || aiLoading}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition ${
-                hasPhotos && !aiLoading
+                hasNewPhotos && !aiLoading
                   ? 'bg-zinc-900 text-white hover:bg-zinc-800'
                   : 'bg-zinc-100 text-zinc-300 cursor-not-allowed'
               }`}
@@ -419,7 +477,14 @@ export default function NewItemPage({ auth }) {
               />
             </div>
 
-            {/* Submit - sticky on mobile */}
+            {/* Error */}
+            {submitError && (
+              <div className="px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-[12px] text-red-600">
+                {submitError}
+              </div>
+            )}
+
+            {/* Submit */}
             <div className="pt-2 pb-4">
               <button
                 data-testid="publish-item-btn"
@@ -436,7 +501,11 @@ export default function NewItemPage({ auth }) {
                 ) : (
                   <CheckCircle size={16} />
                 )}
-                {submitting ? t('publishing') : t('publishItem')}
+                {submitting
+                  ? t('saving')
+                  : isEdit
+                    ? t('saveChanges')
+                    : t('publishItem')}
               </button>
             </div>
           </div>
