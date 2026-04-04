@@ -21,32 +21,40 @@ export default function ItemsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [filter, setFilter] = useState('active');
+  const [eventFilter, setEventFilter] = useState('');
+  const [events, setEvents] = useState([]);
 
   const FILTERS = [
     { key: 'active', labelKey: 'filterActive', params: { status: 'active' } },
     { key: 'all',    labelKey: 'filterAll',    params: {} },
   ];
 
-  const fetchItems = useCallback(async (filterKey, offset = 0) => {
+  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '') => {
     const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
-    const res = await api.get('/business/items', {
-      params: { ...f.params, limit: PAGE_SIZE, offset },
-    });
+    const params = { ...f.params, limit: PAGE_SIZE, offset };
+    if (evtId) params.event_id = evtId;
+    const res = await api.get('/business/items', { params });
     return res.data;
   }, []);
 
   useEffect(() => {
+    api.get('/business/events', { params: { status: 'active' } })
+      .then(res => setEvents(res.data.events || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     setLoading(true);
-    fetchItems(filter)
+    fetchItems(filter, 0, eventFilter)
       .then(data => { setItems(data.items); setTotal(data.total); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filter, fetchItems]);
+  }, [filter, eventFilter, fetchItems]);
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
     try {
-      const data = await fetchItems(filter, items.length);
+      const data = await fetchItems(filter, items.length, eventFilter);
       setItems(prev => [...prev, ...data.items]);
     } catch {}
     setLoadingMore(false);
@@ -72,21 +80,35 @@ export default function ItemsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-1 bg-zinc-50 rounded-lg p-0.5 w-fit mb-6">
-        {FILTERS.map(f => (
-          <button
-            key={f.key}
-            data-testid={`filter-${f.key}`}
-            onClick={() => setFilter(f.key)}
-            className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-colors ${
-              filter === f.key
-                ? 'bg-white text-zinc-900 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-600'
-            }`}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex gap-1 bg-zinc-50 rounded-lg p-0.5 w-fit">
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              data-testid={`filter-${f.key}`}
+              onClick={() => setFilter(f.key)}
+              className={`px-4 py-1.5 text-[12px] font-semibold rounded-md transition-colors ${
+                filter === f.key
+                  ? 'bg-white text-zinc-900 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-600'
+              }`}
+            >
+              {t(f.labelKey)}
+            </button>
+          ))}
+        </div>
+        {events.length > 0 && (
+          <select
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="h-8 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-[12px] outline-none focus:border-zinc-400 transition"
           >
-            {t(f.labelKey)}
-          </button>
-        ))}
+            <option value="">{t('evtAllEvents')}</option>
+            {events.map(evt => (
+              <option key={evt.event_id} value={evt.event_id}>{evt.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {loading ? (

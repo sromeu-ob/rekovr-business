@@ -14,6 +14,9 @@ import ItemMatchesPage from './pages/ItemMatchesPage';
 import TeamPage from './pages/TeamPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import SettingsPage from './pages/SettingsPage';
+import EventsPage from './pages/EventsPage';
+import EventDetailPage from './pages/EventDetailPage';
+import EventFormPage from './pages/EventFormPage';
 
 function ProtectedRoute({ children, auth }) {
   if (!auth) return <Navigate to="/login" replace />;
@@ -135,6 +138,38 @@ export default function App() {
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>
               <SubscriptionPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/events" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <EventsPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/events/new" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <EventFormPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/events/:eventId/edit" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <EventFormPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/events/:eventId" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <EventDetailPage auth={auth} />
             </AppShell>
           </ProtectedRoute>
         } />

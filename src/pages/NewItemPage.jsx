@@ -43,6 +43,9 @@ export default function NewItemPage({ auth }) {
     return now.toISOString().slice(0, 16);
   });
 
+  const [eventId, setEventId] = useState('');
+  const [activeEvents, setActiveEvents] = useState([]);
+
   const [savedAddress, setSavedAddress] = useState('');
   const [savedLat, setSavedLat] = useState(null);
   const [savedLng, setSavedLng] = useState(null);
@@ -51,6 +54,14 @@ export default function NewItemPage({ auth }) {
   const [initialCenter, setInitialCenter] = useState(null);
 
   const orgDefaultLocation = auth?.organization?.default_location;
+
+  // ── Fetch active events for selector ─────────────────────────────────────────
+
+  useEffect(() => {
+    api.get('/business/events', { params: { status: 'active' } })
+      .then(res => setActiveEvents(res.data.events || []))
+      .catch(() => {});
+  }, []);
 
   // ── Load item in edit mode ───────────────────────────────────────────────────
 
@@ -65,6 +76,7 @@ export default function NewItemPage({ auth }) {
         setPublicDescription(item.public_description || '');
         setAddress(item.address || '');
         if (item.date_time) setDateTime(item.date_time.slice(0, 16));
+        if (item.event_id) setEventId(item.event_id);
         if (item.location?.coordinates) {
           const [iLng, iLat] = item.location.coordinates;
           setLat(iLat);
@@ -246,6 +258,7 @@ export default function NewItemPage({ auth }) {
         photos: photos.map((p) => p.url),
         ...(publicTitle && { public_title: publicTitle }),
         ...(publicDescription && { public_description: publicDescription }),
+      ...(eventId && { event_id: eventId }),
       };
 
       if (isEdit) {
@@ -488,6 +501,23 @@ export default function NewItemPage({ auth }) {
                 className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] outline-none focus:border-zinc-400 transition"
               />
             </div>
+
+            {/* Event selector */}
+            {activeEvents.length > 0 && (
+              <div>
+                <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('evtSelectEvent')}</label>
+                <select
+                  value={eventId}
+                  onChange={(e) => setEventId(e.target.value)}
+                  className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] outline-none focus:border-zinc-400 transition"
+                >
+                  <option value="">{t('evtNoEvent')}</option>
+                  {activeEvents.map(evt => (
+                    <option key={evt.event_id} value={evt.event_id}>{evt.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Error */}
             {submitError && (

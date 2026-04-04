@@ -46,13 +46,23 @@ export default function DashboardPage({ auth }) {
   const { t } = useI18n();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState([]);
+  const [eventFilter, setEventFilter] = useState('');
 
   useEffect(() => {
-    api.get('/business/items/dashboard/stats')
+    api.get('/business/events', { params: { status: 'active' } })
+      .then(res => setEvents(res.data.events || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    const params = eventFilter ? { event_id: eventFilter } : {};
+    api.get('/business/items/dashboard/stats', { params })
       .then(res => setData(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [eventFilter]);
 
   if (loading) {
     return (
@@ -78,9 +88,23 @@ export default function DashboardPage({ auth }) {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h2 data-testid="dashboard-heading" className="text-[22px] font-extrabold text-zinc-900">{t('dashboard')}</h2>
-        <p className="text-[13px] text-zinc-400 mt-1">{orgName} — {t('lostFoundOverview')}</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 data-testid="dashboard-heading" className="text-[22px] font-extrabold text-zinc-900">{t('dashboard')}</h2>
+          <p className="text-[13px] text-zinc-400 mt-1">{orgName} — {t('lostFoundOverview')}</p>
+        </div>
+        {events.length > 0 && (
+          <select
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="h-9 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-[12px] font-medium outline-none focus:border-zinc-400 transition"
+          >
+            <option value="">{t('evtAllEvents')}</option>
+            {events.map(evt => (
+              <option key={evt.event_id} value={evt.event_id}>{evt.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Stat cards */}
