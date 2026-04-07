@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, QrCode, Save, RotateCcw, Loader2, CheckCircle, Globe } from 'lucide-react';
+import { Settings, QrCode, Save, RotateCcw, Loader2, CheckCircle, Globe, Euro } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -57,9 +57,24 @@ export default function SettingsPage({ auth }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
 
+  // Org-level settings (fee policy etc.)
+  const [orgConfig, setOrgConfig] = useState(null);
+  const [orgOriginal, setOrgOriginal] = useState(null);
+  const [orgSaving, setOrgSaving] = useState(false);
+  const [orgSaved, setOrgSaved] = useState(false);
+  const [orgError, setOrgError] = useState(null);
+
   useEffect(() => {
-    api.get('/business/items/settings/pickup')
-      .then(res => { setConfig(res.data); setOriginal(res.data); })
+    Promise.all([
+      api.get('/business/items/settings/pickup'),
+      api.get('/business/items/settings/org'),
+    ])
+      .then(([pickupRes, orgRes]) => {
+        setConfig(pickupRes.data);
+        setOriginal(pickupRes.data);
+        setOrgConfig(orgRes.data);
+        setOrgOriginal(orgRes.data);
+      })
       .catch(() => setError(t('failedToLoadSettings')))
       .finally(() => setLoading(false));
   }, []);
@@ -68,6 +83,10 @@ export default function SettingsPage({ auth }) {
     config.pickup_qr_enabled !== original.pickup_qr_enabled ||
     config.pickup_qr_expiry_hours !== original.pickup_qr_expiry_hours ||
     config.pickup_instructions !== original.pickup_instructions
+  );
+
+  const hasOrgChanges = orgConfig && orgOriginal && (
+    orgConfig.charge_users_for_recovery !== orgOriginal.charge_users_for_recovery
   );
 
   async function handleSave() {
@@ -96,6 +115,34 @@ export default function SettingsPage({ auth }) {
   function handleReset() {
     setConfig({ ...original });
     setError(null);
+  }
+
+  async function handleOrgSave() {
+    const updates = {};
+    if (orgConfig.charge_users_for_recovery !== orgOriginal.charge_users_for_recovery) {
+      updates.charge_users_for_recovery = orgConfig.charge_users_for_recovery;
+    }
+    if (!Object.keys(updates).length) return;
+    setOrgSaving(true);
+    setOrgError(null);
+    setOrgSaved(false);
+    try {
+      const res = await api.put('/business/items/settings/org', updates);
+      setOrgConfig(res.data);
+      setOrgOriginal(res.data);
+      setOrgSaved(true);
+      setTimeout(() => setOrgSaved(false), 3000);
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setOrgError(Array.isArray(detail) ? detail.join(', ') : detail || t('failedToSave'));
+    } finally {
+      setOrgSaving(false);
+    }
+  }
+
+  function handleOrgReset() {
+    setOrgConfig({ ...orgOriginal });
+    setOrgError(null);
   }
 
   if (loading) {
@@ -152,6 +199,46 @@ export default function SettingsPage({ auth }) {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Fee Policy */}
+        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+          <div className="flex items-center gap-3 p-5 border-b border-zinc-100">
+            <Euro className="w-5 h-5 text-teal-600" />
+            <div>
+              <h2 className="text-[14px] font-bold text-zinc-900">{t('feePolicy')}</h2>
+              <p className="text-[11px] text-zinc-400">{t('feePolicyDesc')}</p>
+            </div>
+          </div>
+
+          {orgConfig && (
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 pr-4">
+                  <p className="text-[13px] font-semibold text-zinc-800">{t('chargeUsersForRecovery')}</p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 leading-relaxed">
+                    {t('chargeUsersForRecoveryDesc')}
+                  </p>
+                </div>
+                <span data-testid="charge-users-toggle">
+                  <Toggle
+                    enabled={!!orgConfig.charge_users_for_recovery}
+                    onChange={(v) => setOrgConfig(c => ({ ...c, charge_users_for_recovery: v }))}
+                  />
+                </span>
+              </div>
+            </div>
+          )}
+
+          <SectionActions
+            saving={orgSaving}
+            saved={orgSaved}
+            hasChanges={hasOrgChanges}
+            onSave={handleOrgSave}
+            onReset={handleOrgReset}
+            error={orgError}
+            t={t}
+          />
         </div>
 
         {/* Pickup QR */}
