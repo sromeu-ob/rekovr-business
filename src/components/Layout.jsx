@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, GitCompare, Users, CreditCard, LogOut, Building2, Menu, X, Settings, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Package, GitCompare, Users, CreditCard, LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -15,6 +15,7 @@ export default function Layout({ children, auth, onLogout }) {
     { to: '/items',   icon: Package,         labelKey: 'navFoundItems' },
     { to: '/events',  icon: CalendarDays,    labelKey: 'navEvents' },
     { to: '/matches', icon: GitCompare,      labelKey: 'navMatches' },
+    { to: '/pickups', icon: ScanLine,        labelKey: 'navPickups' },
     { to: '/team',    icon: Users,           labelKey: 'navTeam' },
     { to: '/subscription', icon: CreditCard, labelKey: 'navSubscription' },
     { to: '/settings',     icon: Settings,    labelKey: 'navSettings', adminOnly: true },

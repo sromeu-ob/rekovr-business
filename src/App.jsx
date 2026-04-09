@@ -17,6 +17,7 @@ import SettingsPage from './pages/SettingsPage';
 import EventsPage from './pages/EventsPage';
 import EventDetailPage from './pages/EventDetailPage';
 import EventFormPage from './pages/EventFormPage';
+import ConfirmPickupPage from './pages/ConfirmPickupPage';
 
 function ProtectedRoute({ children, auth }) {
   if (!auth) return <Navigate to="/login" replace />;
@@ -170,6 +171,14 @@ export default function App() {
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>
               <EventDetailPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/pickups" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <ConfirmPickupPage auth={auth} />
             </AppShell>
           </ProtectedRoute>
         } />
