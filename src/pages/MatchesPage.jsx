@@ -32,14 +32,14 @@ export default function MatchesPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 data-testid="matches-heading" className="text-2xl font-semibold text-zinc-900">{t('navMatches')}</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h1 data-testid="matches-heading" className="text-2xl font-semibold text-stone-900">{t('navMatches')}</h1>
+        <p className="text-sm text-stone-500 mt-1">
           {allItems.length} {t('itemsWithMatches')}{totalPending > 0 && ` · ${totalPending} ${t('pendingReviewCount')}`}
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-1 bg-zinc-100 rounded-md p-0.5 w-fit mb-6">
+      <div className="flex gap-1 bg-stone-100 rounded-md p-0.5 w-fit mb-6">
         {FILTERS.map(f => (
           <button
             key={f.key}
@@ -47,8 +47,8 @@ export default function MatchesPage() {
             onClick={() => setFilter(f.key)}
             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
               filter === f.key
-                ? 'bg-white text-zinc-900 shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-700'
+                ? 'bg-white text-stone-900 shadow-sm'
+                : 'text-stone-500 hover:text-stone-700'
             }`}
           >
             {t(f.labelKey)}
@@ -58,15 +58,15 @@ export default function MatchesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
         </div>
       ) : items.length === 0 ? (
         <div data-testid="matches-empty" className="flex flex-col items-center justify-center py-20 text-center">
-          <GitCompare size={32} className="text-zinc-300 mb-3" />
-          <p className="text-sm font-medium text-zinc-900">
+          <GitCompare size={32} className="text-stone-300 mb-3" />
+          <p className="text-sm font-medium text-stone-900">
             {filter === 'pending' ? t('noPendingMatches') : t('noMatchesYet')}
           </p>
-          <p className="text-sm text-zinc-500 mt-1 max-w-xs">
+          <p className="text-sm text-stone-500 mt-1 max-w-xs">
             {filter === 'pending' ? t('noPendingMatchesDesc') : t('noMatchesYetDesc')}
           </p>
         </div>
@@ -77,23 +77,23 @@ export default function MatchesPage() {
               key={item.item_id}
               data-testid={`match-item-${item.item_id}`}
               onClick={() => navigate(`/matches/${item.item_id}`)}
-              className="w-full flex items-center gap-4 p-4 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors text-left"
+              className="w-full flex items-center gap-4 p-4 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors text-left"
             >
               {item.photos?.length > 0 ? (
                 <img
                   src={photoUrl(item.photos[0])}
                   alt=""
-                  className="w-12 h-12 rounded-md object-cover flex-shrink-0 bg-zinc-100"
+                  className="w-12 h-12 rounded-md object-cover flex-shrink-0 bg-stone-100"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                  <Package size={18} className="text-zinc-400" />
+                <div className="w-12 h-12 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
+                  <Package size={18} className="text-stone-400" />
                 </div>
               )}
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-900 truncate">{item.title}</p>
-                <p className="text-xs text-zinc-500 capitalize">{item.category}</p>
+                <p className="text-sm font-medium text-stone-900 truncate">{item.title}</p>
+                <p className="text-xs text-stone-500 capitalize">{item.category}</p>
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
@@ -108,14 +108,14 @@ export default function MatchesPage() {
                   </span>
                 )}
                 {item.best_score != null && (
-                  <span className="text-xs text-zinc-400 hidden sm:inline">
+                  <span className="text-xs text-stone-400 hidden sm:inline">
                     {t('best')}: {item.best_score <= 1 ? Math.round(item.best_score * 100) : Math.round(item.best_score)}%
                   </span>
                 )}
-                <span className="text-xs font-medium text-zinc-400">
+                <span className="text-xs font-medium text-stone-400">
                   {item.match_total}
                 </span>
-                <ChevronRight size={15} className="text-zinc-300" />
+                <ChevronRight size={15} className="text-stone-300" />
               </div>
             </button>
           ))}

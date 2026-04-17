@@ -56,24 +56,24 @@ export default function AcceptInvitePage({ onLogin }) {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (checkError) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-5">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center px-5">
         <div className="w-full max-w-[340px] text-center">
-          <h1 className="text-xl font-semibold text-zinc-900 mb-1">Rekovr</h1>
-          <p className="text-sm text-zinc-400 mb-8">{t('business')}</p>
+          <h1 className="text-xl font-semibold text-stone-900 mb-1">Rekovr</h1>
+          <p className="text-sm text-stone-400 mb-8">{t('business')}</p>
           <div className="p-4 bg-red-50 border border-red-100 rounded-md">
             <p className="text-sm text-red-600 font-medium">{checkError}</p>
           </div>
           <button
             onClick={() => navigate('/login')}
-            className="mt-6 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition-colors"
+            className="mt-6 text-sm font-medium text-stone-500 hover:text-stone-700 transition-colors"
           >
             {t('goToLogin')}
           </button>
@@ -83,18 +83,18 @@ export default function AcceptInvitePage({ onLogin }) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-5">
+    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-5">
       <div className="w-full max-w-[340px]">
         <div className="mb-8">
-          <h1 className="text-xl font-semibold text-zinc-900">Rekovr</h1>
-          <p className="text-sm text-zinc-400 mt-1">{t('business')}</p>
+          <h1 className="text-xl font-semibold text-stone-900">Rekovr</h1>
+          <p className="text-sm text-stone-400 mt-1">{t('business')}</p>
         </div>
 
         <div className="mb-6">
-          <h2 className="text-base font-semibold text-zinc-900">
+          <h2 className="text-base font-semibold text-stone-900">
             {needsPassword ? t('acceptInvitation') : t('joinOrganization')}
           </h2>
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             {needsPassword
               ? `${t('setPasswordToJoin')} ${inviteInfo.org_name}.`
               : `${t('youreJoining')} ${inviteInfo.org_name} ${t('as')} ${inviteInfo.role}.`
@@ -103,18 +103,18 @@ export default function AcceptInvitePage({ onLogin }) {
         </div>
 
         {/* Invite summary */}
-        <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-md mb-5 space-y-1.5">
+        <div className="p-4 bg-stone-50 border border-stone-200 rounded-md mb-5 space-y-1.5">
           <div className="flex justify-between text-xs">
-            <span className="text-zinc-400">{t('organization')}</span>
-            <span className="font-medium text-zinc-700">{inviteInfo.org_name}</span>
+            <span className="text-stone-400">{t('organization')}</span>
+            <span className="font-medium text-stone-700">{inviteInfo.org_name}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-zinc-400">{t('role')}</span>
-            <span className="font-medium text-zinc-700 capitalize">{inviteInfo.role}</span>
+            <span className="text-stone-400">{t('role')}</span>
+            <span className="font-medium text-stone-700 capitalize">{inviteInfo.role}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-zinc-400">{t('email')}</span>
-            <span className="font-medium text-zinc-700">{inviteInfo.email}</span>
+            <span className="text-stone-400">{t('email')}</span>
+            <span className="font-medium text-stone-700">{inviteInfo.email}</span>
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export default function AcceptInvitePage({ onLogin }) {
                   placeholder={t('yourName')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
+                  className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
                 />
               )}
               <input
@@ -137,7 +137,7 @@ export default function AcceptInvitePage({ onLogin }) {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoFocus
-                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
+                className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
               />
               <input
                 type="password"
@@ -145,7 +145,7 @@ export default function AcceptInvitePage({ onLogin }) {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
-                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
+                className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
               />
             </>
           )}
@@ -159,7 +159,7 @@ export default function AcceptInvitePage({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-10 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full h-10 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={14} className="animate-spin" />}
             {needsPassword ? t('createAccountAndJoin') : `${t('join')} ${inviteInfo.org_name}`}

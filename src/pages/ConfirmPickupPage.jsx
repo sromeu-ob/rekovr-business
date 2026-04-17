@@ -110,15 +110,15 @@ export default function ConfirmPickupPage({ auth }) {
   if (mode === 'done') {
     return (
       <div className="max-w-lg mx-auto" data-testid="pickup-done">
-        <div className="bg-white rounded-lg border border-zinc-200 p-8 text-center">
+        <div className="bg-white rounded-lg border border-stone-200 p-8 text-center">
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-emerald-600" strokeWidth={1.75} />
           </div>
-          <h2 className="text-xl font-semibold text-zinc-900 mb-2">{t('pickupConfirmedTitle')}</h2>
-          <p className="text-sm text-zinc-500 mb-6">{t('pickupConfirmedSubtitle')}</p>
+          <h2 className="text-xl font-semibold text-stone-900 mb-2">{t('pickupConfirmedTitle')}</h2>
+          <p className="text-sm text-stone-500 mb-6">{t('pickupConfirmedSubtitle')}</p>
           <button
             onClick={reset}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
             data-testid="pickup-new"
           >
             {t('pickupConfirmAnother')}
@@ -139,49 +139,49 @@ export default function ConfirmPickupPage({ auth }) {
       <div className="max-w-lg mx-auto" data-testid="pickup-preview">
         <button
           onClick={reset}
-          className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 mb-4"
+          className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 mb-4"
         >
           <ArrowLeft size={14} /> {t('pickupBack')}
         </button>
 
-        <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden mb-4">
+        <div className="bg-white rounded-lg border border-stone-200 overflow-hidden mb-4">
           {photo && (
-            <div className="aspect-video bg-zinc-100 overflow-hidden">
+            <div className="aspect-video bg-stone-100 overflow-hidden">
               <img src={photo} alt={item.title} className="w-full h-full object-cover" />
             </div>
           )}
           <div className="p-5">
             <div className="flex items-start gap-3 mb-4">
-              <div className="w-9 h-9 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                <Package className="w-4 h-4 text-zinc-500" />
+              <div className="w-9 h-9 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
+                <Package className="w-4 h-4 text-stone-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 mb-0.5">{t('pickupItem')}</p>
-                <h3 className="text-base font-semibold text-zinc-900" data-testid="pickup-item-title">{item.title}</h3>
-                {item.category && <p className="text-xs text-zinc-400 mt-0.5">{item.category}</p>}
+                <p className="text-xs font-medium uppercase tracking-wide text-stone-500 mb-0.5">{t('pickupItem')}</p>
+                <h3 className="text-base font-semibold text-stone-900" data-testid="pickup-item-title">{item.title}</h3>
+                {item.category && <p className="text-xs text-stone-400 mt-0.5">{item.category}</p>}
               </div>
             </div>
 
-            <div className="border-t border-zinc-100 pt-4 flex items-start gap-3">
-              <div className="w-9 h-9 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-zinc-600" />
+            <div className="border-t border-stone-100 pt-4 flex items-start gap-3">
+              <div className="w-9 h-9 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-stone-600" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 mb-0.5">{t('pickupClaimant')}</p>
-                <p className="text-sm font-medium text-zinc-900" data-testid="pickup-claimant-name">{claimant.name || '—'}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-stone-500 mb-0.5">{t('pickupClaimant')}</p>
+                <p className="text-sm font-medium text-stone-900" data-testid="pickup-claimant-name">{claimant.name || '—'}</p>
                 {claimant.email_masked && (
-                  <p className="text-xs text-zinc-500 font-mono">{claimant.email_masked}</p>
+                  <p className="text-xs text-stone-500 font-mono">{claimant.email_masked}</p>
                 )}
                 {lost.title && (
-                  <p className="text-xs text-zinc-500 mt-1">
-                    <span className="text-zinc-400">{t('pickupClaimedFor')}: </span>{lost.title}
+                  <p className="text-xs text-stone-500 mt-1">
+                    <span className="text-stone-400">{t('pickupClaimedFor')}: </span>{lost.title}
                   </p>
                 )}
               </div>
             </div>
 
             {preview.expires_at && (
-              <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center gap-1.5 text-xs text-zinc-400">
+              <div className="mt-4 pt-4 border-t border-stone-100 flex items-center gap-1.5 text-xs text-stone-400">
                 <Clock className="w-3.5 h-3.5" />
                 <span>{t('pickupValidUntil')} {new Date(preview.expires_at).toLocaleString()}</span>
               </div>
@@ -206,7 +206,7 @@ export default function ConfirmPickupPage({ auth }) {
           <button
             onClick={reset}
             disabled={confirming}
-            className="flex-1 py-3 rounded-md border border-zinc-200 text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-colors disabled:opacity-50"
+            className="flex-1 py-3 rounded-md border border-stone-200 text-stone-700 text-sm font-medium hover:bg-stone-50 transition-colors disabled:opacity-50"
             data-testid="pickup-cancel"
           >
             {t('cancel')}
@@ -229,17 +229,17 @@ export default function ConfirmPickupPage({ auth }) {
   return (
     <div className="max-w-lg mx-auto" data-testid="pickup-entry">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-zinc-900 mb-1">{t('pickupPageTitle')}</h1>
-        <p className="text-sm text-zinc-500">{t('pickupPageSubtitle')}</p>
+        <h1 className="text-2xl font-semibold text-stone-900 mb-1">{t('pickupPageTitle')}</h1>
+        <p className="text-sm text-stone-500">{t('pickupPageSubtitle')}</p>
       </div>
 
-      <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
         {/* Tabs */}
-        <div className="flex border-b border-zinc-100">
+        <div className="flex border-b border-stone-100">
           <button
             onClick={() => { setTab('code'); setError(null); }}
             className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
-              tab === 'code' ? 'text-zinc-900 border-b-2 border-zinc-900' : 'text-zinc-400 hover:text-zinc-700'
+              tab === 'code' ? 'text-stone-900 border-b-2 border-stone-900' : 'text-stone-400 hover:text-stone-700'
             }`}
             data-testid="tab-code"
           >
@@ -248,7 +248,7 @@ export default function ConfirmPickupPage({ auth }) {
           <button
             onClick={() => { setTab('scan'); setError(null); }}
             className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
-              tab === 'scan' ? 'text-zinc-900 border-b-2 border-zinc-900' : 'text-zinc-400 hover:text-zinc-700'
+              tab === 'scan' ? 'text-stone-900 border-b-2 border-stone-900' : 'text-stone-400 hover:text-stone-700'
             }`}
             data-testid="tab-scan"
           >
@@ -259,7 +259,7 @@ export default function ConfirmPickupPage({ auth }) {
         <div className="p-6">
           {tab === 'code' && (
             <form onSubmit={submitCode}>
-              <label className="block text-xs font-medium uppercase tracking-wide text-zinc-500 mb-2">
+              <label className="block text-xs font-medium uppercase tracking-wide text-stone-500 mb-2">
                 {t('pickupCodeLabel')}
               </label>
               <input
@@ -271,10 +271,10 @@ export default function ConfirmPickupPage({ auth }) {
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
-                className="w-full px-4 py-4 rounded-md border border-zinc-200 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:outline-none text-2xl font-mono tracking-[0.18em] text-center text-zinc-900 uppercase"
+                className="w-full px-4 py-4 rounded-md border border-stone-200 bg-stone-50 focus:bg-white focus:border-stone-900 focus:outline-none text-2xl font-mono tracking-[0.18em] text-center text-stone-900 uppercase"
                 data-testid="pickup-code-input"
               />
-              <p className="mt-2 text-xs text-zinc-400 text-center">
+              <p className="mt-2 text-xs text-stone-400 text-center">
                 {normalized.length}/8 {t('pickupCodeChars')}
               </p>
               {error && (
@@ -286,7 +286,7 @@ export default function ConfirmPickupPage({ auth }) {
               <button
                 type="submit"
                 disabled={!canLookupCode || loading}
-                className="mt-5 w-full py-3 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="mt-5 w-full py-3 rounded-md bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 data-testid="pickup-lookup-btn"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -297,7 +297,7 @@ export default function ConfirmPickupPage({ auth }) {
 
           {tab === 'scan' && (
             <form onSubmit={submitScan}>
-              <label className="block text-xs font-medium uppercase tracking-wide text-zinc-500 mb-2">
+              <label className="block text-xs font-medium uppercase tracking-wide text-stone-500 mb-2">
                 {t('pickupScanLabel')}
               </label>
               <input
@@ -307,10 +307,10 @@ export default function ConfirmPickupPage({ auth }) {
                 onChange={(e) => setScanInput(e.target.value)}
                 placeholder={t('pickupScanPlaceholder')}
                 autoComplete="off"
-                className="w-full px-4 py-3 rounded-md border border-zinc-200 bg-zinc-50 focus:bg-white focus:border-zinc-900 focus:outline-none text-sm text-zinc-900 font-mono"
+                className="w-full px-4 py-3 rounded-md border border-stone-200 bg-stone-50 focus:bg-white focus:border-stone-900 focus:outline-none text-sm text-stone-900 font-mono"
                 data-testid="pickup-scan-input"
               />
-              <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
+              <p className="mt-2 text-xs text-stone-400 leading-relaxed">
                 {t('pickupScanHint')}
               </p>
               {error && (
@@ -322,7 +322,7 @@ export default function ConfirmPickupPage({ auth }) {
               <button
                 type="submit"
                 disabled={!scanInput.trim() || loading}
-                className="mt-5 w-full py-3 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="mt-5 w-full py-3 rounded-md bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 data-testid="pickup-scan-btn"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}

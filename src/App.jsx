@@ -45,7 +45,7 @@ export default function App() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-stone-900 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 

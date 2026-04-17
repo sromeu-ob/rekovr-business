@@ -20,26 +20,26 @@ export default function SubscriptionPage({ auth }) {
   return (
     <div>
       <div className="mb-8">
-        <h1 data-testid="subscription-heading" className="text-2xl font-semibold text-zinc-900">{t('subscription')}</h1>
-        <p className="text-sm text-zinc-500 mt-1">{t('currentPlanAndBilling')}</p>
+        <h1 data-testid="subscription-heading" className="text-2xl font-semibold text-stone-900">{t('subscription')}</h1>
+        <p className="text-sm text-stone-500 mt-1">{t('currentPlanAndBilling')}</p>
       </div>
 
-      <div className="bg-white rounded-lg border border-zinc-200 p-6 max-w-md">
+      <div className="bg-white rounded-lg border border-stone-200 p-6 max-w-md">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-9 h-9 rounded-md bg-zinc-100 flex items-center justify-center">
-            <CreditCard size={16} className="text-zinc-600" />
+          <div className="w-9 h-9 rounded-md bg-stone-100 flex items-center justify-center">
+            <CreditCard size={16} className="text-stone-600" />
           </div>
           <div>
-            <p data-testid="subscription-plan" className="text-sm font-semibold text-zinc-900">
+            <p data-testid="subscription-plan" className="text-sm font-semibold text-stone-900">
               {PLAN_LABELS[org?.subscription_plan] || org?.subscription_plan || '—'} {t('plan')}
             </p>
-            <span data-testid="subscription-status" className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium capitalize ${STATUS_COLORS[org?.subscription_status] || 'bg-zinc-100 text-zinc-500'}`}>
+            <span data-testid="subscription-status" className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium capitalize ${STATUS_COLORS[org?.subscription_status] || 'bg-stone-100 text-stone-500'}`}>
               {org?.subscription_status || '—'}
             </span>
           </div>
         </div>
 
-        <div className="text-sm text-zinc-500 bg-zinc-50 rounded-md p-4">
+        <div className="text-sm text-stone-500 bg-stone-50 rounded-md p-4">
           {t('billingManagement')}
         </div>
       </div>

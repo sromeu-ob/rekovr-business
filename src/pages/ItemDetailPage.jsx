@@ -39,18 +39,18 @@ const ACTIVE_STATUSES = 'pending,pending_verification,pending_review';
 const STATUS_STYLE = {
   active:    'bg-emerald-50 text-emerald-700',
   matched:   'bg-amber-50 text-amber-700',
-  recovered: 'bg-zinc-100 text-zinc-600',
-  returned:  'bg-zinc-100 text-zinc-600',
-  archived:  'bg-zinc-100 text-zinc-400',
+  recovered: 'bg-stone-100 text-stone-600',
+  returned:  'bg-stone-100 text-stone-600',
+  archived:  'bg-stone-100 text-stone-400',
 };
 
 const MATCH_STATUS_STYLE = {
   pending_verification: 'bg-amber-50 text-amber-700',
   pending_review:       'bg-amber-50 text-amber-700',
   pending:   'bg-amber-50 text-amber-700',
-  accepted:  'bg-zinc-100 text-zinc-600',
+  accepted:  'bg-stone-100 text-stone-600',
   rejected:  'bg-red-50 text-red-600',
-  dismissed: 'bg-zinc-100 text-zinc-400',
+  dismissed: 'bg-stone-100 text-stone-400',
   paid:      'bg-emerald-50 text-emerald-700',
   recovered: 'bg-emerald-50 text-emerald-700',
 };
@@ -137,7 +137,7 @@ export default function ItemDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function ItemDetailPage() {
   if (!item) {
     return (
       <div className="text-center py-20">
-        <p className="text-sm text-zinc-500">{t('itemNotFound')}</p>
+        <p className="text-sm text-stone-500">{t('itemNotFound')}</p>
       </div>
     );
   }
@@ -156,19 +156,19 @@ export default function ItemDetailPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+          className="w-8 h-8 rounded-md bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors"
         >
-          <ArrowLeft size={16} className="text-zinc-600" />
+          <ArrowLeft size={16} className="text-stone-600" />
         </button>
-        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
+        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-stone-100 text-stone-600">
           {t('foundBadge')}
         </span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${STATUS_STYLE[item.status] || 'bg-zinc-100 text-zinc-400'}`}>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${STATUS_STYLE[item.status] || 'bg-stone-100 text-stone-400'}`}>
           {item.status}
         </span>
         <button
           onClick={() => navigate(`/items/${itemId}/edit`)}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-md text-sm font-medium transition-colors"
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-md text-sm font-medium transition-colors"
         >
           <Pencil size={13} />
           {t('editItem')}
@@ -183,7 +183,7 @@ export default function ItemDetailPage() {
               key={i}
               src={photoUrl(photo)}
               alt=""
-              className="w-28 h-28 rounded-lg object-cover flex-shrink-0 border border-zinc-100 cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-28 h-28 rounded-lg object-cover flex-shrink-0 border border-stone-100 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setViewerIndex(i)}
             />
           ))}
@@ -200,28 +200,28 @@ export default function ItemDetailPage() {
 
       {/* Item Info */}
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-zinc-900">
+        <h1 className="text-xl font-semibold text-stone-900">
           {item.title}
         </h1>
 
         {/* Metadata row — badges */}
         <div className="flex flex-wrap items-center gap-2">
           {item.date_time && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md text-xs font-medium">
-              <Clock className="w-3 h-3 text-zinc-500 flex-shrink-0" strokeWidth={1.5} />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium">
+              <Clock className="w-3 h-3 text-stone-500 flex-shrink-0" strokeWidth={1.5} />
               {new Date(item.date_time).toLocaleString()}
             </span>
           )}
           {item.category && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md text-xs font-medium capitalize">
-              <Tag className="w-3 h-3 text-zinc-500 flex-shrink-0" strokeWidth={1.5} />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium capitalize">
+              <Tag className="w-3 h-3 text-stone-500 flex-shrink-0" strokeWidth={1.5} />
               {item.category}
             </span>
           )}
         </div>
 
         {item.description && (
-          <p className="text-sm text-zinc-500 leading-relaxed">{item.description}</p>
+          <p className="text-sm text-stone-500 leading-relaxed">{item.description}</p>
         )}
 
         {/* Map */}
@@ -232,8 +232,8 @@ export default function ItemDetailPage() {
               lat={item.location.coordinates[1]}
             />
             {item.address && (
-              <p className="flex items-center gap-1.5 mt-2 text-xs text-zinc-500">
-                <MapPin className="w-3 h-3 text-zinc-400 flex-shrink-0" strokeWidth={1.5} />
+              <p className="flex items-center gap-1.5 mt-2 text-xs text-stone-500">
+                <MapPin className="w-3 h-3 text-stone-400 flex-shrink-0" strokeWidth={1.5} />
                 {item.address}
               </p>
             )}
@@ -244,19 +244,19 @@ export default function ItemDetailPage() {
       {/* Matches Section */}
       <div className="mt-10">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
-            {t('navMatches')} {matchTotal > 0 && <span className="text-zinc-400 normal-case tracking-normal">({matchTotal})</span>}
+          <p className="text-xs font-medium text-stone-500 uppercase tracking-wide flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-stone-400" strokeWidth={1.5} />
+            {t('navMatches')} {matchTotal > 0 && <span className="text-stone-400 normal-case tracking-normal">({matchTotal})</span>}
           </p>
-          <div className="flex bg-zinc-100 rounded-md p-0.5 gap-0.5">
+          <div className="flex bg-stone-100 rounded-md p-0.5 gap-0.5">
             {['active', 'all'].map(f => (
               <button
                 key={f}
                 onClick={() => handleFilterChange(f)}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   matchFilter === f
-                    ? 'bg-white text-zinc-900 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-700'
+                    ? 'bg-white text-stone-900 shadow-sm'
+                    : 'text-stone-500 hover:text-stone-700'
                 }`}
               >
                 {f === 'active' ? t('filterActive') : t('filterAll')}
@@ -267,36 +267,36 @@ export default function ItemDetailPage() {
 
         {loadingMatches ? (
           <div className="flex justify-center py-10">
-            <div className="w-4 h-4 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
           </div>
         ) : matches.length > 0 ? (
           <>
-            <div className="border border-zinc-200 rounded-lg divide-y divide-zinc-100 overflow-hidden">
+            <div className="border border-stone-200 rounded-lg divide-y divide-stone-100 overflow-hidden">
               {matches.map(match => {
                 const otherItem = match.lost_item;
                 return (
                   <button
                     key={match.match_id}
                     onClick={() => navigate(`/matches/${itemId}`)}
-                    className="w-full px-4 py-3 text-left hover:bg-zinc-50 transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left hover:bg-stone-50 transition-colors flex items-center gap-3"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-zinc-900 truncate">
+                        <span className="text-sm font-medium text-stone-900 truncate">
                           {otherItem?.title || t('possibleMatch')}
                         </span>
-                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded-md flex-shrink-0 ${MATCH_STATUS_STYLE[match.status] || 'bg-zinc-100 text-zinc-400'}`}>
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded-md flex-shrink-0 ${MATCH_STATUS_STYLE[match.status] || 'bg-stone-100 text-stone-400'}`}>
                           {MATCH_STATUS_LABEL[match.status] || match.status}
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-500">
-                        {t('matchScore')}: <span className="font-medium text-zinc-900">{Math.round(match.score * 100)}%</span>
+                      <p className="text-xs text-stone-500">
+                        {t('matchScore')}: <span className="font-medium text-stone-900">{Math.round(match.score * 100)}%</span>
                       </p>
                       {getLocalizedReasoning(match, language) && (
-                        <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{getLocalizedReasoning(match, language)}</p>
+                        <p className="text-xs text-stone-500 mt-0.5 line-clamp-1">{getLocalizedReasoning(match, language)}</p>
                       )}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-200 flex-shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-stone-200 flex-shrink-0" />
                   </button>
                 );
               })}
@@ -305,11 +305,11 @@ export default function ItemDetailPage() {
               <button
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="w-full mt-3 py-2.5 text-sm font-medium text-zinc-500 bg-white border border-zinc-200 rounded-md hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                className="w-full mt-3 py-2.5 text-sm font-medium text-stone-500 bg-white border border-stone-200 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50"
               >
                 {loadingMore ? (
                   <span className="inline-flex items-center gap-2">
-                    <span className="w-3.5 h-3.5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+                    <span className="w-3.5 h-3.5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
                   </span>
                 ) : (
                   `${t('loadMore')} (${matchTotal - matches.length})`
@@ -318,10 +318,10 @@ export default function ItemDetailPage() {
             )}
           </>
         ) : (
-          <div className="text-center py-12 border border-zinc-200 rounded-lg">
-            <Package className="w-8 h-8 text-zinc-300 mx-auto mb-3" strokeWidth={1.5} />
-            <p className="text-sm font-medium text-zinc-900">{t('noMatchesYet')}</p>
-            <p className="text-sm text-zinc-500 mt-1">{t('notifyWhenCandidate')}</p>
+          <div className="text-center py-12 border border-stone-200 rounded-lg">
+            <Package className="w-8 h-8 text-stone-300 mx-auto mb-3" strokeWidth={1.5} />
+            <p className="text-sm font-medium text-stone-900">{t('noMatchesYet')}</p>
+            <p className="text-sm text-stone-500 mt-1">{t('notifyWhenCandidate')}</p>
           </div>
         )}
       </div>

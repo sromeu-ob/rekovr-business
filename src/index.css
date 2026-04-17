@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 /* Mapbox Geocoder inside the map control */
 .mapboxgl-ctrl-geocoder {
   font-size: 13px !important;

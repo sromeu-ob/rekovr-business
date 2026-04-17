@@ -300,7 +300,7 @@ export default function NewItemPage({ auth }) {
   if (loadingItem) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
       </div>
     );
   }
@@ -314,16 +314,16 @@ export default function NewItemPage({ auth }) {
           <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5">
             <CheckCircle size={28} className="text-emerald-600" />
           </div>
-          <h2 className="text-lg font-semibold text-zinc-900 mb-1">{t('itemRegistered')}</h2>
-          <p className="text-sm text-zinc-500 mb-8">
-            "<span className="font-medium text-zinc-700">{success.title}</span>" {t('isBeingRegistered')}
+          <h2 className="text-lg font-semibold text-stone-900 mb-1">{t('itemRegistered')}</h2>
+          <p className="text-sm text-stone-500 mb-8">
+            "<span className="font-medium text-stone-700">{success.title}</span>" {t('isBeingRegistered')}
             {' '}{t('aiLookingForMatches')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               data-testid="register-another-btn"
               onClick={handleRegisterAnother}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors"
             >
               <Plus size={15} />
               {t('registerAnother')}
@@ -331,7 +331,7 @@ export default function NewItemPage({ auth }) {
             <button
               data-testid="view-items-btn"
               onClick={() => navigate('/items')}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-zinc-100 text-zinc-700 rounded-md text-sm font-medium hover:bg-zinc-200 transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-stone-100 text-stone-700 rounded-md text-sm font-medium hover:bg-stone-200 transition-colors"
             >
               {t('viewItems')}
             </button>
@@ -353,15 +353,15 @@ export default function NewItemPage({ auth }) {
         <button
           data-testid="back-btn"
           onClick={() => navigate(isEdit ? `/items/${itemId}` : '/items')}
-          className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition-colors"
+          className="w-8 h-8 rounded-md bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors"
         >
-          <ArrowLeft size={15} className="text-zinc-600" />
+          <ArrowLeft size={15} className="text-stone-600" />
         </button>
         <div>
-          <h2 className="text-2xl font-semibold text-zinc-900">
+          <h2 className="text-2xl font-semibold text-stone-900">
             {isEdit ? t('editItem') : t('registerFoundItem')}
           </h2>
-          <p className="text-sm text-zinc-500">{t('takePhotoAndAI')}</p>
+          <p className="text-sm text-stone-500">{t('takePhotoAndAI')}</p>
         </div>
       </div>
 
@@ -374,7 +374,7 @@ export default function NewItemPage({ auth }) {
             {/* Photo grid */}
             <div className="grid grid-cols-3 gap-2">
               {photos.map((photo, idx) => (
-                <div key={idx} className="relative aspect-square rounded-md overflow-hidden bg-zinc-100">
+                <div key={idx} className="relative aspect-square rounded-md overflow-hidden bg-stone-100">
                   <img src={photo.preview} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
@@ -386,8 +386,8 @@ export default function NewItemPage({ auth }) {
                 </div>
               ))}
               {uploading && (
-                <div className="aspect-square rounded-md bg-zinc-100 flex items-center justify-center">
-                  <Loader2 size={20} className="text-zinc-400 animate-spin" />
+                <div className="aspect-square rounded-md bg-stone-100 flex items-center justify-center">
+                  <Loader2 size={20} className="text-stone-400 animate-spin" />
                 </div>
               )}
             </div>
@@ -397,7 +397,7 @@ export default function NewItemPage({ auth }) {
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 lg:hidden flex items-center justify-center gap-2 py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors"
+                className="flex-1 lg:hidden flex items-center justify-center gap-2 py-2.5 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors"
               >
                 <Camera size={16} />
                 {t('takePhoto')}
@@ -405,7 +405,7 @@ export default function NewItemPage({ auth }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-zinc-100 lg:bg-zinc-900 lg:text-white text-zinc-700 rounded-md text-sm font-medium hover:bg-zinc-200 lg:hover:bg-zinc-800 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-stone-100 lg:bg-stone-900 lg:text-white text-stone-700 rounded-md text-sm font-medium hover:bg-stone-200 lg:hover:bg-stone-800 transition-colors"
               >
                 <Upload size={16} />
                 {t('uploadPhotos')}
@@ -436,8 +436,8 @@ export default function NewItemPage({ auth }) {
               disabled={!hasPhotos || aiLoading}
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 hasPhotos && !aiLoading
-                  ? 'bg-zinc-900 text-white hover:bg-zinc-800'
-                  : 'bg-zinc-100 text-zinc-300 cursor-not-allowed'
+                  ? 'bg-stone-900 text-white hover:bg-stone-800'
+                  : 'bg-stone-100 text-stone-300 cursor-not-allowed'
               }`}
             >
               {aiLoading ? (
@@ -452,7 +452,7 @@ export default function NewItemPage({ auth }) {
           {/* RIGHT: Form fields */}
           <div className="flex-1 space-y-4">
             <div>
-              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('titleLabel')} *</label>
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-1.5">{t('titleLabel')} *</label>
               <input
                 data-testid="item-title-input"
                 type="text"
@@ -460,24 +460,24 @@ export default function NewItemPage({ auth }) {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Black leather wallet"
                 required
-                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
+                className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('descriptionLabel')}</label>
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-1.5">{t('descriptionLabel')}</label>
               <textarea
                 data-testid="item-description-input"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the item in detail..."
                 rows={4}
-                className="w-full px-3 py-2.5 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors resize-none"
+                className="w-full px-3 py-2.5 bg-white border border-stone-300 rounded-md text-sm text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-1.5">
                 <MapPin size={12} className="inline mr-1" />
                 {t('locationRequired')} *
               </label>
@@ -487,29 +487,29 @@ export default function NewItemPage({ auth }) {
                 className="w-full h-[220px] lg:h-[260px] rounded-md overflow-hidden"
               />
               {address && (
-                <p className="mt-1.5 text-xs text-zinc-400 truncate">{address}</p>
+                <p className="mt-1.5 text-xs text-stone-400 truncate">{address}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('dateTimeFound')}</label>
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-1.5">{t('dateTimeFound')}</label>
               <input
                 data-testid="item-datetime-input"
                 type="datetime-local"
                 value={dateTime}
                 onChange={(e) => setDateTime(e.target.value)}
-                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
+                className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
               />
             </div>
 
             {/* Event selector */}
             {activeEvents.length > 0 && (
               <div>
-                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('evtSelectEvent')}</label>
+                <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-1.5">{t('evtSelectEvent')}</label>
                 <select
                   value={eventId}
                   onChange={(e) => setEventId(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
+                  className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
                 >
                   <option value="">{t('evtNoEvent')}</option>
                   {activeEvents.map(evt => (
@@ -534,8 +534,8 @@ export default function NewItemPage({ auth }) {
                 disabled={!canSubmit}
                 className={`w-full flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-colors ${
                   canSubmit
-                    ? 'bg-zinc-900 text-white hover:bg-zinc-800'
-                    : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                    ? 'bg-stone-900 text-white hover:bg-stone-800'
+                    : 'bg-stone-200 text-stone-400 cursor-not-allowed'
                 }`}
               >
                 {submitting ? (
