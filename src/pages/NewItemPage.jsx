@@ -300,7 +300,7 @@ export default function NewItemPage({ auth }) {
   if (loadingItem) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-5 h-5 border-2 border-zinc-300 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
       </div>
     );
   }
@@ -311,11 +311,11 @@ export default function NewItemPage({ auth }) {
     return (
       <div data-testid="item-success" className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
-            <CheckCircle size={28} className="text-green-600" />
+          <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle size={28} className="text-emerald-600" />
           </div>
-          <h2 className="text-[18px] font-bold text-zinc-900 mb-1">{t('itemRegistered')}</h2>
-          <p className="text-[13px] text-zinc-500 mb-8">
+          <h2 className="text-lg font-semibold text-zinc-900 mb-1">{t('itemRegistered')}</h2>
+          <p className="text-sm text-zinc-500 mb-8">
             "<span className="font-medium text-zinc-700">{success.title}</span>" {t('isBeingRegistered')}
             {' '}{t('aiLookingForMatches')}
           </p>
@@ -323,7 +323,7 @@ export default function NewItemPage({ auth }) {
             <button
               data-testid="register-another-btn"
               onClick={handleRegisterAnother}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors"
             >
               <Plus size={15} />
               {t('registerAnother')}
@@ -331,7 +331,7 @@ export default function NewItemPage({ auth }) {
             <button
               data-testid="view-items-btn"
               onClick={() => navigate('/items')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-zinc-100 text-zinc-700 rounded-xl text-[13px] font-medium hover:bg-zinc-200 transition"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-zinc-100 text-zinc-700 rounded-md text-sm font-medium hover:bg-zinc-200 transition-colors"
             >
               {t('viewItems')}
             </button>
@@ -353,15 +353,15 @@ export default function NewItemPage({ auth }) {
         <button
           data-testid="back-btn"
           onClick={() => navigate(isEdit ? `/items/${itemId}` : '/items')}
-          className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition"
+          className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition-colors"
         >
-          <ArrowLeft size={16} className="text-zinc-600" />
+          <ArrowLeft size={15} className="text-zinc-600" />
         </button>
         <div>
-          <h2 className="text-[20px] font-extrabold text-zinc-900">
+          <h2 className="text-2xl font-semibold text-zinc-900">
             {isEdit ? t('editItem') : t('registerFoundItem')}
           </h2>
-          <p className="text-[12px] text-zinc-400">{t('takePhotoAndAI')}</p>
+          <p className="text-sm text-zinc-500">{t('takePhotoAndAI')}</p>
         </div>
       </div>
 
@@ -374,7 +374,7 @@ export default function NewItemPage({ auth }) {
             {/* Photo grid */}
             <div className="grid grid-cols-3 gap-2">
               {photos.map((photo, idx) => (
-                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100">
+                <div key={idx} className="relative aspect-square rounded-md overflow-hidden bg-zinc-100">
                   <img src={photo.preview} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
@@ -386,7 +386,7 @@ export default function NewItemPage({ auth }) {
                 </div>
               ))}
               {uploading && (
-                <div className="aspect-square rounded-xl bg-zinc-100 flex items-center justify-center">
+                <div className="aspect-square rounded-md bg-zinc-100 flex items-center justify-center">
                   <Loader2 size={20} className="text-zinc-400 animate-spin" />
                 </div>
               )}
@@ -397,7 +397,7 @@ export default function NewItemPage({ auth }) {
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 lg:hidden flex items-center justify-center gap-2 py-3 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
+                className="flex-1 lg:hidden flex items-center justify-center gap-2 py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors"
               >
                 <Camera size={16} />
                 {t('takePhoto')}
@@ -405,7 +405,7 @@ export default function NewItemPage({ auth }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-100 lg:bg-zinc-900 lg:text-white text-zinc-700 rounded-xl text-[13px] font-medium lg:font-semibold hover:bg-zinc-200 lg:hover:bg-zinc-800 transition"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-zinc-100 lg:bg-zinc-900 lg:text-white text-zinc-700 rounded-md text-sm font-medium hover:bg-zinc-200 lg:hover:bg-zinc-800 transition-colors"
               >
                 <Upload size={16} />
                 {t('uploadPhotos')}
@@ -434,7 +434,7 @@ export default function NewItemPage({ auth }) {
               type="button"
               onClick={handleAiFill}
               disabled={!hasPhotos || aiLoading}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition ${
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 hasPhotos && !aiLoading
                   ? 'bg-zinc-900 text-white hover:bg-zinc-800'
                   : 'bg-zinc-100 text-zinc-300 cursor-not-allowed'
@@ -452,7 +452,7 @@ export default function NewItemPage({ auth }) {
           {/* RIGHT: Form fields */}
           <div className="flex-1 space-y-4">
             <div>
-              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('titleLabel')} *</label>
+              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('titleLabel')} *</label>
               <input
                 data-testid="item-title-input"
                 type="text"
@@ -460,56 +460,56 @@ export default function NewItemPage({ auth }) {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Black leather wallet"
                 required
-                className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] outline-none focus:border-zinc-400 transition"
+                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('descriptionLabel')}</label>
+              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('descriptionLabel')}</label>
               <textarea
                 data-testid="item-description-input"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the item in detail..."
                 rows={4}
-                className="w-full px-3 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] outline-none focus:border-zinc-400 transition resize-none"
+                className="w-full px-3 py-2.5 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">
                 <MapPin size={12} className="inline mr-1" />
                 {t('locationRequired')} *
               </label>
               <div
                 data-testid="map-container"
                 ref={mapContainerRef}
-                className="w-full h-[220px] lg:h-[260px] rounded-xl overflow-hidden"
+                className="w-full h-[220px] lg:h-[260px] rounded-md overflow-hidden"
               />
               {address && (
-                <p className="mt-1.5 text-[11px] text-zinc-400 truncate">{address}</p>
+                <p className="mt-1.5 text-xs text-zinc-400 truncate">{address}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('dateTimeFound')}</label>
+              <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('dateTimeFound')}</label>
               <input
                 data-testid="item-datetime-input"
                 type="datetime-local"
                 value={dateTime}
                 onChange={(e) => setDateTime(e.target.value)}
-                className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] outline-none focus:border-zinc-400 transition"
+                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
               />
             </div>
 
             {/* Event selector */}
             {activeEvents.length > 0 && (
               <div>
-                <label className="block text-[12px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">{t('evtSelectEvent')}</label>
+                <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1.5">{t('evtSelectEvent')}</label>
                 <select
                   value={eventId}
                   onChange={(e) => setEventId(e.target.value)}
-                  className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] outline-none focus:border-zinc-400 transition"
+                  className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
                 >
                   <option value="">{t('evtNoEvent')}</option>
                   {activeEvents.map(evt => (
@@ -521,7 +521,7 @@ export default function NewItemPage({ auth }) {
 
             {/* Error */}
             {submitError && (
-              <div className="px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-[12px] text-red-600">
+              <div className="px-4 py-3 bg-red-50 border border-red-100 rounded-md text-xs text-red-600">
                 {submitError}
               </div>
             )}
@@ -532,7 +532,7 @@ export default function NewItemPage({ auth }) {
                 data-testid="publish-item-btn"
                 type="submit"
                 disabled={!canSubmit}
-                className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-bold transition ${
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-colors ${
                   canSubmit
                     ? 'bg-zinc-900 text-white hover:bg-zinc-800'
                     : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'

@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, GitCompare, Users, CreditCard, LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import {
+  LayoutDashboard, Package, GitCompare, Users, CreditCard,
+  LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine
+} from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -8,17 +11,16 @@ export default function Layout({ children, auth, onLogout }) {
   const { user, organization, org_role } = auth;
   const { t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
 
   const NAV = [
-    { to: '/',        icon: LayoutDashboard, labelKey: 'navDashboard' },
-    { to: '/items',   icon: Package,         labelKey: 'navFoundItems' },
-    { to: '/events',  icon: CalendarDays,    labelKey: 'navEvents' },
-    { to: '/matches', icon: GitCompare,      labelKey: 'navMatches' },
-    { to: '/pickups', icon: ScanLine,        labelKey: 'navPickups' },
-    { to: '/team',    icon: Users,           labelKey: 'navTeam' },
-    { to: '/subscription', icon: CreditCard, labelKey: 'navSubscription' },
-    { to: '/settings',     icon: Settings,    labelKey: 'navSettings', adminOnly: true },
+    { to: '/',           icon: LayoutDashboard, labelKey: 'navDashboard' },
+    { to: '/items',      icon: Package,         labelKey: 'navFoundItems' },
+    { to: '/events',     icon: CalendarDays,    labelKey: 'navEvents' },
+    { to: '/matches',    icon: GitCompare,      labelKey: 'navMatches' },
+    { to: '/pickups',    icon: ScanLine,        labelKey: 'navPickups' },
+    { to: '/team',       icon: Users,           labelKey: 'navTeam' },
+    { to: '/subscription', icon: CreditCard,   labelKey: 'navSubscription' },
+    { to: '/settings',   icon: Settings,        labelKey: 'navSettings', adminOnly: true },
   ];
 
   const handleLogout = async () => {
@@ -29,86 +31,117 @@ export default function Layout({ children, auth, onLogout }) {
   const closeMobile = () => setMobileOpen(false);
 
   const sidebarContent = (
-    <>
-      <div className="p-5 border-b border-zinc-100">
-        <h1 className="text-lg font-extrabold tracking-tight text-zinc-900">Rekovr</h1>
-        <p className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest font-medium">{t('business')}</p>
+    <div className="flex flex-col h-full">
+
+      {/* Brand */}
+      <div className="px-5 py-4 border-b border-zinc-100">
+        <span className="text-sm font-semibold text-zinc-900 tracking-tight">Rekovr</span>
+        <span className="ml-2 text-xs text-zinc-400 uppercase tracking-wide">Business</span>
       </div>
 
-      <div className="px-4 py-3 border-b border-zinc-100 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center flex-shrink-0">
-          <Building2 size={14} className="text-white" />
-        </div>
-        <div className="min-w-0">
-          <p data-testid="sidebar-org-name" className="text-[12px] font-semibold text-zinc-900 truncate">{organization?.name}</p>
-          <p className="text-[10px] text-zinc-400 capitalize truncate">{organization?.type}</p>
+      {/* Org */}
+      <div className="px-4 py-3 border-b border-zinc-100">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-zinc-900 flex items-center justify-center flex-shrink-0">
+            <Building2 size={13} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <p
+              data-testid="sidebar-org-name"
+              className="text-sm font-medium text-zinc-900 truncate leading-tight"
+            >
+              {organization?.name}
+            </p>
+            <p className="text-xs text-zinc-400 capitalize truncate leading-tight mt-0.5">
+              {organization?.type}
+            </p>
+          </div>
         </div>
       </div>
 
-      <nav className="flex-1 p-3 space-y-0.5">
-        {NAV.filter(n => !n.adminOnly || org_role === 'admin').map(({ to, icon: Icon, labelKey }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            onClick={closeMobile}
-            data-testid={`nav-${to === '/' ? 'dashboard' : to.replace('/', '')}`}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
-                isActive
-                  ? 'bg-zinc-900 text-white'
-                  : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900'
-              }`
-            }
-          >
-            <Icon size={16} />
-            {t(labelKey)}
-          </NavLink>
-        ))}
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+        {NAV
+          .filter(n => !n.adminOnly || org_role === 'admin')
+          .map(({ to, icon: Icon, labelKey }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              onClick={closeMobile}
+              data-testid={`nav-${to === '/' ? 'dashboard' : to.replace('/', '')}`}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-zinc-900 text-white'
+                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+                }`
+              }
+            >
+              <Icon size={15} />
+              {t(labelKey)}
+            </NavLink>
+          ))}
       </nav>
 
-      <div className="p-3 border-t border-zinc-100">
-        <div className="flex items-center gap-2 px-3 py-2 mb-1">
-          <div className="w-7 h-7 rounded-full bg-zinc-900 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
+      {/* User */}
+      <div className="px-3 py-3 border-t border-zinc-100">
+        <div className="flex items-center gap-2.5 px-3 py-2 mb-0.5">
+          <div className="w-6 h-6 rounded-full bg-zinc-900 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
             {user?.name?.charAt(0)?.toUpperCase() || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p data-testid="sidebar-user-name" className="text-[12px] font-medium text-zinc-900 truncate">{user?.name}</p>
-            <p className="text-[10px] text-zinc-400 truncate capitalize">{org_role}</p>
+            <p
+              data-testid="sidebar-user-name"
+              className="text-sm font-medium text-zinc-900 truncate leading-tight"
+            >
+              {user?.name}
+            </p>
+            <p className="text-xs text-zinc-400 capitalize truncate leading-tight mt-0.5">
+              {org_role}
+            </p>
           </div>
         </div>
         <button
           onClick={handleLogout}
           data-testid="logout-btn"
-          className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-[12px] text-zinc-400 hover:text-zinc-900 hover:bg-zinc-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 w-full rounded-md text-xs text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
         >
-          <LogOut size={14} />
+          <LogOut size={13} />
           {t('logout')}
         </button>
       </div>
-    </>
+
+    </div>
   );
 
   return (
     <div className="min-h-screen bg-zinc-50 flex">
+
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-zinc-100 flex items-center h-14 px-4">
-        <button data-testid="mobile-menu-btn" onClick={() => setMobileOpen(true)} className="w-9 h-9 rounded-lg bg-zinc-100 flex items-center justify-center">
-          <Menu size={18} className="text-zinc-700" />
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-zinc-100 flex items-center h-12 px-4 gap-3">
+        <button
+          data-testid="mobile-menu-btn"
+          onClick={() => setMobileOpen(true)}
+          className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center"
+        >
+          <Menu size={16} className="text-zinc-600" />
         </button>
-        <span className="ml-3 text-[14px] font-bold text-zinc-900">{organization?.name || 'Rekovr'}</span>
+        <span className="text-sm font-semibold text-zinc-900">
+          {organization?.name || 'Rekovr'}
+        </span>
       </div>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/30" onClick={closeMobile} />
-          <aside className="relative w-60 bg-white flex flex-col h-full shadow-xl">
+          <div className="absolute inset-0 bg-zinc-900/30" onClick={closeMobile} />
+          <aside className="relative w-60 bg-white flex flex-col h-full shadow-sm">
             <button
               onClick={closeMobile}
-              className="absolute top-4 right-3 w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center"
+              className="absolute top-3.5 right-3 w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center z-10"
             >
-              <X size={16} className="text-zinc-600" />
+              <X size={14} className="text-zinc-600" />
             </button>
             {sidebarContent}
           </aside>
@@ -116,14 +149,15 @@ export default function Layout({ children, auth, onLogout }) {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 bg-white border-r border-zinc-100 flex-col fixed h-full z-10">
+      <aside className="hidden lg:flex w-56 bg-white border-r border-zinc-100 flex-col fixed h-full z-10">
         {sidebarContent}
       </aside>
 
       {/* Main content */}
-      <main className="lg:ml-60 flex-1 p-4 pt-18 lg:p-8 lg:pt-8 min-h-screen">
+      <main className="lg:ml-56 flex-1 px-6 py-6 pt-18 lg:px-8 lg:py-8 min-h-screen">
         {children}
       </main>
+
     </div>
   );
 }

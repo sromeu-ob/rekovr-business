@@ -64,10 +64,10 @@ export default function TeamPage({ auth }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 data-testid="team-heading" className="text-[20px] font-extrabold text-zinc-900">{t('team')}</h2>
-          <p className="text-[13px] text-zinc-400 mt-1">
+          <h1 data-testid="team-heading" className="text-2xl font-semibold text-zinc-900">{t('team')}</h1>
+          <p className="text-sm text-zinc-500 mt-1">
             {members.length} {members.length !== 1 ? t('members') : t('member')}
             {invites.length > 0 && ` · ${invites.length} ${t('pending')}`}
           </p>
@@ -76,7 +76,7 @@ export default function TeamPage({ auth }) {
           <button
             data-testid="invite-member-btn"
             onClick={() => { setShowInvite(!showInvite); setInviteResult(null); }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors"
           >
             <UserPlus size={15} />
             {t('inviteMember')}
@@ -86,8 +86,8 @@ export default function TeamPage({ auth }) {
 
       {/* Invite form */}
       {showInvite && (
-        <div className="bg-white border border-zinc-100 rounded-2xl p-5 mb-6">
-          <p className="text-[13px] font-bold text-zinc-900 mb-4">{t('newInvitation')}</p>
+        <div className="bg-white border border-zinc-200 rounded-lg p-5 mb-6">
+          <p className="text-sm font-medium text-zinc-900 mb-4">{t('newInvitation')}</p>
           <form onSubmit={handleInvite} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
@@ -97,7 +97,7 @@ export default function TeamPage({ auth }) {
                 value={inviteForm.name}
                 onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
                 required
-                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
               />
               <input
                 data-testid="invite-email-input"
@@ -106,21 +106,21 @@ export default function TeamPage({ auth }) {
                 value={inviteForm.email}
                 onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                 required
-                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
               />
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 bg-zinc-100 rounded-md p-0.5">
                 {['operator', 'admin'].map((r) => (
                   <button
                     key={r}
                     data-testid={`invite-role-${r}`}
                     type="button"
                     onClick={() => setInviteForm({ ...inviteForm, role: r })}
-                    className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition ${
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                       inviteForm.role === r
-                        ? 'bg-zinc-900 text-white'
-                        : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                        ? 'bg-white text-zinc-900 shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-700'
                     }`}
                   >
                     {r.charAt(0).toUpperCase() + r.slice(1)}
@@ -131,7 +131,7 @@ export default function TeamPage({ auth }) {
                 data-testid="send-invite-btn"
                 type="submit"
                 disabled={inviting}
-                className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-zinc-900 text-white rounded-xl text-[13px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
+                className="ml-auto flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50"
               >
                 {inviting ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
                 {inviting ? t('sending') : t('sendInvitation')}
@@ -140,12 +140,12 @@ export default function TeamPage({ auth }) {
           </form>
 
           {inviteResult && (
-            <div className={`mt-3 px-4 py-3 rounded-xl text-[12px] font-medium ${
-              inviteResult.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            <div className={`mt-3 px-3 py-2.5 rounded-md text-sm ${
+              inviteResult.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
             }`}>
               {inviteResult.message}
               {inviteResult.token && (
-                <span className="block mt-1 text-[11px] text-green-600 font-mono break-all">
+                <span className="block mt-1 text-xs text-emerald-600 font-mono break-all">
                   Dev token: {inviteResult.token}
                 </span>
               )}
@@ -156,33 +156,33 @@ export default function TeamPage({ auth }) {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
         </div>
       ) : (
         <div className="space-y-6">
           {/* Members */}
-          <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
             <div className="px-5 py-3.5 border-b border-zinc-100">
-              <p className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">{t('membersSection')}</p>
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{t('membersSection')}</p>
             </div>
-            <div className="divide-y divide-zinc-50">
+            <div className="divide-y divide-zinc-100">
               {members.map((m) => {
                 const rc = ROLE_CONFIG[m.role] || ROLE_CONFIG.operator;
                 const RoleIcon = rc.icon;
                 return (
-                  <div key={m.user_id} data-testid={`member-${m.user_id}`} className="flex items-center gap-4 px-5 py-4">
+                  <div key={m.user_id} data-testid={`member-${m.user_id}`} className="flex items-center gap-4 px-5 py-3.5">
                     {m.picture ? (
-                      <img src={m.picture} alt="" className="w-9 h-9 rounded-full object-cover bg-zinc-100" />
+                      <img src={m.picture} alt="" className="w-8 h-8 rounded-full object-cover bg-zinc-100 flex-shrink-0" />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-zinc-100 flex items-center justify-center text-[13px] font-bold text-zinc-400">
+                      <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-sm font-medium text-zinc-500 flex-shrink-0">
                         {(m.name || m.email || '?').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-medium text-zinc-800 truncate">{m.name}</p>
-                      <p className="text-[12px] text-zinc-400 truncate">{m.email}</p>
+                      <p className="text-sm font-medium text-zinc-900 truncate">{m.name}</p>
+                      <p className="text-xs text-zinc-500 truncate">{m.email}</p>
                     </div>
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold ${rc.style}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${rc.style}`}>
                       <RoleIcon size={11} />
                       {ROLE_LABELS[m.role] || m.role}
                     </span>
@@ -194,23 +194,23 @@ export default function TeamPage({ auth }) {
 
           {/* Pending invites */}
           {invites.length > 0 && (
-            <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden">
+            <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
               <div className="px-5 py-3.5 border-b border-zinc-100">
-                <p className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">{t('pendingInvitations')}</p>
+                <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{t('pendingInvitations')}</p>
               </div>
-              <div className="divide-y divide-zinc-50">
+              <div className="divide-y divide-zinc-100">
                 {invites.map((inv, i) => (
-                  <div key={i} className="flex items-center gap-4 px-5 py-4">
-                    <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center">
-                      <Clock size={14} className="text-amber-500" />
+                  <div key={i} className="flex items-center gap-4 px-5 py-3.5">
+                    <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                      <Clock size={13} className="text-amber-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-medium text-zinc-800 truncate">{inv.name}</p>
-                      <p className="text-[12px] text-zinc-400 truncate">{inv.email}</p>
+                      <p className="text-sm font-medium text-zinc-900 truncate">{inv.name}</p>
+                      <p className="text-xs text-zinc-500 truncate">{inv.email}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <span className="text-[11px] font-medium text-amber-600 capitalize">{inv.role}</span>
-                      <p className="text-[10px] text-zinc-300 mt-0.5">{timeAgo(inv.created_at, t)}</p>
+                      <span className="text-xs font-medium text-amber-600 capitalize">{inv.role}</span>
+                      <p className="text-xs text-zinc-400 mt-0.5">{timeAgo(inv.created_at, t)}</p>
                     </div>
                   </div>
                 ))}

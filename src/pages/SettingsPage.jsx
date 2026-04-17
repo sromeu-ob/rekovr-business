@@ -1,21 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Settings, QrCode, Save, RotateCcw, Loader2, CheckCircle, Globe, Euro } from 'lucide-react';
+import { QrCode, Save, RotateCcw, Loader2, CheckCircle } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
-function Toggle({ enabled, onChange }) {
+function Toggle({ enabled, onChange, testId }) {
   return (
     <button
+      type="button"
+      data-testid={testId}
       onClick={() => onChange(!enabled)}
-      className={`relative w-11 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-teal-600' : 'bg-zinc-200'
+      className={`relative flex-shrink-0 w-11 h-6 rounded-full overflow-hidden transition-colors ${
+        enabled ? 'bg-zinc-900' : 'bg-zinc-200'
       }`}
     >
       <span
-        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
+        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform"
         style={{ transform: enabled ? 'translateX(22px)' : 'translateX(0)' }}
       />
     </button>
+  );
+}
+
+function CardHeader({ title, description }) {
+  return (
+    <div className="px-6 py-5 border-b border-zinc-100">
+      <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
+      <p className="text-sm text-zinc-500 mt-0.5">{description}</p>
+    </div>
   );
 }
 
@@ -23,25 +34,31 @@ function SectionActions({ saving, saved, hasChanges, onSave, onReset, error, t }
   return (
     <>
       {error && (
-        <div className="mx-5 mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-[12px] text-red-600">
+        <div className="mx-6 mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-xs text-red-600">
           {error}
         </div>
       )}
-      <div className="flex items-center gap-3 px-5 py-4 border-t border-zinc-100 bg-zinc-50/50">
-        <button
-          onClick={onSave}
-          disabled={saving || !hasChanges}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 text-white text-[12px] font-semibold hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : saved ? <CheckCircle className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
-          {saving ? t('saving') : saved ? t('saved') : t('saveChanges')}
-        </button>
+      <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50/60">
         <button
           onClick={onReset}
           disabled={!hasChanges}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-200 text-zinc-600 text-[12px] font-semibold hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          <RotateCcw className="w-3.5 h-3.5" /> {t('reset')}
+          <RotateCcw className="w-3.5 h-3.5" />
+          {t('reset')}
+        </button>
+        <button
+          onClick={onSave}
+          disabled={saving || !hasChanges}
+          className="flex items-center gap-2 px-4 py-2 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          {saving
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : saved
+            ? <CheckCircle className="w-3.5 h-3.5" />
+            : <Save className="w-3.5 h-3.5" />
+          }
+          {saving ? t('saving') : saved ? t('saved') : t('saveChanges')}
         </button>
       </div>
     </>
@@ -57,7 +74,6 @@ export default function SettingsPage({ auth }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
 
-  // Org-level settings (fee policy etc.)
   const [orgConfig, setOrgConfig] = useState(null);
   const [orgOriginal, setOrgOriginal] = useState(null);
   const [orgSaving, setOrgSaving] = useState(false);
@@ -148,7 +164,7 @@ export default function SettingsPage({ auth }) {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
       </div>
     );
   }
@@ -161,37 +177,34 @@ export default function SettingsPage({ auth }) {
 
   return (
     <div className="max-w-2xl">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 data-testid="settings-heading" className="text-xl font-extrabold text-zinc-900 tracking-tight">{t('settings')}</h1>
-          <p className="text-[12px] text-zinc-400">{t('manageConfiguration')}</p>
-        </div>
+
+      {/* Page header */}
+      <div className="mb-8">
+        <h1 data-testid="settings-heading" className="text-2xl font-semibold text-zinc-900">
+          {t('settings')}
+        </h1>
+        <p className="text-sm text-zinc-500 mt-1">{t('manageConfiguration')}</p>
       </div>
 
       <div className="space-y-6">
+
         {/* Language */}
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-          <div className="flex items-center gap-3 p-5 border-b border-zinc-100">
-            <Globe className="w-5 h-5 text-zinc-500" />
-            <div>
-              <h2 className="text-[14px] font-bold text-zinc-900">{t('language')}</h2>
-              <p className="text-[11px] text-zinc-400">{t('languageDesc')}</p>
-            </div>
-          </div>
-          <div className="p-5">
+        <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <CardHeader
+            title={t('language')}
+            description={t('languageDesc')}
+          />
+          <div className="px-6 py-5">
             <div className="flex gap-2">
               {LANGUAGES.map(({ code, label }) => (
                 <button
                   key={code}
                   data-testid={`lang-${code}`}
                   onClick={() => changeLanguage(code)}
-                  className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors ${
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     language === code
                       ? 'bg-zinc-900 text-white'
-                      : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                   }`}
                 >
                   {label}
@@ -202,30 +215,26 @@ export default function SettingsPage({ auth }) {
         </div>
 
         {/* Fee Policy */}
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-          <div className="flex items-center gap-3 p-5 border-b border-zinc-100">
-            <Euro className="w-5 h-5 text-teal-600" />
-            <div>
-              <h2 className="text-[14px] font-bold text-zinc-900">{t('feePolicy')}</h2>
-              <p className="text-[11px] text-zinc-400">{t('feePolicyDesc')}</p>
-            </div>
-          </div>
+        <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <CardHeader
+            title={t('feePolicy')}
+            description={t('feePolicyDesc')}
+          />
 
           {orgConfig && (
-            <div className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 pr-4">
-                  <p className="text-[13px] font-semibold text-zinc-800">{t('chargeUsersForRecovery')}</p>
-                  <p className="text-[11px] text-zinc-400 mt-0.5 leading-relaxed">
+            <div className="px-6 py-5">
+              <div className="flex items-center justify-between gap-6">
+                <div>
+                  <p className="text-sm font-medium text-zinc-900">{t('chargeUsersForRecovery')}</p>
+                  <p className="text-sm text-zinc-500 mt-0.5 leading-relaxed">
                     {t('chargeUsersForRecoveryDesc')}
                   </p>
                 </div>
-                <span data-testid="charge-users-toggle">
-                  <Toggle
-                    enabled={!!orgConfig.charge_users_for_recovery}
-                    onChange={(v) => setOrgConfig(c => ({ ...c, charge_users_for_recovery: v }))}
-                  />
-                </span>
+                <Toggle
+                  testId="charge-users-toggle"
+                  enabled={!!orgConfig.charge_users_for_recovery}
+                  onChange={(v) => setOrgConfig(c => ({ ...c, charge_users_for_recovery: v }))}
+                />
               </div>
             </div>
           )}
@@ -242,52 +251,59 @@ export default function SettingsPage({ auth }) {
         </div>
 
         {/* Pickup QR */}
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-          <div className="flex items-center gap-3 p-5 border-b border-zinc-100">
-            <QrCode className="w-5 h-5 text-teal-600" />
+        <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-zinc-100 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0">
+              <QrCode className="w-4 h-4 text-zinc-500" />
+            </div>
             <div>
-              <h2 className="text-[14px] font-bold text-zinc-900">{t('pickupQrCode')}</h2>
-              <p className="text-[11px] text-zinc-400">{t('configureQrHandover')}</p>
+              <h2 className="text-sm font-semibold text-zinc-900">{t('pickupQrCode')}</h2>
+              <p className="text-sm text-zinc-500 mt-0.5">{t('configureQrHandover')}</p>
             </div>
           </div>
 
           {config && (
-            <div className="p-5 space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="px-6 py-5 space-y-6">
+
+              {/* Enable toggle */}
+              <div className="flex items-center justify-between gap-6">
                 <div>
-                  <p className="text-[13px] font-semibold text-zinc-800">{t('enableQrPickup')}</p>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">
-                    {t('generateQrCodes')}
-                  </p>
+                  <p className="text-sm font-medium text-zinc-900">{t('enableQrPickup')}</p>
+                  <p className="text-sm text-zinc-500 mt-0.5">{t('generateQrCodes')}</p>
                 </div>
-                <span data-testid="pickup-qr-toggle">
-                  <Toggle
-                    enabled={config.pickup_qr_enabled}
-                    onChange={(v) => setConfig(c => ({ ...c, pickup_qr_enabled: v }))}
-                  />
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-[13px] font-semibold text-zinc-800 mb-1.5">{t('qrExpiryHours')}</label>
-                <p className="text-[11px] text-zinc-400 mb-2">{t('qrExpiryDesc')}</p>
-                <input
-                  data-testid="pickup-qr-expiry"
-                  type="number"
-                  min={1}
-                  max={720}
-                  value={config.pickup_qr_expiry_hours}
-                  onChange={(e) => setConfig(c => ({ ...c, pickup_qr_expiry_hours: parseInt(e.target.value) || 1 }))}
-                  className="w-32 px-3 py-2 text-[13px] border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400"
+                <Toggle
+                  testId="pickup-qr-toggle"
+                  enabled={config.pickup_qr_enabled}
+                  onChange={(v) => setConfig(c => ({ ...c, pickup_qr_enabled: v }))}
                 />
-                <span className="ml-2 text-[11px] text-zinc-400">{t('hoursRange')}</span>
               </div>
 
+              {/* Expiry hours */}
               <div>
-                <label className="block text-[13px] font-semibold text-zinc-800 mb-1.5">{t('pickupInstructions')}</label>
-                <p className="text-[11px] text-zinc-400 mb-2">
-                  {t('pickupInstructionsDesc')}
-                </p>
+                <label className="block text-sm font-medium text-zinc-900 mb-1">
+                  {t('qrExpiryHours')}
+                </label>
+                <p className="text-sm text-zinc-500 mb-3">{t('qrExpiryDesc')}</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    data-testid="pickup-qr-expiry"
+                    type="number"
+                    min={1}
+                    max={720}
+                    value={config.pickup_qr_expiry_hours}
+                    onChange={(e) => setConfig(c => ({ ...c, pickup_qr_expiry_hours: parseInt(e.target.value) || 1 }))}
+                    className="w-28 h-9 px-3 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors"
+                  />
+                  <span className="text-sm text-zinc-500">{t('hoursRange')}</span>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-900 mb-1">
+                  {t('pickupInstructions')}
+                </label>
+                <p className="text-sm text-zinc-500 mb-3">{t('pickupInstructionsDesc')}</p>
                 <textarea
                   data-testid="pickup-instructions"
                   value={config.pickup_instructions}
@@ -295,15 +311,26 @@ export default function SettingsPage({ auth }) {
                   placeholder={t('pickupInstructionsPlaceholder')}
                   maxLength={1000}
                   rows={3}
-                  className="w-full px-3 py-2 text-[13px] border border-zinc-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400 placeholder:text-zinc-300"
+                  className="w-full px-3 py-2.5 text-sm border border-zinc-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 placeholder:text-zinc-400 transition-colors"
                 />
-                <p className="text-[10px] text-zinc-300 mt-1 text-right">{config.pickup_instructions.length}/1000</p>
+                <p className="text-xs text-zinc-400 mt-1.5 text-right">
+                  {config.pickup_instructions.length}/1000
+                </p>
               </div>
             </div>
           )}
 
-          <SectionActions saving={saving} saved={saved} hasChanges={hasChanges} onSave={handleSave} onReset={handleReset} error={error} t={t} />
+          <SectionActions
+            saving={saving}
+            saved={saved}
+            hasChanges={hasChanges}
+            onSave={handleSave}
+            onReset={handleReset}
+            error={error}
+            t={t}
+          />
         </div>
+
       </div>
     </div>
   );

@@ -82,7 +82,11 @@ const translations = {
 
     // Login
     business: 'Business',
+    mapLegendFoundItem: 'Found item',
+    mapLegendMatchZone: 'Approximate match zone',
     selectOrganization: 'Select the organization you want to access:',
+    selectOrganizationDesc: 'Choose the workspace you want to sign in to.',
+    loginTagline: 'Recover what matters',
     backToLogin: '← Back to login',
     workEmail: 'Work email',
     password: 'Password',
@@ -358,7 +362,11 @@ const translations = {
 
     // Login
     business: 'Business',
+    mapLegendFoundItem: 'Objeto encontrado',
+    mapLegendMatchZone: 'Zona aproximada del match',
     selectOrganization: 'Selecciona la organización a la que quieres acceder:',
+    selectOrganizationDesc: 'Elige el espacio de trabajo al que quieres acceder.',
+    loginTagline: 'Recupera lo que importa',
     backToLogin: '← Volver al inicio',
     workEmail: 'Correo corporativo',
     password: 'Contraseña',
@@ -634,7 +642,11 @@ const translations = {
 
     // Login
     business: 'Business',
+    mapLegendFoundItem: 'Objecte trobat',
+    mapLegendMatchZone: 'Zona aproximada del match',
     selectOrganization: "Selecciona l'organització a la qual vols accedir:",
+    selectOrganizationDesc: "Tria l'espai de treball al qual vols accedir.",
+    loginTagline: 'Recupera el que importa',
     backToLogin: "← Tornar a l'inici",
     workEmail: 'Correu corporatiu',
     password: 'Contrasenya',

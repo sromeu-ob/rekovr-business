@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -16,12 +17,10 @@ export default function LoginPage({ onLogin }) {
     setError('');
     try {
       const res = await api.post('/business/auth/login', { email, password });
-
       if (res.data.requires_org_selection) {
         setOrgList({ email, password, orgs: res.data.organizations });
         return;
       }
-
       onLogin(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || t('loginFailed'));
@@ -47,98 +46,147 @@ export default function LoginPage({ onLogin }) {
     }
   };
 
+  /* ── Org selection ─────────────────────────────────────────────────────── */
   if (orgList) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-5">
-        <div className="w-full max-w-[360px]">
-          <div className="mb-8">
-            <h1 className="text-[28px] font-extrabold tracking-tight text-zinc-900">Rekovr</h1>
-            <p className="text-[13px] text-zinc-400 mt-1">{t('business')}</p>
-          </div>
-          <p className="text-[13px] font-medium text-zinc-700 mb-4">
-            {t('selectOrganization')}
-          </p>
-          <div className="space-y-2">
-            {orgList.orgs.map((org) => (
-              <button
-                key={org.organization_id}
-                onClick={() => handleOrgSelect(org.organization_id)}
-                disabled={loading}
-                data-testid={`org-select-${org.organization_id}`}
-                className="w-full flex items-center justify-between px-4 py-3 border border-zinc-200 rounded-xl hover:border-zinc-400 hover:bg-zinc-50 transition text-left disabled:opacity-50"
-              >
-                <div>
-                  <p className="text-[13px] font-semibold text-zinc-900">{org.name}</p>
-                  <p className="text-[11px] text-zinc-400 capitalize mt-0.5">{org.type}</p>
-                </div>
-                <span className="text-zinc-300">→</span>
-              </button>
-            ))}
-          </div>
-          {error && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-lg">
-              <p className="text-[12px] text-red-600">{error}</p>
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+
+          {/* Brand */}
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center gap-2 mb-1">
+              <span className="text-xl font-semibold text-zinc-900">Rekovr</span>
+              <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-md">
+                Business
+              </span>
             </div>
-          )}
-          <button
-            onClick={() => setOrgList(null)}
-            className="mt-4 text-[12px] text-zinc-400 hover:text-zinc-600 transition"
-          >
-            {t('backToLogin')}
-          </button>
+          </div>
+
+          {/* Card */}
+          <div className="bg-white border border-zinc-200 rounded-lg shadow-sm px-6 py-7">
+            <h2 className="text-base font-semibold text-zinc-900 mb-1">
+              {t('selectOrganization')}
+            </h2>
+            <p className="text-sm text-zinc-500 mb-5">{t('selectOrganizationDesc')}</p>
+
+            <div className="space-y-2">
+              {orgList.orgs.map((org) => (
+                <button
+                  key={org.organization_id}
+                  onClick={() => handleOrgSelect(org.organization_id)}
+                  disabled={loading}
+                  data-testid={`org-select-${org.organization_id}`}
+                  className="w-full flex items-center justify-between px-4 py-3 border border-zinc-200 rounded-md hover:border-zinc-400 hover:bg-zinc-50 transition-colors text-left disabled:opacity-50"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900">{org.name}</p>
+                    <p className="text-xs text-zinc-500 capitalize mt-0.5">{org.type}</p>
+                  </div>
+                  {loading
+                    ? <Loader2 size={14} className="text-zinc-400 animate-spin flex-shrink-0" />
+                    : <ArrowRight size={14} className="text-zinc-400 flex-shrink-0" />
+                  }
+                </button>
+              ))}
+            </div>
+
+            {error && (
+              <div className="mt-4 px-3 py-2.5 bg-red-50 rounded-md">
+                <p className="text-xs text-red-600">{error}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setOrgList(null)}
+              className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors"
+            >
+              {t('backToLogin')}
+            </button>
+          </div>
+
         </div>
       </div>
     );
   }
 
+  /* ── Login form ────────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-5">
-      <div className="w-full max-w-[320px]">
-        <div className="mb-10">
-          <h1 className="text-[32px] font-extrabold tracking-tight text-zinc-900">Rekovr</h1>
-          <p className="text-[13px] text-zinc-400 mt-1">{t('business')}</p>
+    <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+
+        {/* Brand */}
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <span className="text-xl font-semibold text-zinc-900">Rekovr</span>
+            <span className="text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-md">
+              Business
+            </span>
+          </div>
+          <p className="text-sm text-zinc-500">{t('loginTagline')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="email"
-            placeholder={t('workEmail')}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoFocus
-            data-testid="login-email-input"
-            className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-[13px] outline-none focus:border-zinc-400 transition"
-          />
-          <input
-            type="password"
-            placeholder={t('password')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            data-testid="login-password-input"
-            className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-lg text-[13px] outline-none focus:border-zinc-400 transition"
-          />
+        {/* Card */}
+        <div className="bg-white border border-zinc-200 rounded-lg shadow-sm px-6 py-7">
+          <h2 className="text-base font-semibold text-zinc-900 mb-5">{t('signIn')}</h2>
 
-          {error && (
-            <div data-testid="login-error" className="p-3 bg-red-50 border border-red-100 rounded-lg">
-              <p className="text-[12px] text-red-600">{error}</p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                {t('workEmail')}
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+                data-testid="login-email-input"
+                placeholder="you@company.com"
+                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors placeholder:text-zinc-400"
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            data-testid="login-submit-btn"
-            className="w-full h-11 bg-zinc-900 text-white rounded-lg text-[13px] font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
-          >
-            {loading ? t('signingIn') : t('signIn')}
-          </button>
-        </form>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                {t('password')}
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                data-testid="login-password-input"
+                placeholder="••••••••"
+                className="w-full h-10 px-3 bg-white border border-zinc-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-colors placeholder:text-zinc-400"
+              />
+            </div>
 
-        <p className="text-[11px] text-zinc-300 text-center mt-6">
+            {error && (
+              <div data-testid="login-error" className="px-3 py-2.5 bg-red-50 rounded-md">
+                <p className="text-xs text-red-600">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              data-testid="login-submit-btn"
+              className="w-full h-10 flex items-center justify-center gap-2 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50 mt-2"
+            >
+              {loading && <Loader2 size={14} className="animate-spin" />}
+              {loading ? t('signingIn') : t('signIn')}
+            </button>
+
+          </form>
+        </div>
+
+        <p className="text-xs text-zinc-400 text-center mt-5">
           {t('invitationOnly')}
         </p>
+
       </div>
     </div>
   );
