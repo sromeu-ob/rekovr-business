@@ -49,25 +49,25 @@ export default function LoginPage({ onLogin }) {
   /* ── Org selection ─────────────────────────────────────────────────────── */
   if (orgList) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
 
           {/* Brand */}
           <div className="mb-8 text-center">
             <div className="inline-flex items-center gap-2 mb-1">
-              <span className="text-xl font-semibold text-stone-900">Rekovr</span>
-              <span className="text-xs font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md">
+              <span className="text-xl font-semibold text-slate-900">Rekovr</span>
+              <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                 Business
               </span>
             </div>
           </div>
 
           {/* Card */}
-          <div className="bg-white border border-stone-200 rounded-lg shadow-sm px-6 py-7">
-            <h2 className="text-base font-semibold text-stone-900 mb-1">
+          <div className="bg-white border border-slate-200 rounded-lg shadow-sm px-6 py-7">
+            <h2 className="text-base font-semibold text-slate-900 mb-1">
               {t('selectOrganization')}
             </h2>
-            <p className="text-sm text-stone-500 mb-5">{t('selectOrganizationDesc')}</p>
+            <p className="text-sm text-slate-500 mb-5">{t('selectOrganizationDesc')}</p>
 
             <div className="space-y-2">
               {orgList.orgs.map((org) => (
@@ -76,15 +76,15 @@ export default function LoginPage({ onLogin }) {
                   onClick={() => handleOrgSelect(org.organization_id)}
                   disabled={loading}
                   data-testid={`org-select-${org.organization_id}`}
-                  className="w-full flex items-center justify-between px-4 py-3 border border-stone-200 rounded-md hover:border-stone-400 hover:bg-stone-50 transition-colors text-left disabled:opacity-50"
+                  className="w-full flex items-center justify-between px-4 py-3 border border-slate-200 rounded-md hover:border-slate-400 hover:bg-slate-50 transition-colors text-left disabled:opacity-50"
                 >
                   <div>
-                    <p className="text-sm font-medium text-stone-900">{org.name}</p>
-                    <p className="text-xs text-stone-500 capitalize mt-0.5">{org.type}</p>
+                    <p className="text-sm font-medium text-slate-900">{org.name}</p>
+                    <p className="text-xs text-slate-500 capitalize mt-0.5">{org.type}</p>
                   </div>
                   {loading
-                    ? <Loader2 size={14} className="text-stone-400 animate-spin flex-shrink-0" />
-                    : <ArrowRight size={14} className="text-stone-400 flex-shrink-0" />
+                    ? <Loader2 size={14} className="text-slate-400 animate-spin flex-shrink-0" />
+                    : <ArrowRight size={14} className="text-slate-400 flex-shrink-0" />
                   }
                 </button>
               ))}
@@ -100,7 +100,7 @@ export default function LoginPage({ onLogin }) {
           <div className="mt-4 text-center">
             <button
               onClick={() => setOrgList(null)}
-              className="text-sm text-stone-400 hover:text-stone-700 transition-colors"
+              className="text-sm text-slate-400 hover:text-slate-700 transition-colors"
             >
               {t('backToLogin')}
             </button>
@@ -113,28 +113,28 @@ export default function LoginPage({ onLogin }) {
 
   /* ── Login form ────────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
 
         {/* Brand */}
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 mb-2">
-            <span className="text-xl font-semibold text-stone-900">Rekovr</span>
-            <span className="text-xs font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md">
+            <span className="text-xl font-semibold text-slate-900">Rekovr</span>
+            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
               Business
             </span>
           </div>
-          <p className="text-sm text-stone-500">{t('loginTagline')}</p>
+          <p className="text-sm text-slate-500">{t('loginTagline')}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white border border-stone-200 rounded-lg shadow-sm px-6 py-7">
-          <h2 className="text-base font-semibold text-stone-900 mb-5">{t('signIn')}</h2>
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm px-6 py-7">
+          <h2 className="text-base font-semibold text-slate-900 mb-5">{t('signIn')}</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
 
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 {t('workEmail')}
               </label>
               <input
@@ -145,12 +145,12 @@ export default function LoginPage({ onLogin }) {
                 autoFocus
                 data-testid="login-email-input"
                 placeholder="you@company.com"
-                className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors placeholder:text-stone-400"
+                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors placeholder:text-slate-400"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 {t('password')}
               </label>
               <input
@@ -160,7 +160,7 @@ export default function LoginPage({ onLogin }) {
                 required
                 data-testid="login-password-input"
                 placeholder="••••••••"
-                className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors placeholder:text-stone-400"
+                className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors placeholder:text-slate-400"
               />
             </div>
 
@@ -174,7 +174,7 @@ export default function LoginPage({ onLogin }) {
               type="submit"
               disabled={loading}
               data-testid="login-submit-btn"
-              className="w-full h-10 flex items-center justify-center gap-2 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-50 mt-2"
+              className="w-full h-10 flex items-center justify-center gap-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 mt-2"
             >
               {loading && <Loader2 size={14} className="animate-spin" />}
               {loading ? t('signingIn') : t('signIn')}
@@ -183,7 +183,7 @@ export default function LoginPage({ onLogin }) {
           </form>
         </div>
 
-        <p className="text-xs text-stone-400 text-center mt-5">
+        <p className="text-xs text-slate-400 text-center mt-5">
           {t('invitationOnly')}
         </p>
 

@@ -83,7 +83,7 @@ export default function EventFormPage({ auth }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-5 h-5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
       </div>
     );
   }
@@ -95,20 +95,20 @@ export default function EventFormPage({ auth }) {
         <div className="w-14 h-14 rounded-md bg-emerald-50 flex items-center justify-center mb-4">
           <CalendarDays size={24} className="text-emerald-600" />
         </div>
-        <h2 className="text-xl font-semibold text-stone-900 mb-1">{t('evtEventCreated')}</h2>
-        <p className="text-sm text-stone-500 mb-6">
-          <span className="font-medium text-stone-700">{success.name}</span> {t('evtHasBeenCreated')}
+        <h2 className="text-xl font-semibold text-slate-900 mb-1">{t('evtEventCreated')}</h2>
+        <p className="text-sm text-slate-500 mb-6">
+          <span className="font-medium text-slate-700">{success.name}</span> {t('evtHasBeenCreated')}
         </p>
         <div className="flex gap-3">
           <button
             onClick={handleCreateAnother}
-            className="px-4 py-2 bg-stone-100 text-stone-700 rounded-md text-sm font-medium hover:bg-stone-200 transition-colors"
+            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200 transition-colors"
           >
             {t('evtCreateAnother')}
           </button>
           <button
             onClick={() => navigate(`/events/${success.eventId}`)}
-            className="px-4 py-2 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors"
+            className="px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
           >
             {t('evtViewEvent')}
           </button>
@@ -123,15 +123,15 @@ export default function EventFormPage({ auth }) {
       <div className="flex items-center gap-3 mb-8">
         <button
           onClick={() => navigate(isEdit ? `/events/${eventId}` : '/events')}
-          className="w-8 h-8 rounded-md bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors"
+          className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
         >
-          <ArrowLeft size={15} className="text-stone-600" />
+          <ArrowLeft size={15} className="text-slate-600" />
         </button>
         <div>
-          <h2 className="text-2xl font-semibold text-stone-900">
+          <h2 className="text-2xl font-semibold text-slate-900">
             {isEdit ? t('evtEditEvent') : t('evtNewEvent')}
           </h2>
-          <p className="text-sm text-stone-500 mt-0.5">{t('evtFormSubtitle')}</p>
+          <p className="text-sm text-slate-500 mt-0.5">{t('evtFormSubtitle')}</p>
         </div>
       </div>
 
@@ -139,61 +139,61 @@ export default function EventFormPage({ auth }) {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Name */}
         <div>
-          <label className="block text-xs font-medium text-stone-700 mb-1.5">{t('evtNameLabel')} *</label>
+          <label className="block text-xs font-medium text-slate-700 mb-1.5">{t('evtNameLabel')} *</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('evtNamePlaceholder')}
             required
-            className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
+            className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
           />
         </div>
 
         {/* Dates */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1.5">{t('evtStartDate')} *</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1.5">{t('evtStartDate')} *</label>
             <input
               type="datetime-local"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               required
-              className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1.5">{t('evtEndDate')} *</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1.5">{t('evtEndDate')} *</label>
             <input
               type="datetime-local"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               required
-              className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
             />
           </div>
         </div>
 
         {/* Location */}
         <div>
-          <label className="block text-xs font-medium text-stone-700 mb-1.5">{t('evtLocationLabel')}</label>
+          <label className="block text-xs font-medium text-slate-700 mb-1.5">{t('evtLocationLabel')}</label>
           <input
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder={t('evtLocationPlaceholder')}
-            className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 placeholder:text-stone-400 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
+            className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
           />
         </div>
 
         {/* Status (only in edit mode) */}
         {isEdit && (
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1.5">{t('colStatus')}</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1.5">{t('colStatus')}</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full h-10 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-800 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
+              className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
             >
               {VALID_STATUSES.map(s => (
                 <option key={s} value={s}>{t(`evtStatus_${s}`)}</option>
@@ -213,7 +213,7 @@ export default function EventFormPage({ auth }) {
         <button
           type="submit"
           disabled={submitting || !name.trim() || !startDate || !endDate}
-          className="w-full py-2.5 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-2.5 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting
             ? (isEdit ? t('saving') : t('evtCreating'))

@@ -150,12 +150,12 @@ function MatchesMap({ foundItem, matches, hoveredMatchId, t }) {
     <div>
       <div ref={containerRef} className="w-full h-52 rounded-lg overflow-hidden" />
       <div className="flex items-center gap-4 mt-2 px-0.5">
-        <span className="flex items-center gap-1.5 text-xs text-stone-500">
-          <span className="w-2.5 h-2.5 rounded-full bg-stone-900 flex-shrink-0" />
+        <span className="flex items-center gap-1.5 text-xs text-slate-500">
+          <span className="w-2.5 h-2.5 rounded-full bg-slate-900 flex-shrink-0" />
           {t('mapLegendFoundItem')}
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-stone-500">
-          <span className="w-2.5 h-2.5 rounded-full border-2 border-stone-400 bg-stone-100 flex-shrink-0" />
+        <span className="flex items-center gap-1.5 text-xs text-slate-500">
+          <span className="w-2.5 h-2.5 rounded-full border-2 border-slate-400 bg-slate-100 flex-shrink-0" />
           {t('mapLegendMatchZone')}
         </span>
       </div>
@@ -176,16 +176,16 @@ const FILTERS = [
 const PAGE_SIZE = 20;
 
 function ScoreBar({ score, label }) {
-  if (score == null) return <span className="text-xs text-stone-400">—</span>;
+  if (score == null) return <span className="text-xs text-slate-400">—</span>;
   const pct = score <= 1 ? Math.round(score * 100) : Math.round(score);
   const color = pct >= 75 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-400';
   return (
     <div className="flex items-center gap-2">
-      {label && <span className="text-xs text-stone-500 font-medium">{label}</span>}
-      <div className="w-20 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+      {label && <span className="text-xs text-slate-500 font-medium">{label}</span>}
+      <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs font-medium text-stone-700">{pct}%</span>
+      <span className="text-xs font-medium text-slate-700">{pct}%</span>
     </div>
   );
 }
@@ -208,7 +208,7 @@ function VerificationBadge({ score }) {
 }
 
 function StatusBadge({ status, statusStyles }) {
-  const s = statusStyles[status] || { bg: 'bg-stone-100', text: 'text-stone-500', label: status };
+  const s = statusStyles[status] || { bg: 'bg-slate-100', text: 'text-slate-500', label: status };
   return (
     <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${s.bg} ${s.text}`}>
       {s.label}
@@ -219,7 +219,7 @@ function StatusBadge({ status, statusStyles }) {
 function DistanceBadge({ km }) {
   if (km == null) return null;
   const label = km < 1 ? `${Math.round(km * 1000)} m` : `${km} km`;
-  const color = km <= 1 ? 'text-emerald-600 bg-emerald-50' : km <= 5 ? 'text-amber-600 bg-amber-50' : 'text-stone-500 bg-stone-100';
+  const color = km <= 1 ? 'text-emerald-600 bg-emerald-50' : km <= 5 ? 'text-amber-600 bg-amber-50' : 'text-slate-500 bg-slate-100';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${color}`}>
       <MapPin size={11} />
@@ -250,7 +250,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
   return (
     <div
       data-testid={`match-card-${match.match_id}`}
-      className="bg-white border border-stone-200 rounded-lg p-5 space-y-4 transition-colors"
+      className="bg-white border border-slate-200 rounded-lg p-5 space-y-4 transition-colors"
       onMouseEnter={() => onHover?.(match.match_id)}
       onMouseLeave={() => onHover?.(null)}
     >
@@ -270,22 +270,22 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
           <img
             src={photoUrl(lost.photos[0])}
             alt=""
-            className="w-16 h-16 rounded-md object-cover flex-shrink-0 bg-stone-100"
+            className="w-16 h-16 rounded-md object-cover flex-shrink-0 bg-slate-100"
           />
         ) : (
-          <div className="w-16 h-16 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
-            <Package size={20} className="text-stone-400" />
+          <div className="w-16 h-16 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
+            <Package size={20} className="text-slate-400" />
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-stone-900 truncate">{lost?.title || '—'}</p>
+          <p className="text-sm font-medium text-slate-900 truncate">{lost?.title || '—'}</p>
           {lost?.description && (
-            <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">{lost.description}</p>
+            <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{lost.description}</p>
           )}
           {lost?.category && (
             <div className="flex flex-wrap items-center gap-2 mt-1.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium capitalize">
-                <Tag className="w-3 h-3 text-stone-500 flex-shrink-0" strokeWidth={1.5} />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium capitalize">
+                <Tag className="w-3 h-3 text-slate-500 flex-shrink-0" strokeWidth={1.5} />
                 {lost.category}
               </span>
             </div>
@@ -295,7 +295,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
 
       {/* AI reasoning */}
       {getLocalizedReasoning(match, language) && (
-        <p className="text-xs text-stone-500 italic bg-stone-50 rounded-md px-3 py-2">
+        <p className="text-xs text-slate-500 italic bg-slate-50 rounded-md px-3 py-2">
           {getLocalizedReasoning(match, language)}
         </p>
       )}
@@ -305,7 +305,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
         <div>
           <button
             onClick={fetchVerification}
-            className="flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-stone-800 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
           >
             {loadingVerification ? (
               <Loader2 size={12} className="animate-spin" />
@@ -317,7 +317,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
             {showVerification ? t('hideVerificationDetails') : t('viewVerificationDetails')}
           </button>
           {showVerification && verificationData && (
-            <div className="mt-3 border border-stone-200 rounded-lg overflow-hidden divide-y divide-stone-100">
+            <div className="mt-3 border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100">
               {(verificationData.questions || []).map((q, i) => {
                 const ans = (verificationData.answers || [])[i];
                 const score = ans?.score;
@@ -329,13 +329,13 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
                     : 'text-red-600 bg-red-50';
                 return (
                   <div key={i} className="px-4 py-3">
-                    <p className="text-sm font-medium text-stone-800">{q.question}</p>
+                    <p className="text-sm font-medium text-slate-800">{q.question}</p>
                     {q.answer_hint && (
-                      <p className="text-xs text-stone-400 mt-0.5 italic">{t('expected')}: {q.answer_hint}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 italic">{t('expected')}: {q.answer_hint}</p>
                     )}
                     {ans && (
                       <div className="mt-2 flex items-start gap-2">
-                        <p className="text-xs text-stone-600 flex-1">{ans.answer || '—'}</p>
+                        <p className="text-xs text-slate-600 flex-1">{ans.answer || '—'}</p>
                         {scorePct != null && (
                           <span className={`text-xs font-medium px-1.5 py-0.5 rounded-md flex-shrink-0 ${scoreStyle}`}>
                             {scorePct}%
@@ -344,14 +344,14 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
                       </div>
                     )}
                     {ans?.reasoning && (
-                      <p className="text-xs text-stone-400 italic mt-1">{ans.reasoning}</p>
+                      <p className="text-xs text-slate-400 italic mt-1">{ans.reasoning}</p>
                     )}
                   </div>
                 );
               })}
               {verificationData.verification_reasoning && (
-                <div className="px-4 py-3 bg-stone-50">
-                  <p className="text-xs text-stone-500 italic">{verificationData.verification_reasoning}</p>
+                <div className="px-4 py-3 bg-slate-50">
+                  <p className="text-xs text-slate-500 italic">{verificationData.verification_reasoning}</p>
                 </div>
               )}
             </div>
@@ -366,7 +366,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
             data-testid={`accept-btn-${match.match_id}`}
             onClick={() => onAction('accept')}
             disabled={isActioning}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-stone-900 text-white rounded-md text-sm font-medium hover:bg-stone-800 transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50"
           >
             {isActioning ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
             {t('accept')}
@@ -375,7 +375,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
             data-testid={`reject-btn-${match.match_id}`}
             onClick={() => onAction('reject')}
             disabled={isActioning}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-stone-100 text-stone-700 rounded-md text-sm font-medium hover:bg-stone-200 transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-slate-100 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
           >
             <X size={14} />
             {t('reject')}
@@ -385,7 +385,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
               data-testid={`request-info-btn-${match.match_id}`}
               onClick={() => onAction('request-info')}
               disabled={isActioning}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-stone-100 text-stone-700 rounded-md text-sm font-medium hover:bg-stone-200 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
             >
               <MessageSquare size={14} />
               <span className="hidden sm:inline">{t('moreInfo')}</span>
@@ -408,7 +408,7 @@ export default function ItemMatchesPage() {
     pending:   { bg: 'bg-amber-50',   text: 'text-amber-700',   label: t('statusPending') },
     accepted:  { bg: 'bg-emerald-50', text: 'text-emerald-700', label: t('statusAccepted') },
     rejected:  { bg: 'bg-red-50',     text: 'text-red-600',     label: t('statusRejected') },
-    dismissed: { bg: 'bg-stone-100',   text: 'text-stone-500',    label: t('statusDismissed') },
+    dismissed: { bg: 'bg-slate-100',   text: 'text-slate-500',    label: t('statusDismissed') },
     paid:      { bg: 'bg-emerald-50', text: 'text-emerald-700', label: t('statusPaid') },
     recovered: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: t('statusRecovered') },
   };
@@ -482,7 +482,7 @@ export default function ItemMatchesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
       </div>
     );
   }
@@ -493,20 +493,20 @@ export default function ItemMatchesPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate('/matches')}
-          className="w-8 h-8 rounded-md bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors"
+          className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
         >
-          <ArrowLeft size={16} className="text-stone-600" />
+          <ArrowLeft size={16} className="text-slate-600" />
         </button>
         <div>
-          <h1 data-testid="item-matches-heading" className="text-2xl font-semibold text-stone-900">{t('matchCandidates')}</h1>
-          <p className="text-sm text-stone-500">
+          <h1 data-testid="item-matches-heading" className="text-2xl font-semibold text-slate-900">{t('matchCandidates')}</h1>
+          <p className="text-sm text-slate-500">
             {total} {total !== 1 ? t('candidates') : t('candidate')} {t('forThisItem')}{filter !== 'all' ? ` (${filter})` : ''}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-1 bg-stone-100 rounded-md p-0.5 w-fit mb-6">
+      <div className="flex gap-1 bg-slate-100 rounded-md p-0.5 w-fit mb-6">
         {FILTERS.map(f => (
           <button
             key={f.key}
@@ -514,8 +514,8 @@ export default function ItemMatchesPage() {
             onClick={() => handleFilterChange(f.key)}
             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
               filter === f.key
-                ? 'bg-white text-stone-900 shadow-sm'
-                : 'text-stone-500 hover:text-stone-700'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             {t(f.labelKey)}
@@ -526,8 +526,8 @@ export default function ItemMatchesPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* LEFT: Found item (org's item) — sticky on desktop */}
         <div className="w-full lg:w-[340px] flex-shrink-0">
-          <div data-testid="found-item-detail" className="lg:sticky lg:top-8 bg-white border border-stone-200 rounded-lg p-5 space-y-4">
-            <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">{t('yourFoundItem')}</p>
+          <div data-testid="found-item-detail" className="lg:sticky lg:top-8 bg-white border border-slate-200 rounded-lg p-5 space-y-4">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t('yourFoundItem')}</p>
 
             {foundItem?.photos?.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
@@ -536,29 +536,29 @@ export default function ItemMatchesPage() {
                     key={i}
                     src={photoUrl(photo)}
                     alt=""
-                    className="w-full aspect-square rounded-md object-cover bg-stone-100"
+                    className="w-full aspect-square rounded-md object-cover bg-slate-100"
                   />
                 ))}
               </div>
             )}
 
             <div>
-              <p className="text-sm font-semibold text-stone-900">{foundItem?.title}</p>
+              <p className="text-sm font-semibold text-slate-900">{foundItem?.title}</p>
               {foundItem?.description && (
-                <p className="text-xs text-stone-500 mt-1 line-clamp-3">{foundItem.description}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-3">{foundItem.description}</p>
               )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               {foundItem?.date_time && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium">
-                  <Clock className="w-3 h-3 text-stone-500 flex-shrink-0" strokeWidth={1.5} />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
+                  <Clock className="w-3 h-3 text-slate-500 flex-shrink-0" strokeWidth={1.5} />
                   {new Date(foundItem.date_time).toLocaleString()}
                 </span>
               )}
               {foundItem?.category && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium capitalize">
-                  <Tag className="w-3 h-3 text-stone-500 flex-shrink-0" strokeWidth={1.5} />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium capitalize">
+                  <Tag className="w-3 h-3 text-slate-500 flex-shrink-0" strokeWidth={1.5} />
                   {foundItem.category}
                 </span>
               )}
@@ -572,13 +572,13 @@ export default function ItemMatchesPage() {
         <div className="flex-1 space-y-3">
           {matches.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-sm font-medium text-stone-900">
+              <p className="text-sm font-medium text-slate-900">
                 {filter === 'active' ? t('noPendingMatchesForItem') : t('noMatchCandidates')}
               </p>
               {filter === 'active' && (
                 <button
                   onClick={() => handleFilterChange('all')}
-                  className="mt-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors"
+                  className="mt-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   {t('viewAllMatches')}
                 </button>
@@ -611,11 +611,11 @@ export default function ItemMatchesPage() {
                 <button
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="w-full mt-2 py-2.5 text-sm font-medium text-stone-500 bg-white border border-stone-200 rounded-md hover:bg-stone-50 transition-colors disabled:opacity-50"
+                  className="w-full mt-2 py-2.5 text-sm font-medium text-slate-500 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors disabled:opacity-50"
                 >
                   {loadingMore ? (
                     <span className="inline-flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
+                      <span className="w-3.5 h-3.5 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
                     </span>
                   ) : (
                     `${t('loadMore')} (${total - matches.length} ${t('remaining')})`

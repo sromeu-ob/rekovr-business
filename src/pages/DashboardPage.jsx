@@ -6,13 +6,13 @@ import { useI18n } from '../contexts/I18nContext';
 
 function StatCard({ icon: Icon, label, value, sub, testId }) {
   return (
-    <div data-testid={testId} className="bg-white rounded-lg border border-stone-200 p-5">
+    <div data-testid={testId} className="bg-white rounded-lg border border-slate-200 p-5">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">{label}</span>
-        <Icon size={15} className="text-stone-400" />
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
+        <Icon size={15} className="text-slate-400" />
       </div>
-      <p className="text-3xl font-semibold text-stone-900 leading-none tabular-nums">{value ?? '—'}</p>
-      {sub && <p className="text-xs text-stone-500 mt-2">{sub}</p>}
+      <p className="text-3xl font-semibold text-slate-900 leading-none tabular-nums">{value ?? '—'}</p>
+      {sub && <p className="text-xs text-slate-500 mt-2">{sub}</p>}
     </div>
   );
 }
@@ -25,7 +25,7 @@ const STATUS_DOT = {
   recovered:            'bg-emerald-500',
   paid:                 'bg-emerald-500',
   rejected:             'bg-red-400',
-  dismissed:            'bg-stone-300',
+  dismissed:            'bg-slate-300',
 };
 
 function timeAgo(dateStr, t) {
@@ -65,7 +65,7 @@ export default function DashboardPage({ auth }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-5 h-5 border-2 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
       </div>
     );
   }
@@ -89,16 +89,16 @@ export default function DashboardPage({ auth }) {
       {/* Page header */}
       <div className="flex items-start justify-between mb-8 gap-4">
         <div>
-          <h1 data-testid="dashboard-heading" className="text-2xl font-semibold text-stone-900">
+          <h1 data-testid="dashboard-heading" className="text-2xl font-semibold text-slate-900">
             {t('dashboard')}
           </h1>
-          <p className="text-sm text-stone-500 mt-1">{orgName}</p>
+          <p className="text-sm text-slate-500 mt-1">{orgName}</p>
         </div>
         {events.length > 0 && (
           <select
             value={eventFilter}
             onChange={(e) => setEventFilter(e.target.value)}
-            className="h-9 px-3 bg-white border border-stone-300 rounded-md text-sm text-stone-700 outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors flex-shrink-0"
+            className="h-9 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors flex-shrink-0"
           >
             <option value="">{t('evtAllEvents')}</option>
             {events.map(evt => (
@@ -144,13 +144,13 @@ export default function DashboardPage({ auth }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
 
         {/* Recent items */}
-        <div data-testid="recent-items" className="bg-white rounded-lg border border-stone-200">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-            <p className="text-sm font-medium text-stone-900">{t('recentItems')}</p>
+        <div data-testid="recent-items" className="bg-white rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <p className="text-sm font-medium text-slate-900">{t('recentItems')}</p>
             <button
               data-testid="view-all-items-btn"
               onClick={() => navigate('/items')}
-              className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors"
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
             >
               {t('viewAll')} <ArrowRight size={12} />
             </button>
@@ -158,39 +158,39 @@ export default function DashboardPage({ auth }) {
 
           {!data?.recent_items?.length ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-              <Package size={32} className="text-stone-300 mb-3" />
-              <p className="text-sm font-medium text-stone-900">{t('noItemsRegistered')}</p>
-              <p className="text-sm text-stone-500 mt-1 mb-4">{t('registerFirstItemDesc')}</p>
+              <Package size={32} className="text-slate-300 mb-3" />
+              <p className="text-sm font-medium text-slate-900">{t('noItemsRegistered')}</p>
+              <p className="text-sm text-slate-500 mt-1 mb-4">{t('registerFirstItemDesc')}</p>
               <button
                 onClick={() => navigate('/items/new')}
-                className="px-4 py-2 rounded-md bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
+                className="px-4 py-2 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition-colors"
               >
                 {t('registerFirstItem')}
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-slate-100">
               {data.recent_items.map((item) => (
                 <div
                   key={item.item_id}
-                  className="flex items-center gap-3 px-5 py-3 hover:bg-stone-50 transition-colors"
+                  className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors"
                 >
                   {item.photos?.length > 0 ? (
                     <img
                       src={photoUrl(item.photos[0])}
                       alt=""
-                      className="w-8 h-8 rounded-md object-cover bg-stone-100 flex-shrink-0"
+                      className="w-8 h-8 rounded-md object-cover bg-slate-100 flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
-                      <Package size={13} className="text-stone-400" />
+                    <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
+                      <Package size={13} className="text-slate-400" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-900 truncate">{item.title}</p>
-                    <p className="text-xs text-stone-500 capitalize">{item.category}</p>
+                    <p className="text-sm font-medium text-slate-900 truncate">{item.title}</p>
+                    <p className="text-xs text-slate-500 capitalize">{item.category}</p>
                   </div>
-                  <span className="text-xs text-stone-400 flex-shrink-0">{timeAgo(item.created_at, t)}</span>
+                  <span className="text-xs text-slate-400 flex-shrink-0">{timeAgo(item.created_at, t)}</span>
                 </div>
               ))}
             </div>
@@ -198,13 +198,13 @@ export default function DashboardPage({ auth }) {
         </div>
 
         {/* Recent matches */}
-        <div data-testid="recent-matches" className="bg-white rounded-lg border border-stone-200">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-            <p className="text-sm font-medium text-stone-900">{t('recentMatches')}</p>
+        <div data-testid="recent-matches" className="bg-white rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <p className="text-sm font-medium text-slate-900">{t('recentMatches')}</p>
             <button
               data-testid="view-all-matches-btn"
               onClick={() => navigate('/matches')}
-              className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors"
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
             >
               {t('viewAll')} <ArrowRight size={12} />
             </button>
@@ -212,35 +212,35 @@ export default function DashboardPage({ auth }) {
 
           {!data?.recent_matches?.length ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-              <Sparkles size={32} className="text-stone-300 mb-3" />
-              <p className="text-sm font-medium text-stone-900">{t('noMatchesFound')}</p>
-              <p className="text-sm text-stone-500 mt-1">{t('matchesAppearAutomatically')}</p>
+              <Sparkles size={32} className="text-slate-300 mb-3" />
+              <p className="text-sm font-medium text-slate-900">{t('noMatchesFound')}</p>
+              <p className="text-sm text-slate-500 mt-1">{t('matchesAppearAutomatically')}</p>
             </div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-slate-100">
               {data.recent_matches.map((m) => (
                 <button
                   key={m.match_id}
                   onClick={() => navigate(`/matches/${m.found_item_id}`)}
-                  className="w-full flex items-center gap-3 px-5 py-3 hover:bg-stone-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors text-left"
                 >
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-0.5 ${STATUS_DOT[m.status] || 'bg-stone-300'}`} />
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-0.5 ${STATUS_DOT[m.status] || 'bg-slate-300'}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-900 truncate">
+                    <p className="text-sm font-medium text-slate-900 truncate">
                       {m.found_title}
-                      <span className="text-stone-400 font-normal mx-1">·</span>
+                      <span className="text-slate-400 font-normal mx-1">·</span>
                       {m.lost_title}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-xs text-stone-500">{STATUS_LABEL[m.status] || m.status}</span>
+                      <span className="text-xs text-slate-500">{STATUS_LABEL[m.status] || m.status}</span>
                       {m.score != null && (
-                        <span className="text-xs text-stone-400">
+                        <span className="text-xs text-slate-400">
                           · {m.score <= 1 ? Math.round(m.score * 100) : Math.round(m.score)}{t('matchPct')}
                         </span>
                       )}
                     </div>
                   </div>
-                  <span className="text-xs text-stone-400 flex-shrink-0">{timeAgo(m.created_at, t)}</span>
+                  <span className="text-xs text-slate-400 flex-shrink-0">{timeAgo(m.created_at, t)}</span>
                 </button>
               ))}
             </div>
@@ -250,9 +250,9 @@ export default function DashboardPage({ auth }) {
 
       {/* Getting started */}
       {data?.total_items === 0 && (
-        <div className="mt-6 bg-stone-50 rounded-lg px-6 py-5">
-          <p className="text-sm font-medium text-stone-900 mb-1">{t('gettingStarted')}</p>
-          <p className="text-sm text-stone-500">{t('gettingStartedDescription')}</p>
+        <div className="mt-6 bg-slate-50 rounded-lg px-6 py-5">
+          <p className="text-sm font-medium text-slate-900 mb-1">{t('gettingStarted')}</p>
+          <p className="text-sm text-slate-500">{t('gettingStartedDescription')}</p>
         </div>
       )}
 
