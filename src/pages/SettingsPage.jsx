@@ -10,7 +10,7 @@ function Toggle({ enabled, onChange, testId }) {
       data-testid={testId}
       onClick={() => onChange(!enabled)}
       className={`relative flex-shrink-0 w-11 h-6 rounded-full overflow-hidden transition-colors ${
-        enabled ? 'bg-stone-900' : 'bg-stone-200'
+        enabled ? 'bg-teal-600' : 'bg-slate-200'
       }`}
     >
       <span
@@ -23,9 +23,9 @@ function Toggle({ enabled, onChange, testId }) {
 
 function CardHeader({ title, description }) {
   return (
-    <div className="px-6 py-5 border-b border-stone-100">
-      <h2 className="text-sm font-semibold text-stone-900">{title}</h2>
-      <p className="text-sm text-stone-500 mt-0.5">{description}</p>
+    <div className="px-6 py-5 border-b border-slate-100">
+      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+      <p className="text-sm text-slate-500 mt-0.5">{description}</p>
     </div>
   );
 }
@@ -38,11 +38,11 @@ function SectionActions({ saving, saved, hasChanges, onSave, onReset, error, t }
           {error}
         </div>
       )}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/60">
+      <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/60">
         <button
           onClick={onReset}
           disabled={!hasChanges}
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-stone-500 hover:text-stone-900 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           {t('reset')}
@@ -50,7 +50,7 @@ function SectionActions({ saving, saved, hasChanges, onSave, onReset, error, t }
         <button
           onClick={onSave}
           disabled={saving || !hasChanges}
-          className="flex items-center gap-2 px-4 py-2 rounded-md bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {saving
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -164,7 +164,7 @@ export default function SettingsPage({ auth }) {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-5 h-5 animate-spin text-stone-300" />
+        <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
       </div>
     );
   }
@@ -180,16 +180,16 @@ export default function SettingsPage({ auth }) {
 
       {/* Page header */}
       <div className="mb-8">
-        <h1 data-testid="settings-heading" className="text-2xl font-semibold text-stone-900">
+        <h1 data-testid="settings-heading" className="text-2xl font-semibold text-slate-900">
           {t('settings')}
         </h1>
-        <p className="text-sm text-stone-500 mt-1">{t('manageConfiguration')}</p>
+        <p className="text-sm text-slate-500 mt-1">{t('manageConfiguration')}</p>
       </div>
 
       <div className="space-y-6">
 
         {/* Language */}
-        <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
           <CardHeader
             title={t('language')}
             description={t('languageDesc')}
@@ -203,8 +203,8 @@ export default function SettingsPage({ auth }) {
                   onClick={() => changeLanguage(code)}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     language === code
-                      ? 'bg-stone-900 text-white'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   {label}
@@ -215,7 +215,7 @@ export default function SettingsPage({ auth }) {
         </div>
 
         {/* Fee Policy */}
-        <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
           <CardHeader
             title={t('feePolicy')}
             description={t('feePolicyDesc')}
@@ -225,8 +225,8 @@ export default function SettingsPage({ auth }) {
             <div className="px-6 py-5">
               <div className="flex items-center justify-between gap-6">
                 <div>
-                  <p className="text-sm font-medium text-stone-900">{t('chargeUsersForRecovery')}</p>
-                  <p className="text-sm text-stone-500 mt-0.5 leading-relaxed">
+                  <p className="text-sm font-medium text-slate-900">{t('chargeUsersForRecovery')}</p>
+                  <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">
                     {t('chargeUsersForRecoveryDesc')}
                   </p>
                 </div>
@@ -251,14 +251,14 @@ export default function SettingsPage({ auth }) {
         </div>
 
         {/* Pickup QR */}
-        <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
-          <div className="px-6 py-5 border-b border-stone-100 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-md bg-stone-100 flex items-center justify-center flex-shrink-0">
-              <QrCode className="w-4 h-4 text-stone-500" />
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <QrCode className="w-4 h-4 text-slate-500" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-stone-900">{t('pickupQrCode')}</h2>
-              <p className="text-sm text-stone-500 mt-0.5">{t('configureQrHandover')}</p>
+              <h2 className="text-sm font-semibold text-slate-900">{t('pickupQrCode')}</h2>
+              <p className="text-sm text-slate-500 mt-0.5">{t('configureQrHandover')}</p>
             </div>
           </div>
 
@@ -268,8 +268,8 @@ export default function SettingsPage({ auth }) {
               {/* Enable toggle */}
               <div className="flex items-center justify-between gap-6">
                 <div>
-                  <p className="text-sm font-medium text-stone-900">{t('enableQrPickup')}</p>
-                  <p className="text-sm text-stone-500 mt-0.5">{t('generateQrCodes')}</p>
+                  <p className="text-sm font-medium text-slate-900">{t('enableQrPickup')}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">{t('generateQrCodes')}</p>
                 </div>
                 <Toggle
                   testId="pickup-qr-toggle"
@@ -280,10 +280,10 @@ export default function SettingsPage({ auth }) {
 
               {/* Expiry hours */}
               <div>
-                <label className="block text-sm font-medium text-stone-900 mb-1">
+                <label className="block text-sm font-medium text-slate-900 mb-1">
                   {t('qrExpiryHours')}
                 </label>
-                <p className="text-sm text-stone-500 mb-3">{t('qrExpiryDesc')}</p>
+                <p className="text-sm text-slate-500 mb-3">{t('qrExpiryDesc')}</p>
                 <div className="flex items-center gap-3">
                   <input
                     data-testid="pickup-qr-expiry"
@@ -292,18 +292,18 @@ export default function SettingsPage({ auth }) {
                     max={720}
                     value={config.pickup_qr_expiry_hours}
                     onChange={(e) => setConfig(c => ({ ...c, pickup_qr_expiry_hours: parseInt(e.target.value) || 1 }))}
-                    className="w-28 h-9 px-3 text-sm border border-stone-300 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors"
+                    className="w-28 h-9 px-3 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
                   />
-                  <span className="text-sm text-stone-500">{t('hoursRange')}</span>
+                  <span className="text-sm text-slate-500">{t('hoursRange')}</span>
                 </div>
               </div>
 
               {/* Instructions */}
               <div>
-                <label className="block text-sm font-medium text-stone-900 mb-1">
+                <label className="block text-sm font-medium text-slate-900 mb-1">
                   {t('pickupInstructions')}
                 </label>
-                <p className="text-sm text-stone-500 mb-3">{t('pickupInstructionsDesc')}</p>
+                <p className="text-sm text-slate-500 mb-3">{t('pickupInstructionsDesc')}</p>
                 <textarea
                   data-testid="pickup-instructions"
                   value={config.pickup_instructions}
@@ -311,9 +311,9 @@ export default function SettingsPage({ auth }) {
                   placeholder={t('pickupInstructionsPlaceholder')}
                   maxLength={1000}
                   rows={3}
-                  className="w-full px-3 py-2.5 text-sm border border-stone-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 placeholder:text-stone-400 transition-colors"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 placeholder:text-slate-400 transition-colors"
                 />
-                <p className="text-xs text-stone-400 mt-1.5 text-right">
+                <p className="text-xs text-slate-400 mt-1.5 text-right">
                   {config.pickup_instructions.length}/1000
                 </p>
               </div>
