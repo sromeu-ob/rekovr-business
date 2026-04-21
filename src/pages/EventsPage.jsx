@@ -75,7 +75,7 @@ export default function EventsPage({ auth }) {
         </div>
         {isAdmin && (
           <button
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 btn-brand text-white rounded-md text-sm font-medium transition-colors"
             onClick={() => navigate('/events/new')}
           >
             <Plus size={15} />

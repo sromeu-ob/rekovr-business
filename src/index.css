@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@800&display=swap');
 
+.btn-brand {
+  background: linear-gradient(135deg, #0D9488 0%, #0891B2 100%);
+}
+.btn-brand:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0F766E 0%, #0E7490 100%);
+}
+
 
 /* Mapbox Geocoder inside the map control */
 .mapboxgl-ctrl-geocoder {

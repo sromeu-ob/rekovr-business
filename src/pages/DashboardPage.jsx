@@ -163,7 +163,7 @@ export default function DashboardPage({ auth }) {
               <p className="text-sm text-slate-500 mt-1 mb-4">{t('registerFirstItemDesc')}</p>
               <button
                 onClick={() => navigate('/items/new')}
-                className="px-4 py-2 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition-colors"
+                className="px-4 py-2 rounded-md btn-brand text-white text-sm font-medium transition-colors"
               >
                 {t('registerFirstItem')}
               </button>

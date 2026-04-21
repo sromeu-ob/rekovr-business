@@ -76,7 +76,7 @@ export default function TeamPage({ auth }) {
           <button
             data-testid="invite-member-btn"
             onClick={() => { setShowInvite(!showInvite); setInviteResult(null); }}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 btn-brand text-white rounded-md text-sm font-medium transition-colors"
           >
             <UserPlus size={15} />
             {t('inviteMember')}
@@ -131,7 +131,7 @@ export default function TeamPage({ auth }) {
                 data-testid="send-invite-btn"
                 type="submit"
                 disabled={inviting}
-                className="ml-auto flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50"
+                className="ml-auto flex items-center gap-2 px-4 py-2 btn-brand text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {inviting ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
                 {inviting ? t('sending') : t('sendInvitation')}

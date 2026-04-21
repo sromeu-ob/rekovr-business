@@ -366,7 +366,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
             data-testid={`accept-btn-${match.match_id}`}
             onClick={() => onAction('accept')}
             disabled={isActioning}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 btn-brand text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
           >
             {isActioning ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
             {t('accept')}

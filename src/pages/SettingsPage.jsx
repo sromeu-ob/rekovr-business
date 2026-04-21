@@ -10,7 +10,7 @@ function Toggle({ enabled, onChange, testId }) {
       data-testid={testId}
       onClick={() => onChange(!enabled)}
       className={`relative flex-shrink-0 w-11 h-6 rounded-full overflow-hidden transition-colors ${
-        enabled ? 'bg-teal-600' : 'bg-slate-200'
+        enabled ? 'btn-brand' : 'bg-slate-200'
       }`}
     >
       <span
@@ -50,7 +50,7 @@ function SectionActions({ saving, saved, hasChanges, onSave, onReset, error, t }
         <button
           onClick={onSave}
           disabled={saving || !hasChanges}
-          className="flex items-center gap-2 px-4 py-2 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-md btn-brand text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {saving
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -203,7 +203,7 @@ export default function SettingsPage({ auth }) {
                   onClick={() => changeLanguage(code)}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     language === code
-                      ? 'bg-teal-600 text-white'
+                      ? 'btn-brand text-white'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >

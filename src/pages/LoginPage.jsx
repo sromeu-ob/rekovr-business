@@ -174,7 +174,7 @@ export default function LoginPage({ onLogin }) {
               type="submit"
               disabled={loading}
               data-testid="login-submit-btn"
-              className="w-full h-10 flex items-center justify-center gap-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 mt-2"
+              className="w-full h-10 flex items-center justify-center gap-2 btn-brand text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50 mt-2"
             >
               {loading && <Loader2 size={14} className="animate-spin" />}
               {loading ? t('signingIn') : t('signIn')}

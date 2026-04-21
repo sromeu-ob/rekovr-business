@@ -108,7 +108,7 @@ export default function EventFormPage({ auth }) {
           </button>
           <button
             onClick={() => navigate(`/events/${success.eventId}`)}
-            className="px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
+            className="px-4 py-2 btn-brand text-white rounded-md text-sm font-medium transition-colors"
           >
             {t('evtViewEvent')}
           </button>
@@ -213,7 +213,7 @@ export default function EventFormPage({ auth }) {
         <button
           type="submit"
           disabled={submitting || !name.trim() || !startDate || !endDate}
-          className="w-full py-2.5 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-2.5 btn-brand text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting
             ? (isEdit ? t('saving') : t('evtCreating'))

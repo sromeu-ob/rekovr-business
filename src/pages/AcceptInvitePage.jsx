@@ -159,7 +159,7 @@ export default function AcceptInvitePage({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-10 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full h-10 btn-brand text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={14} className="animate-spin" />}
             {needsPassword ? t('createAccountAndJoin') : `${t('join')} ${inviteInfo.org_name}`}

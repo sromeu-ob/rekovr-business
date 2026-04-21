@@ -80,7 +80,7 @@ export default function ItemsPage() {
         </div>
         <button
           data-testid="new-item-btn"
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 btn-brand text-white rounded-md text-sm font-medium transition-colors"
           onClick={() => navigate('/items/new')}
         >
           <Plus size={15} />

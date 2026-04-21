@@ -392,7 +392,7 @@ export default function NewItemPage({ auth }) {
             <button
               data-testid="register-another-btn"
               onClick={handleRegisterAnother}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 btn-brand text-white rounded-md text-sm font-medium transition-colors"
             >
               <Plus size={15} />
               {t('registerAnother')}
@@ -466,7 +466,7 @@ export default function NewItemPage({ auth }) {
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 lg:hidden flex items-center justify-center gap-2 py-2.5 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
+                className="flex-1 lg:hidden flex items-center justify-center gap-2 py-2.5 btn-brand text-white rounded-md text-sm font-medium transition-colors"
               >
                 <Camera size={16} />
                 {t('takePhoto')}
@@ -474,7 +474,7 @@ export default function NewItemPage({ auth }) {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-100 lg:bg-teal-600 lg:text-white text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200 lg:hover:bg-teal-700 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-100 lg:btn-brand lg:text-white text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200 lg:hover:bg-teal-700 transition-colors"
               >
                 <Upload size={16} />
                 {t('uploadPhotos')}
@@ -505,7 +505,7 @@ export default function NewItemPage({ auth }) {
               disabled={!hasPhotos || aiLoading}
               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 hasPhotos && !aiLoading
-                  ? 'bg-teal-600 text-white hover:bg-teal-700'
+                  ? 'btn-brand text-white'
                   : 'bg-slate-100 text-slate-300 cursor-not-allowed'
               }`}
             >
@@ -732,7 +732,7 @@ export default function NewItemPage({ auth }) {
                 disabled={!canSubmit}
                 className={`w-full flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition-colors ${
                   canSubmit
-                    ? 'bg-teal-600 text-white hover:bg-teal-700'
+                    ? 'btn-brand text-white'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >

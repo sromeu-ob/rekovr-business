@@ -196,7 +196,7 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
                     </div>
                   )}
                   <button onClick={handleCreateSession} disabled={creatingSession}
-                    className="w-full py-3 rounded-md bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+                    className="w-full py-3 rounded-md btn-brand text-white text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
                     {creatingSession ? <Loader2 size={15} className="animate-spin" /> : (
                       signMode === 'A' ? <Link size={15} /> : <QrCode size={15} />
                     )}
