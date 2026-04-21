@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, IdCard, UserCheck } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -22,6 +22,7 @@ export default function ItemsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [filter, setFilter] = useState('active');
   const [eventFilter, setEventFilter] = useState('');
+  const [identifiedOnly, setIdentifiedOnly] = useState(false);
   const [events, setEvents] = useState([]);
 
   const FILTERS = [
@@ -29,10 +30,11 @@ export default function ItemsPage() {
     { key: 'all',    labelKey: 'filterAll',    params: {} },
   ];
 
-  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '') => {
+  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false) => {
     const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
     const params = { ...f.params, limit: PAGE_SIZE, offset };
     if (evtId) params.event_id = evtId;
+    if (identified) params.identified_only = true;
     const res = await api.get('/business/items', { params });
     return res.data;
   }, []);
@@ -41,7 +43,7 @@ export default function ItemsPage() {
     setLoading(true);
     Promise.all([
       api.get('/business/events', { params: { status: 'active' } }).catch(() => ({ data: { events: [] } })),
-      fetchItems(filter, 0, eventFilter),
+      fetchItems(filter, 0, eventFilter, identifiedOnly),
     ]).then(([eventsRes, itemsData]) => {
       setEvents(eventsRes.data.events || []);
       setItems(itemsData.items);
@@ -52,16 +54,16 @@ export default function ItemsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchItems(filter, 0, eventFilter)
+    fetchItems(filter, 0, eventFilter, identifiedOnly)
       .then(data => { setItems(data.items); setTotal(data.total); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filter, eventFilter, fetchItems]);
+  }, [filter, eventFilter, identifiedOnly, fetchItems]);
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
     try {
-      const data = await fetchItems(filter, items.length, eventFilter);
+      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly);
       setItems(prev => [...prev, ...data.items]);
     } catch {}
     setLoadingMore(false);
@@ -104,6 +106,18 @@ export default function ItemsPage() {
             </button>
           ))}
         </div>
+        <button
+          data-testid="filter-identified"
+          onClick={() => setIdentifiedOnly(v => !v)}
+          className={`inline-flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-md border transition-colors ${
+            identifiedOnly
+              ? 'bg-teal-50 border-teal-200 text-teal-700'
+              : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <IdCard size={14} />
+          {t('filterIdentified')}
+        </button>
         {events.length > 0 && (
           <select
             value={eventFilter}
@@ -157,7 +171,22 @@ export default function ItemsPage() {
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-medium text-slate-900 line-clamp-1">{item.title}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-slate-900 line-clamp-1">{item.title}</p>
+                            {item.identified_owner && (
+                              <span
+                                title={item.identified_owner.owner_name || ''}
+                                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                  item.identified_owner.matched_user_id
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-amber-50 text-amber-700'
+                                }`}
+                              >
+                                {item.identified_owner.matched_user_id ? <UserCheck size={10} /> : <IdCard size={10} />}
+                                {item.identified_owner.doc_number_masked || t('identifiedOwner')}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-500 line-clamp-1">{item.address || '—'}</p>
                         </div>
                       </div>

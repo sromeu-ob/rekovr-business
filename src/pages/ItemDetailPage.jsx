@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, Clock, Tag, Package, Sparkles, ChevronRight,
   Pencil, HandshakeIcon, X, AlertTriangle, CheckCircle2, Loader2,
-  Link, QrCode, Copy, Check,
+  Link, QrCode, Copy, Check, IdCard, UserCheck, Eye, EyeOff, Phone,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import mapboxgl from 'mapbox-gl';
@@ -281,6 +281,55 @@ export default function ItemDetailPage() {
   const [viewerIndex, setViewerIndex] = useState(null);
   const [showDirectDelivery, setShowDirectDelivery] = useState(false);
   const [deliveryRecord, setDeliveryRecord] = useState(null);
+  const [revealedDocNumber, setRevealedDocNumber] = useState(null);
+  const [revealing, setRevealing] = useState(false);
+  const [revealError, setRevealError] = useState(null);
+  const [contactedBusy, setContactedBusy] = useState(false);
+  const [contactedNotes, setContactedNotes] = useState('');
+  const [showContactedForm, setShowContactedForm] = useState(false);
+
+  const handleRevealDocNumber = async () => {
+    if (revealedDocNumber) { setRevealedDocNumber(null); return; }
+    setRevealing(true); setRevealError(null);
+    try {
+      const res = await api.post(`/business/items/${itemId}/reveal-document`);
+      setRevealedDocNumber(res.data.doc_number);
+    } catch (err) {
+      setRevealError(err?.response?.data?.detail || t('revealDocError'));
+    } finally {
+      setRevealing(false);
+    }
+  };
+
+  const handleMarkContacted = async () => {
+    setContactedBusy(true);
+    try {
+      const res = await api.post(`/business/items/${itemId}/mark-externally-contacted`, {
+        notes: contactedNotes.trim() || null,
+      });
+      setItem(prev => ({ ...prev, identified_owner: { ...prev.identified_owner, ...res.data } }));
+      setShowContactedForm(false);
+      setContactedNotes('');
+    } catch {} finally {
+      setContactedBusy(false);
+    }
+  };
+
+  const handleUnmarkContacted = async () => {
+    setContactedBusy(true);
+    try {
+      await api.delete(`/business/items/${itemId}/mark-externally-contacted`);
+      setItem(prev => {
+        const next = { ...prev.identified_owner };
+        delete next.externally_contacted_at;
+        delete next.externally_contacted_by;
+        delete next.externally_contacted_notes;
+        return { ...prev, identified_owner: next };
+      });
+    } catch {} finally {
+      setContactedBusy(false);
+    }
+  };
 
   const fetchMatches = async (filter, offset = 0, append = false) => {
     const params = { found_item_id: itemId, limit: MATCH_LIMIT, offset };
@@ -439,6 +488,125 @@ export default function ItemDetailPage() {
 
         {item.description && (
           <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>
+        )}
+
+        {/* Identified owner preview (full details in Phase 5) */}
+        {item.identified_owner && (
+          <div className="border border-teal-100 bg-teal-50/40 rounded-md p-4" data-testid="identified-owner-preview">
+            <div className="flex items-start gap-2.5">
+              <IdCard size={16} className="text-teal-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs font-medium text-teal-700 uppercase tracking-wide">{t('identifiedOwner')}</p>
+                  {item.identified_owner.matched_user_id && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
+                      <UserCheck size={10} />
+                      {t('identifiedOwnerMatched')}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-slate-800">{item.identified_owner.owner_name}</p>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500">
+                  <span>
+                    {item.identified_owner.doc_type_label || t(
+                      item.identified_owner.doc_type === 'id_card' ? 'docTypeIdCard'
+                      : item.identified_owner.doc_type === 'passport' ? 'docTypePassport'
+                      : item.identified_owner.doc_type === 'driving_license' ? 'docTypeDrivingLicense'
+                      : 'docTypeOther'
+                    )}
+                  </span>
+                  {item.identified_owner.doc_number_masked && (
+                    <span className="font-mono">
+                      {revealedDocNumber || item.identified_owner.doc_number_masked}
+                    </span>
+                  )}
+                </div>
+                {item.identified_owner.notes && (
+                  <p className="mt-1.5 text-xs text-slate-500 italic">{item.identified_owner.notes}</p>
+                )}
+
+                {/* Sensitive actions */}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleRevealDocNumber}
+                    disabled={revealing}
+                    data-testid="reveal-doc-btn"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors disabled:opacity-50"
+                  >
+                    {revealing ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : revealedDocNumber ? (
+                      <EyeOff size={12} />
+                    ) : (
+                      <Eye size={12} />
+                    )}
+                    {revealedDocNumber ? t('revealDocHide') : t('revealDocShow')}
+                  </button>
+
+                  {!item.identified_owner.externally_contacted_at ? (
+                    <button
+                      onClick={() => setShowContactedForm(v => !v)}
+                      data-testid="mark-contacted-btn"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <Phone size={12} />
+                      {t('markContacted')}
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
+                      <Check size={12} />
+                      {t('contactedOn')} {new Date(item.identified_owner.externally_contacted_at).toLocaleDateString()}
+                      <button
+                        onClick={handleUnmarkContacted}
+                        disabled={contactedBusy}
+                        className="ml-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                        aria-label={t('undoContacted')}
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                {revealError && (
+                  <p className="mt-2 text-xs text-red-600">{revealError}</p>
+                )}
+
+                {item.identified_owner.externally_contacted_notes && !showContactedForm && (
+                  <p className="mt-2 text-xs text-slate-500 italic">
+                    {t('contactedNotes')}: {item.identified_owner.externally_contacted_notes}
+                  </p>
+                )}
+
+                {showContactedForm && !item.identified_owner.externally_contacted_at && (
+                  <div className="mt-3 flex flex-col gap-2 p-2.5 bg-white border border-slate-200 rounded-md">
+                    <input
+                      type="text"
+                      value={contactedNotes}
+                      onChange={(e) => setContactedNotes(e.target.value)}
+                      placeholder={t('contactedNotesPlaceholder')}
+                      className="px-2.5 py-1.5 text-xs border border-slate-200 rounded focus:outline-none focus:border-teal-500"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleMarkContacted}
+                        disabled={contactedBusy}
+                        className="flex-1 px-2.5 py-1.5 rounded text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {contactedBusy ? <Loader2 size={11} className="animate-spin inline" /> : t('confirm')}
+                      </button>
+                      <button
+                        onClick={() => { setShowContactedForm(false); setContactedNotes(''); }}
+                        className="px-2.5 py-1.5 rounded text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      >
+                        {t('cancel')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Map */}

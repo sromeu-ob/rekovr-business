@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Camera, Upload, X, Sparkles, MapPin, CheckCircle, Plus, ArrowLeft, Loader2 } from 'lucide-react';
+import { Camera, Upload, X, Sparkles, MapPin, CheckCircle, Plus, ArrowLeft, Loader2, IdCard, ShieldCheck, AlertCircle } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -21,6 +21,7 @@ export default function NewItemPage({ auth }) {
   const mapInitializedRef = useRef(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const docInputRef = useRef(null);
 
   const [loadingItem, setLoadingItem] = useState(isEdit);
   const [photos, setPhotos] = useState([]);
@@ -49,6 +50,11 @@ export default function NewItemPage({ auth }) {
   const [savedAddress, setSavedAddress] = useState('');
   const [savedLat, setSavedLat] = useState(null);
   const [savedLng, setSavedLng] = useState(null);
+
+  // Identified owner (document) — ephemeral, never uploaded to storage
+  const [identifiedOwner, setIdentifiedOwner] = useState(null);
+  const [docExtracting, setDocExtracting] = useState(false);
+  const [docError, setDocError] = useState(null);
 
   // Initial map center: item coords (edit) or org default or Barcelona
   const [initialCenter, setInitialCenter] = useState(null);
@@ -240,6 +246,56 @@ export default function NewItemPage({ auth }) {
     }
   };
 
+  // ── Identified owner extraction (ephemeral, no storage) ─────────────────────
+
+  const handleDocSelect = async (e) => {
+    const file = (e.target.files || [])[0];
+    e.target.value = '';
+    if (!file) return;
+    setDocError(null);
+    setDocExtracting(true);
+    try {
+      const formData = new FormData();
+      formData.append('files', file);
+      const res = await api.post('/business/items/extract-document', formData);
+      const data = res.data || {};
+      if (!data.is_identity_document) {
+        setDocError(t('identifiedOwnerNotDetected'));
+        return;
+      }
+      setIdentifiedOwner({
+        doc_type: data.doc_type || 'other',
+        doc_type_label: data.doc_type_label || '',
+        owner_name: data.owner_name || '',
+        doc_number: data.doc_number || '',
+        notes: data.notes || '',
+        ai_extracted: true,
+        extraction_confidence: data.confidence || null,
+      });
+      // Auto-fill title if empty — saves a step when the item IS the document
+      if (!title.trim()) {
+        const typeKey = {
+          id_card: 'docTypeIdCard',
+          passport: 'docTypePassport',
+          driving_license: 'docTypeDrivingLicense',
+          other: 'docTypeOther',
+        }[data.doc_type] || 'docTypeOther';
+        const typeLabel = data.doc_type_label?.trim() || t(typeKey);
+        const owner = data.owner_name?.trim();
+        setTitle(owner ? `${typeLabel} · ${owner}` : typeLabel);
+      }
+    } catch (err) {
+      console.error('Document extraction failed:', err);
+      setDocError(err.response?.data?.detail || t('identifiedOwnerNotDetected'));
+    } finally {
+      setDocExtracting(false);
+    }
+  };
+
+  const updateIdentifiedOwner = (field, value) => {
+    setIdentifiedOwner((prev) => ({ ...(prev || {}), [field]: value, ai_extracted: false }));
+  };
+
   // ── Submit ───────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e) => {
@@ -259,6 +315,17 @@ export default function NewItemPage({ auth }) {
         ...(publicTitle && { public_title: publicTitle }),
         ...(publicDescription && { public_description: publicDescription }),
       ...(eventId && { event_id: eventId }),
+      ...(identifiedOwner && identifiedOwner.owner_name?.trim() && identifiedOwner.doc_number?.trim() && {
+        identified_owner: {
+          doc_type: identifiedOwner.doc_type || 'other',
+          doc_type_label: identifiedOwner.doc_type_label?.trim() || null,
+          owner_name: identifiedOwner.owner_name.trim(),
+          doc_number: identifiedOwner.doc_number.trim(),
+          notes: identifiedOwner.notes?.trim() || null,
+          ai_extracted: !!identifiedOwner.ai_extracted,
+          extraction_confidence: identifiedOwner.extraction_confidence ?? null,
+        },
+      }),
       };
 
       if (isEdit) {
@@ -290,6 +357,8 @@ export default function NewItemPage({ auth }) {
     setAddress(savedAddress);
     setLat(savedLat);
     setLng(savedLng);
+    setIdentifiedOwner(null);
+    setDocError(null);
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     mapInitializedRef.current = false;
     setSuccess(null);
@@ -518,6 +587,135 @@ export default function NewItemPage({ auth }) {
                 </select>
               </div>
             )}
+
+            {/* Identified owner (document) */}
+            <div className="border border-slate-200 rounded-md p-4 bg-slate-50/50" data-testid="identified-owner-section">
+              <div className="flex items-start gap-2 mb-2">
+                <IdCard size={16} className="text-teal-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-800">{t('identifiedOwner')}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t('identifiedOwnerHint')}</p>
+                </div>
+              </div>
+
+              {!identifiedOwner && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => docInputRef.current?.click()}
+                    disabled={docExtracting}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 mt-2 bg-white border border-teal-600 text-teal-700 rounded-md text-sm font-medium hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    data-testid="scan-document-btn"
+                  >
+                    {docExtracting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+                    {docExtracting ? t('identifiedOwnerExtracting') : t('identifiedOwnerUploadBtn')}
+                  </button>
+                  <input
+                    ref={docInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleDocSelect}
+                    className="hidden"
+                  />
+                  {docError && (
+                    <div className="mt-2 flex items-start gap-1.5 text-xs text-amber-700">
+                      <AlertCircle size={13} className="flex-shrink-0 mt-px" />
+                      <span>{docError}</span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {identifiedOwner && (
+                <div className="mt-2 space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-700">
+                    <CheckCircle size={13} />
+                    <span>{t('identifiedOwnerDetected')} {t('identifiedOwnerEditHint')}</span>
+                    {identifiedOwner.extraction_confidence != null && (
+                      <span className="ml-auto text-slate-400">
+                        {t('docConfidence')}: {Math.round(identifiedOwner.extraction_confidence * 100)}%
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{t('docTypeField')}</span>
+                      <select
+                        value={identifiedOwner.doc_type}
+                        onChange={(e) => updateIdentifiedOwner('doc_type', e.target.value)}
+                        className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      >
+                        <option value="id_card">{t('docTypeIdCard')}</option>
+                        <option value="passport">{t('docTypePassport')}</option>
+                        <option value="driving_license">{t('docTypeDrivingLicense')}</option>
+                        <option value="other">{t('docTypeOther')}</option>
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{t('docTypeLabelField')}</span>
+                      <input
+                        type="text"
+                        value={identifiedOwner.doc_type_label || ''}
+                        onChange={(e) => updateIdentifiedOwner('doc_type_label', e.target.value)}
+                        placeholder={t('docTypeLabelFieldHint')}
+                        className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="block">
+                    <span className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{t('ownerNameField')}</span>
+                    <input
+                      type="text"
+                      value={identifiedOwner.owner_name}
+                      onChange={(e) => updateIdentifiedOwner('owner_name', e.target.value)}
+                      required
+                      className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                      data-testid="owner-name-input"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{t('docNumberField')}</span>
+                    <input
+                      type="text"
+                      value={identifiedOwner.doc_number}
+                      onChange={(e) => updateIdentifiedOwner('doc_number', e.target.value)}
+                      required
+                      autoComplete="off"
+                      className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-800 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-mono"
+                      data-testid="doc-number-input"
+                    />
+                    <div className="mt-1.5 flex items-start gap-1.5 text-xs text-slate-500">
+                      <ShieldCheck size={12} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                      <span>{t('docNumberEphemeralNotice')}</span>
+                    </div>
+                  </label>
+
+                  <label className="block">
+                    <span className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">{t('docNotesField')}</span>
+                    <textarea
+                      value={identifiedOwner.notes || ''}
+                      onChange={(e) => updateIdentifiedOwner('notes', e.target.value)}
+                      placeholder={t('docNotesFieldHint')}
+                      rows={2}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 resize-none"
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => { setIdentifiedOwner(null); setDocError(null); }}
+                    className="text-xs text-slate-500 hover:text-red-600"
+                  >
+                    {t('identifiedOwnerRemove')}
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Error */}
             {submitError && (
