@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, IdCard, UserCheck, Search, X, Tag, Check, ChevronDown, Calendar } from 'lucide-react';
+import { Plus, Package, IdCard, UserCheck, Search, X, SlidersHorizontal } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -11,12 +11,23 @@ const STATUS_COLORS = {
   expired:   'bg-slate-100 text-slate-500',
 };
 
+const STATUSES = ['active', 'recovered', 'returned', 'expired'];
+
 const CATEGORIES = [
   'electronics', 'documents', 'clothing', 'keys', 'bags',
   'jewelry', 'pets', 'sports', 'toys', 'accessories', 'other',
 ];
 
 const PAGE_SIZE = 30;
+
+const toLocalYMD = (d) => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const arraysEqual = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 export default function ItemsPage() {
   const navigate = useNavigate();
@@ -25,46 +36,52 @@ export default function ItemsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [filter, setFilter] = useState('active');
-  const [eventFilter, setEventFilter] = useState('');
-  const [identifiedOnly, setIdentifiedOnly] = useState(false);
   const [events, setEvents] = useState([]);
+
+  // Filters
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [selectedStatuses, setSelectedStatuses] = useState(['active']);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [catMenuOpen, setCatMenuOpen] = useState(false);
-  const catMenuRef = useRef(null);
+  const [identifiedOnly, setIdentifiedOnly] = useState(false);
+  const [eventFilter, setEventFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [datePreset, setDatePreset] = useState('');
-  const [dateMenuOpen, setDateMenuOpen] = useState(false);
-  const dateMenuRef = useRef(null);
 
-  const FILTERS = [
-    { key: 'active', labelKey: 'filterActive', params: { status: 'active' } },
-    { key: 'all',    labelKey: 'filterAll',    params: {} },
-  ];
+  // UI
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersRef = useRef(null);
 
-  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false, q = '', categories = [], dFrom = '', dTo = '') => {
-    const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
-    const params = { ...f.params, limit: PAGE_SIZE, offset };
-    if (evtId) params.event_id = evtId;
-    if (identified) params.identified_only = true;
-    if (q) params.q = q;
+  const fetchItems = useCallback(async (offset = 0, opts) => {
+    const { statuses, categories, identified, evtId, q, dFrom, dTo } = opts;
+    const params = { limit: PAGE_SIZE, offset };
+    if (statuses.length > 0) params.status = statuses.join(',');
     if (categories.length > 0) params.category = categories.join(',');
-    // dFrom/dTo are YYYY-MM-DD (local). Convert to local-tz ISO bounds:
-    // start of day for date_from, end of day for date_to.
+    if (identified) params.identified_only = true;
+    if (evtId) params.event_id = evtId;
+    if (q) params.q = q;
     if (dFrom) params.date_from = new Date(`${dFrom}T00:00:00`).toISOString();
     if (dTo) params.date_to = new Date(`${dTo}T23:59:59.999`).toISOString();
     const res = await api.get('/business/items', { params });
     return res.data;
   }, []);
 
+  const filterOpts = useMemo(() => ({
+    statuses: selectedStatuses,
+    categories: selectedCategories,
+    identified: identifiedOnly,
+    evtId: eventFilter,
+    q: search,
+    dFrom: dateFrom,
+    dTo: dateTo,
+  }), [selectedStatuses, selectedCategories, identifiedOnly, eventFilter, search, dateFrom, dateTo]);
+
   useEffect(() => {
     setLoading(true);
     Promise.all([
       api.get('/business/events', { params: { status: 'active' } }).catch(() => ({ data: { events: [] } })),
-      fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo),
+      fetchItems(0, filterOpts),
     ]).then(([eventsRes, itemsData]) => {
       setEvents(eventsRes.data.events || []);
       setItems(itemsData.items);
@@ -75,11 +92,11 @@ export default function ItemsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo)
+    fetchItems(0, filterOpts)
       .then(data => { setItems(data.items); setTotal(data.total); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filter, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo, fetchItems]);
+  }, [filterOpts, fetchItems]);
 
   // Debounce search input → search
   useEffect(() => {
@@ -87,44 +104,23 @@ export default function ItemsPage() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  // Close category menu on outside click
+  // Close filters popover on outside click
   useEffect(() => {
-    if (!catMenuOpen) return;
+    if (!filtersOpen) return;
     const onClick = (e) => {
-      if (catMenuRef.current && !catMenuRef.current.contains(e.target)) {
-        setCatMenuOpen(false);
+      if (filtersRef.current && !filtersRef.current.contains(e.target)) {
+        setFiltersOpen(false);
       }
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
-  }, [catMenuOpen]);
+  }, [filtersOpen]);
 
-  // Close date menu on outside click
-  useEffect(() => {
-    if (!dateMenuOpen) return;
-    const onClick = (e) => {
-      if (dateMenuRef.current && !dateMenuRef.current.contains(e.target)) {
-        setDateMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, [dateMenuOpen]);
-
-  const toggleCategory = (cat) => {
-    setSelectedCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
-    );
+  const toggleInArray = (setter) => (val) => {
+    setter(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
   };
-
-  // dateFrom / dateTo are stored as YYYY-MM-DD (local) to avoid TZ drift.
-  // Conversion to ISO happens only when calling the API (in fetchItems).
-  const toLocalYMD = (d) => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
+  const toggleStatus = toggleInArray(setSelectedStatuses);
+  const toggleCategory = toggleInArray(setSelectedCategories);
 
   const applyDatePreset = (preset) => {
     const now = new Date();
@@ -135,7 +131,6 @@ export default function ItemsPage() {
     setDatePreset(preset);
     setDateFrom(toLocalYMD(start));
     setDateTo(toLocalYMD(now));
-    setDateMenuOpen(false);
   };
 
   const applyCustomDates = (from, to) => {
@@ -148,28 +143,77 @@ export default function ItemsPage() {
     setDatePreset('');
     setDateFrom('');
     setDateTo('');
-    setDateMenuOpen(false);
   };
 
-  const dateLabel = () => {
-    if (datePreset === 'today') return t('dateToday');
-    if (datePreset === '7d') return t('date7d');
-    if (datePreset === '30d') return t('date30d');
-    if (datePreset === 'custom' && (dateFrom || dateTo)) {
-      const fmt = (ymd) => ymd ? new Date(`${ymd}T00:00:00`).toLocaleDateString() : '…';
-      return `${fmt(dateFrom)} – ${fmt(dateTo)}`;
-    }
-    return t('filterDates');
+  // Active filter count for the badge (search excluded — it has its own input)
+  const activeCount = useMemo(() => {
+    let n = 0;
+    if (!arraysEqual(selectedStatuses, ['active'])) n += 1;
+    if (selectedCategories.length > 0) n += 1;
+    if (identifiedOnly) n += 1;
+    if (eventFilter) n += 1;
+    if (datePreset) n += 1;
+    return n;
+  }, [selectedStatuses, selectedCategories, identifiedOnly, eventFilter, datePreset]);
+
+  const clearAll = () => {
+    setSelectedStatuses(['active']);
+    setSelectedCategories([]);
+    setIdentifiedOnly(false);
+    setEventFilter('');
+    clearDates();
   };
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
     try {
-      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo);
+      const data = await fetchItems(items.length, filterOpts);
       setItems(prev => [...prev, ...data.items]);
     } catch {}
     setLoadingMore(false);
   };
+
+  // Active chips
+  const chips = [];
+  if (selectedStatuses.length > 0) {
+    chips.push({
+      key: 'status',
+      label: selectedStatuses.length === 1
+        ? `${t('chipStatus')}: ${t(`status_${selectedStatuses[0]}`)}`
+        : `${t('chipStatus')} · ${selectedStatuses.length}`,
+      onRemove: () => setSelectedStatuses([]),
+    });
+  }
+  if (selectedCategories.length > 0) {
+    chips.push({
+      key: 'category',
+      label: selectedCategories.length === 1
+        ? `${t('chipCategory')}: ${t(`cat_${selectedCategories[0]}`)}`
+        : `${t('chipCategory')} · ${selectedCategories.length}`,
+      onRemove: () => setSelectedCategories([]),
+    });
+  }
+  if (datePreset) {
+    let label = t('chipDates');
+    if (datePreset === 'today') label = t('dateToday');
+    else if (datePreset === '7d') label = t('date7d');
+    else if (datePreset === '30d') label = t('date30d');
+    else if (datePreset === 'custom' && (dateFrom || dateTo)) {
+      const fmt = (ymd) => ymd ? new Date(`${ymd}T00:00:00`).toLocaleDateString() : '…';
+      label = `${fmt(dateFrom)} – ${fmt(dateTo)}`;
+    }
+    chips.push({ key: 'dates', label, onRemove: clearDates });
+  }
+  if (identifiedOnly) {
+    chips.push({ key: 'identified', label: t('filterIdentified'), onRemove: () => setIdentifiedOnly(false) });
+  }
+  if (eventFilter) {
+    const evt = events.find(e => e.event_id === eventFilter);
+    chips.push({ key: 'event', label: evt ? evt.name : t('chipEvent'), onRemove: () => setEventFilter('') });
+  }
+
+  const isEmpty = items.length === 0;
+  const onlyActiveDefault = arraysEqual(selectedStatuses, ['active']) && activeCount === 0 && !search;
 
   return (
     <div>
@@ -177,7 +221,7 @@ export default function ItemsPage() {
         <div>
           <h1 data-testid="items-heading" className="text-2xl font-semibold text-slate-900">{t('navFoundItems')}</h1>
           <p data-testid="items-count" className="text-sm text-slate-500 mt-1">
-            {total} items{filter !== 'all' ? ` (${filter})` : ''}
+            {total} items
           </p>
         </div>
         <button
@@ -190,9 +234,9 @@ export default function ItemsPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <div className="relative">
+      {/* Primary bar: search + filters trigger */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="relative flex-1 max-w-md">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             data-testid="items-search"
@@ -200,7 +244,7 @@ export default function ItemsPage() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={t('searchItemsPlaceholder')}
-            className="h-9 pl-8 pr-8 w-64 bg-white border border-slate-300 rounded-md text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+            className="h-9 pl-8 pr-8 w-full bg-white border border-slate-300 rounded-md text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
           />
           {searchInput && (
             <button
@@ -213,120 +257,109 @@ export default function ItemsPage() {
             </button>
           )}
         </div>
-        <div className="flex gap-1 bg-slate-50 rounded-lg p-0.5 w-fit">
-          {FILTERS.map(f => (
-            <button
-              key={f.key}
-              data-testid={`filter-${f.key}`}
-              onClick={() => setFilter(f.key)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                filter === f.key
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {t(f.labelKey)}
-            </button>
-          ))}
-        </div>
-        <button
-          data-testid="filter-identified"
-          onClick={() => setIdentifiedOnly(v => !v)}
-          className={`inline-flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-md border transition-colors ${
-            identifiedOnly
-              ? 'bg-teal-50 border-teal-200 text-teal-700'
-              : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <IdCard size={14} />
-          {t('filterIdentified')}
-        </button>
 
-        {/* Category multi-select */}
-        <div className="relative" ref={catMenuRef}>
+        <div className="relative" ref={filtersRef}>
           <button
-            data-testid="filter-category"
+            data-testid="filters-btn"
             type="button"
-            onClick={() => setCatMenuOpen(o => !o)}
+            onClick={() => setFiltersOpen(o => !o)}
             className={`inline-flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-md border transition-colors ${
-              selectedCategories.length > 0
+              activeCount > 0
                 ? 'bg-teal-50 border-teal-200 text-teal-700'
-                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            <Tag size={14} />
-            {selectedCategories.length === 0
-              ? t('filterCategory')
-              : selectedCategories.length === 1
-                ? t(`cat_${selectedCategories[0]}`)
-                : `${t('filterCategory')} · ${selectedCategories.length}`}
-            <ChevronDown size={13} className="opacity-60" />
+            <SlidersHorizontal size={14} />
+            {t('filters')}
+            {activeCount > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-teal-600 text-white text-[11px] font-semibold">
+                {activeCount}
+              </span>
+            )}
           </button>
-          {catMenuOpen && (
-            <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-10 py-1 max-h-80 overflow-auto">
-              {selectedCategories.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategories([])}
-                  className="w-full text-left px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 border-b border-slate-100"
-                >
-                  {t('clearAll')}
-                </button>
-              )}
-              {CATEGORIES.map(cat => {
-                const checked = selectedCategories.includes(cat);
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => toggleCategory(cat)}
-                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    <span>{t(`cat_${cat}`)}</span>
-                    {checked && <Check size={14} className="text-teal-600" />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
 
-        {/* Date range */}
-        <div className="relative" ref={dateMenuRef}>
-          <button
-            data-testid="filter-dates"
-            type="button"
-            onClick={() => setDateMenuOpen(o => !o)}
-            className={`inline-flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-md border transition-colors ${
-              datePreset
-                ? 'bg-teal-50 border-teal-200 text-teal-700'
-                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            <Calendar size={14} />
-            {dateLabel()}
-            <ChevronDown size={13} className="opacity-60" />
-          </button>
-          {dateMenuOpen && (
-            <div className="absolute left-0 top-full mt-1 w-72 bg-white border border-slate-200 rounded-md shadow-lg z-10 p-2">
-              <div className="flex gap-1 mb-2">
-                {['today', '7d', '30d'].map(preset => (
+          {filtersOpen && (
+            <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-[80vh] overflow-auto">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
+                <span className="text-sm font-semibold text-slate-900">{t('filters')}</span>
+                {activeCount > 0 && (
                   <button
-                    key={preset}
                     type="button"
-                    onClick={() => applyDatePreset(preset)}
-                    className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                      datePreset === preset
-                        ? 'bg-teal-50 border-teal-200 text-teal-700'
-                        : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
-                    }`}
+                    onClick={clearAll}
+                    className="text-xs font-medium text-slate-500 hover:text-slate-700"
                   >
-                    {t(preset === 'today' ? 'dateToday' : preset === '7d' ? 'date7d' : 'date30d')}
+                    {t('clearAll')}
                   </button>
-                ))}
+                )}
               </div>
-              <div className="border-t border-slate-100 pt-2">
-                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1.5 px-1">{t('dateCustom')}</p>
+
+              {/* Status */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">{t('chipStatus')}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {STATUSES.map(s => {
+                    const checked = selectedStatuses.includes(s);
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => toggleStatus(s)}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                          checked
+                            ? 'bg-teal-50 border-teal-300 text-teal-700'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {t(`status_${s}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Category */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">{t('chipCategory')}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {CATEGORIES.map(cat => {
+                    const checked = selectedCategories.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => toggleCategory(cat)}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                          checked
+                            ? 'bg-teal-50 border-teal-300 text-teal-700'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {t(`cat_${cat}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">{t('chipDates')}</p>
+                <div className="flex gap-1.5 mb-2">
+                  {['today', '7d', '30d'].map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => applyDatePreset(preset)}
+                      className={`flex-1 px-2 py-1 text-xs font-medium rounded-md border transition-colors ${
+                        datePreset === preset
+                          ? 'bg-teal-50 border-teal-300 text-teal-700'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {t(preset === 'today' ? 'dateToday' : preset === '7d' ? 'date7d' : 'date30d')}
+                    </button>
+                  ))}
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
@@ -343,45 +376,83 @@ export default function ItemsPage() {
                   />
                 </div>
               </div>
-              {datePreset && (
-                <button
-                  type="button"
-                  onClick={clearDates}
-                  className="w-full mt-2 px-2 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded border border-slate-200"
-                >
-                  {t('clearAll')}
-                </button>
+
+              {/* Identified */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <span className="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <IdCard size={14} className="text-slate-400" />
+                    {t('filterIdentified')}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={identifiedOnly}
+                    onChange={(e) => setIdentifiedOnly(e.target.checked)}
+                    className="w-4 h-4 accent-teal-600"
+                  />
+                </label>
+              </div>
+
+              {/* Event (only if any exists) */}
+              {events.length > 0 && (
+                <div className="px-4 py-3">
+                  <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">{t('chipEvent')}</p>
+                  <select
+                    value={eventFilter}
+                    onChange={(e) => setEventFilter(e.target.value)}
+                    className="w-full h-9 px-2 bg-white border border-slate-300 rounded-md text-sm text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+                  >
+                    <option value="">{t('evtAllEvents')}</option>
+                    {events.map(evt => (
+                      <option key={evt.event_id} value={evt.event_id}>{evt.name}</option>
+                    ))}
+                  </select>
+                </div>
               )}
             </div>
           )}
         </div>
-
-        {events.length > 0 && (
-          <select
-            value={eventFilter}
-            onChange={(e) => setEventFilter(e.target.value)}
-            className="h-9 px-3 bg-white border border-slate-300 rounded-md text-sm text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
-          >
-            <option value="">{t('evtAllEvents')}</option>
-            {events.map(evt => (
-              <option key={evt.event_id} value={evt.event_id}>{evt.name}</option>
-            ))}
-          </select>
-        )}
       </div>
+
+      {/* Active filter chips */}
+      {chips.length > 0 && (
+        <div className="flex items-center flex-wrap gap-1.5 mb-6">
+          {chips.map(chip => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={chip.onRemove}
+              className="inline-flex items-center gap-1.5 h-7 pl-2.5 pr-2 text-xs font-medium rounded-md bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 transition-colors"
+            >
+              {chip.label}
+              <X size={12} className="opacity-70" />
+            </button>
+          ))}
+          {activeCount > 0 && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-xs font-medium text-slate-500 hover:text-slate-700 ml-1"
+            >
+              {t('clearAll')}
+            </button>
+          )}
+        </div>
+      )}
+      {chips.length === 0 && <div className="mb-6" />}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-5 h-5 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
         </div>
-      ) : items.length === 0 ? (
+      ) : isEmpty ? (
         <div data-testid="items-empty" className="flex flex-col items-center justify-center py-20 text-center">
           <Package size={32} className="text-slate-300 mb-3" />
           <p className="text-sm font-medium text-slate-900">
-            {filter === 'active' ? t('noActiveItems') : t('noItemsYet')}
+            {onlyActiveDefault ? t('noActiveItems') : t('noItemsMatching')}
           </p>
           <p className="text-sm text-slate-500 mt-1">
-            {filter === 'active' ? t('allItemsRecovered') : t('startRegistering')}
+            {onlyActiveDefault ? t('allItemsRecovered') : t('tryAdjustFilters')}
           </p>
         </div>
       ) : (
