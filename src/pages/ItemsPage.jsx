@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, IdCard, UserCheck } from 'lucide-react';
+import { Plus, Package, IdCard, UserCheck, Search, X } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -24,17 +24,20 @@ export default function ItemsPage() {
   const [eventFilter, setEventFilter] = useState('');
   const [identifiedOnly, setIdentifiedOnly] = useState(false);
   const [events, setEvents] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
 
   const FILTERS = [
     { key: 'active', labelKey: 'filterActive', params: { status: 'active' } },
     { key: 'all',    labelKey: 'filterAll',    params: {} },
   ];
 
-  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false) => {
+  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false, q = '') => {
     const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
     const params = { ...f.params, limit: PAGE_SIZE, offset };
     if (evtId) params.event_id = evtId;
     if (identified) params.identified_only = true;
+    if (q) params.q = q;
     const res = await api.get('/business/items', { params });
     return res.data;
   }, []);
@@ -43,7 +46,7 @@ export default function ItemsPage() {
     setLoading(true);
     Promise.all([
       api.get('/business/events', { params: { status: 'active' } }).catch(() => ({ data: { events: [] } })),
-      fetchItems(filter, 0, eventFilter, identifiedOnly),
+      fetchItems(filter, 0, eventFilter, identifiedOnly, search),
     ]).then(([eventsRes, itemsData]) => {
       setEvents(eventsRes.data.events || []);
       setItems(itemsData.items);
@@ -54,16 +57,22 @@ export default function ItemsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchItems(filter, 0, eventFilter, identifiedOnly)
+    fetchItems(filter, 0, eventFilter, identifiedOnly, search)
       .then(data => { setItems(data.items); setTotal(data.total); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filter, eventFilter, identifiedOnly, fetchItems]);
+  }, [filter, eventFilter, identifiedOnly, search, fetchItems]);
+
+  // Debounce search input → search
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
     try {
-      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly);
+      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly, search);
       setItems(prev => [...prev, ...data.items]);
     } catch {}
     setLoadingMore(false);
@@ -89,7 +98,28 @@ export default function ItemsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            data-testid="items-search"
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={t('searchItemsPlaceholder')}
+            className="h-9 pl-8 pr-8 w-64 bg-white border border-slate-300 rounded-md text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+              aria-label="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <div className="flex gap-1 bg-slate-50 rounded-lg p-0.5 w-fit">
           {FILTERS.map(f => (
             <button
