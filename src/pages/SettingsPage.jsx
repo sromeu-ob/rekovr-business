@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { QrCode, Save, RotateCcw, Loader2, CheckCircle } from 'lucide-react';
+import { QrCode, Save, RotateCcw, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -102,7 +102,11 @@ export default function SettingsPage({ auth }) {
   );
 
   const hasOrgChanges = orgConfig && orgOriginal && (
-    orgConfig.charge_users_for_recovery !== orgOriginal.charge_users_for_recovery
+    orgConfig.charge_users_for_recovery !== orgOriginal.charge_users_for_recovery ||
+    orgConfig.verification_enabled !== orgOriginal.verification_enabled ||
+    orgConfig.auto_accept_enabled !== orgOriginal.auto_accept_enabled ||
+    orgConfig.auto_accept_match_threshold !== orgOriginal.auto_accept_match_threshold ||
+    orgConfig.auto_accept_verification_threshold !== orgOriginal.auto_accept_verification_threshold
   );
 
   async function handleSave() {
@@ -135,9 +139,16 @@ export default function SettingsPage({ auth }) {
 
   async function handleOrgSave() {
     const updates = {};
-    if (orgConfig.charge_users_for_recovery !== orgOriginal.charge_users_for_recovery) {
+    if (orgConfig.charge_users_for_recovery !== orgOriginal.charge_users_for_recovery)
       updates.charge_users_for_recovery = orgConfig.charge_users_for_recovery;
-    }
+    if (orgConfig.verification_enabled !== orgOriginal.verification_enabled)
+      updates.verification_enabled = orgConfig.verification_enabled;
+    if (orgConfig.auto_accept_enabled !== orgOriginal.auto_accept_enabled)
+      updates.auto_accept_enabled = orgConfig.auto_accept_enabled;
+    if (orgConfig.auto_accept_match_threshold !== orgOriginal.auto_accept_match_threshold)
+      updates.auto_accept_match_threshold = orgConfig.auto_accept_match_threshold;
+    if (orgConfig.auto_accept_verification_threshold !== orgOriginal.auto_accept_verification_threshold)
+      updates.auto_accept_verification_threshold = orgConfig.auto_accept_verification_threshold;
     if (!Object.keys(updates).length) return;
     setOrgSaving(true);
     setOrgError(null);
@@ -236,6 +247,112 @@ export default function SettingsPage({ auth }) {
                   onChange={(v) => setOrgConfig(c => ({ ...c, charge_users_for_recovery: v }))}
                 />
               </div>
+            </div>
+          )}
+
+          <SectionActions
+            saving={orgSaving}
+            saved={orgSaved}
+            hasChanges={hasOrgChanges}
+            onSave={handleOrgSave}
+            onReset={handleOrgReset}
+            error={orgError}
+            t={t}
+          />
+        </div>
+
+        {/* Matching Behaviour */}
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <CardHeader
+            title={t('matchingBehaviour')}
+            description={t('matchingBehaviourDesc')}
+          />
+
+          {orgConfig && (
+            <div className="px-6 py-5 space-y-6">
+
+              {/* Verification enabled */}
+              <div className="flex items-center justify-between gap-6">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{t('verificationEnabled')}</p>
+                  <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{t('verificationEnabledDesc')}</p>
+                </div>
+                <Toggle
+                  enabled={!!orgConfig.verification_enabled}
+                  onChange={(v) => setOrgConfig(c => ({ ...c, verification_enabled: v }))}
+                />
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-slate-100" />
+
+              {/* Auto-accept enabled */}
+              <div className="flex items-center justify-between gap-6">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{t('autoAcceptEnabled')}</p>
+                  <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{t('autoAcceptEnabledDesc')}</p>
+                </div>
+                <Toggle
+                  enabled={!!orgConfig.auto_accept_enabled}
+                  onChange={(v) => setOrgConfig(c => ({ ...c, auto_accept_enabled: v }))}
+                />
+              </div>
+
+              {/* Thresholds — only shown when auto-accept is on */}
+              {orgConfig.auto_accept_enabled && (
+                <div className="space-y-5 pl-4 border-l-2 border-teal-100">
+
+                  {/* Match threshold */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-0.5">
+                      {t('autoAcceptMatchThreshold')}
+                    </label>
+                    <p className="text-sm text-slate-500 mb-2">{t('autoAcceptMatchThresholdDesc')}</p>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={Math.round((orgConfig.auto_accept_match_threshold ?? 0.90) * 100)}
+                        onChange={(e) => setOrgConfig(c => ({ ...c, auto_accept_match_threshold: parseInt(e.target.value) / 100 }))}
+                        className="flex-1 accent-teal-600 h-1.5"
+                      />
+                      <span className="text-sm font-semibold text-slate-800 w-12 text-right tabular-nums">
+                        {Math.round((orgConfig.auto_accept_match_threshold ?? 0.90) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Verification threshold */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-0.5">
+                      {t('autoAcceptVerificationThreshold')}
+                    </label>
+                    <p className="text-sm text-slate-500 mb-2">{t('autoAcceptVerificationThresholdDesc')}</p>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={Math.round((orgConfig.auto_accept_verification_threshold ?? 0.85) * 100)}
+                        onChange={(e) => setOrgConfig(c => ({ ...c, auto_accept_verification_threshold: parseInt(e.target.value) / 100 }))}
+                        className="flex-1 accent-teal-600 h-1.5"
+                      />
+                      <span className="text-sm font-semibold text-slate-800 w-12 text-right tabular-nums">
+                        {Math.round((orgConfig.auto_accept_verification_threshold ?? 0.85) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Warning when thresholds are low */}
+                  {(orgConfig.auto_accept_match_threshold < 0.6 || orgConfig.auto_accept_verification_threshold < 0.6) && (
+                    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700 leading-relaxed">{t('autoAcceptWarning')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
