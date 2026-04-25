@@ -52,8 +52,10 @@ export default function ItemsPage() {
     if (identified) params.identified_only = true;
     if (q) params.q = q;
     if (categories.length > 0) params.category = categories.join(',');
-    if (dFrom) params.date_from = dFrom;
-    if (dTo) params.date_to = dTo;
+    // dFrom/dTo are YYYY-MM-DD (local). Convert to local-tz ISO bounds:
+    // start of day for date_from, end of day for date_to.
+    if (dFrom) params.date_from = new Date(`${dFrom}T00:00:00`).toISOString();
+    if (dTo) params.date_to = new Date(`${dTo}T23:59:59.999`).toISOString();
     const res = await api.get('/business/items', { params });
     return res.data;
   }, []);
@@ -115,30 +117,31 @@ export default function ItemsPage() {
     );
   };
 
+  // dateFrom / dateTo are stored as YYYY-MM-DD (local) to avoid TZ drift.
+  // Conversion to ISO happens only when calling the API (in fetchItems).
+  const toLocalYMD = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const applyDatePreset = (preset) => {
     const now = new Date();
-    const end = new Date(now); end.setHours(23, 59, 59, 999);
-    let start;
-    if (preset === 'today') {
-      start = new Date(now); start.setHours(0, 0, 0, 0);
-    } else if (preset === '7d') {
-      start = new Date(now); start.setDate(start.getDate() - 6); start.setHours(0, 0, 0, 0);
-    } else if (preset === '30d') {
-      start = new Date(now); start.setDate(start.getDate() - 29); start.setHours(0, 0, 0, 0);
-    } else {
-      return;
-    }
+    let start = new Date(now);
+    if (preset === '7d') start.setDate(start.getDate() - 6);
+    else if (preset === '30d') start.setDate(start.getDate() - 29);
+    else if (preset !== 'today') return;
     setDatePreset(preset);
-    setDateFrom(start.toISOString());
-    setDateTo(end.toISOString());
+    setDateFrom(toLocalYMD(start));
+    setDateTo(toLocalYMD(now));
     setDateMenuOpen(false);
   };
 
   const applyCustomDates = (from, to) => {
     setDatePreset('custom');
-    // from: YYYY-MM-DD → start of day; to: YYYY-MM-DD → end of day
-    setDateFrom(from ? new Date(from + 'T00:00:00').toISOString() : '');
-    setDateTo(to ? new Date(to + 'T23:59:59.999').toISOString() : '');
+    setDateFrom(from || '');
+    setDateTo(to || '');
   };
 
   const clearDates = () => {
@@ -153,7 +156,7 @@ export default function ItemsPage() {
     if (datePreset === '7d') return t('date7d');
     if (datePreset === '30d') return t('date30d');
     if (datePreset === 'custom' && (dateFrom || dateTo)) {
-      const fmt = (iso) => iso ? new Date(iso).toLocaleDateString() : '…';
+      const fmt = (ymd) => ymd ? new Date(`${ymd}T00:00:00`).toLocaleDateString() : '…';
       return `${fmt(dateFrom)} – ${fmt(dateTo)}`;
     }
     return t('filterDates');
@@ -327,15 +330,15 @@ export default function ItemsPage() {
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
-                    value={dateFrom ? dateFrom.slice(0, 10) : ''}
-                    onChange={(e) => applyCustomDates(e.target.value, dateTo ? dateTo.slice(0, 10) : '')}
+                    value={dateFrom}
+                    onChange={(e) => applyCustomDates(e.target.value, dateTo)}
                     className="flex-1 h-8 px-2 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                   <span className="text-slate-400 text-xs">–</span>
                   <input
                     type="date"
-                    value={dateTo ? dateTo.slice(0, 10) : ''}
-                    onChange={(e) => applyCustomDates(dateFrom ? dateFrom.slice(0, 10) : '', e.target.value)}
+                    value={dateTo}
+                    onChange={(e) => applyCustomDates(dateFrom, e.target.value)}
                     className="flex-1 h-8 px-2 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                 </div>
