@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, IdCard, UserCheck, Search, X } from 'lucide-react';
+import { Plus, Package, IdCard, UserCheck, Search, X, Tag, Check, ChevronDown } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -10,6 +10,11 @@ const STATUS_COLORS = {
   returned:  'bg-slate-100 text-slate-600',
   expired:   'bg-slate-100 text-slate-500',
 };
+
+const CATEGORIES = [
+  'electronics', 'documents', 'clothing', 'keys', 'bags',
+  'jewelry', 'pets', 'sports', 'toys', 'accessories', 'other',
+];
 
 const PAGE_SIZE = 30;
 
@@ -26,18 +31,22 @@ export default function ItemsPage() {
   const [events, setEvents] = useState([]);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [catMenuOpen, setCatMenuOpen] = useState(false);
+  const catMenuRef = useRef(null);
 
   const FILTERS = [
     { key: 'active', labelKey: 'filterActive', params: { status: 'active' } },
     { key: 'all',    labelKey: 'filterAll',    params: {} },
   ];
 
-  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false, q = '') => {
+  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false, q = '', categories = []) => {
     const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
     const params = { ...f.params, limit: PAGE_SIZE, offset };
     if (evtId) params.event_id = evtId;
     if (identified) params.identified_only = true;
     if (q) params.q = q;
+    if (categories.length > 0) params.category = categories.join(',');
     const res = await api.get('/business/items', { params });
     return res.data;
   }, []);
@@ -46,7 +55,7 @@ export default function ItemsPage() {
     setLoading(true);
     Promise.all([
       api.get('/business/events', { params: { status: 'active' } }).catch(() => ({ data: { events: [] } })),
-      fetchItems(filter, 0, eventFilter, identifiedOnly, search),
+      fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories),
     ]).then(([eventsRes, itemsData]) => {
       setEvents(eventsRes.data.events || []);
       setItems(itemsData.items);
@@ -57,11 +66,11 @@ export default function ItemsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchItems(filter, 0, eventFilter, identifiedOnly, search)
+    fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories)
       .then(data => { setItems(data.items); setTotal(data.total); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filter, eventFilter, identifiedOnly, search, fetchItems]);
+  }, [filter, eventFilter, identifiedOnly, search, selectedCategories, fetchItems]);
 
   // Debounce search input → search
   useEffect(() => {
@@ -69,10 +78,28 @@ export default function ItemsPage() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
+  // Close category menu on outside click
+  useEffect(() => {
+    if (!catMenuOpen) return;
+    const onClick = (e) => {
+      if (catMenuRef.current && !catMenuRef.current.contains(e.target)) {
+        setCatMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [catMenuOpen]);
+
+  const toggleCategory = (cat) => {
+    setSelectedCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
+
   const handleLoadMore = async () => {
     setLoadingMore(true);
     try {
-      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly, search);
+      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly, search, selectedCategories);
       setItems(prev => [...prev, ...data.items]);
     } catch {}
     setLoadingMore(false);
@@ -148,6 +175,55 @@ export default function ItemsPage() {
           <IdCard size={14} />
           {t('filterIdentified')}
         </button>
+
+        {/* Category multi-select */}
+        <div className="relative" ref={catMenuRef}>
+          <button
+            data-testid="filter-category"
+            type="button"
+            onClick={() => setCatMenuOpen(o => !o)}
+            className={`inline-flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-md border transition-colors ${
+              selectedCategories.length > 0
+                ? 'bg-teal-50 border-teal-200 text-teal-700'
+                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Tag size={14} />
+            {selectedCategories.length === 0
+              ? t('filterCategory')
+              : selectedCategories.length === 1
+                ? t(`cat_${selectedCategories[0]}`)
+                : `${t('filterCategory')} · ${selectedCategories.length}`}
+            <ChevronDown size={13} className="opacity-60" />
+          </button>
+          {catMenuOpen && (
+            <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-10 py-1 max-h-80 overflow-auto">
+              {selectedCategories.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategories([])}
+                  className="w-full text-left px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 border-b border-slate-100"
+                >
+                  {t('clearAll')}
+                </button>
+              )}
+              {CATEGORIES.map(cat => {
+                const checked = selectedCategories.includes(cat);
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => toggleCategory(cat)}
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <span>{t(`cat_${cat}`)}</span>
+                    {checked && <Check size={14} className="text-teal-600" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
         {events.length > 0 && (
           <select
             value={eventFilter}
