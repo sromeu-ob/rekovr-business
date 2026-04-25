@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, IdCard, UserCheck, Search, X, Tag, Check, ChevronDown } from 'lucide-react';
+import { Plus, Package, IdCard, UserCheck, Search, X, Tag, Check, ChevronDown, Calendar } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -34,19 +34,26 @@ export default function ItemsPage() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [catMenuOpen, setCatMenuOpen] = useState(false);
   const catMenuRef = useRef(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [datePreset, setDatePreset] = useState('');
+  const [dateMenuOpen, setDateMenuOpen] = useState(false);
+  const dateMenuRef = useRef(null);
 
   const FILTERS = [
     { key: 'active', labelKey: 'filterActive', params: { status: 'active' } },
     { key: 'all',    labelKey: 'filterAll',    params: {} },
   ];
 
-  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false, q = '', categories = []) => {
+  const fetchItems = useCallback(async (filterKey, offset = 0, evtId = '', identified = false, q = '', categories = [], dFrom = '', dTo = '') => {
     const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
     const params = { ...f.params, limit: PAGE_SIZE, offset };
     if (evtId) params.event_id = evtId;
     if (identified) params.identified_only = true;
     if (q) params.q = q;
     if (categories.length > 0) params.category = categories.join(',');
+    if (dFrom) params.date_from = dFrom;
+    if (dTo) params.date_to = dTo;
     const res = await api.get('/business/items', { params });
     return res.data;
   }, []);
@@ -55,7 +62,7 @@ export default function ItemsPage() {
     setLoading(true);
     Promise.all([
       api.get('/business/events', { params: { status: 'active' } }).catch(() => ({ data: { events: [] } })),
-      fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories),
+      fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo),
     ]).then(([eventsRes, itemsData]) => {
       setEvents(eventsRes.data.events || []);
       setItems(itemsData.items);
@@ -66,11 +73,11 @@ export default function ItemsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories)
+    fetchItems(filter, 0, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo)
       .then(data => { setItems(data.items); setTotal(data.total); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filter, eventFilter, identifiedOnly, search, selectedCategories, fetchItems]);
+  }, [filter, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo, fetchItems]);
 
   // Debounce search input → search
   useEffect(() => {
@@ -90,16 +97,72 @@ export default function ItemsPage() {
     return () => document.removeEventListener('mousedown', onClick);
   }, [catMenuOpen]);
 
+  // Close date menu on outside click
+  useEffect(() => {
+    if (!dateMenuOpen) return;
+    const onClick = (e) => {
+      if (dateMenuRef.current && !dateMenuRef.current.contains(e.target)) {
+        setDateMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [dateMenuOpen]);
+
   const toggleCategory = (cat) => {
     setSelectedCategories(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     );
   };
 
+  const applyDatePreset = (preset) => {
+    const now = new Date();
+    const end = new Date(now); end.setHours(23, 59, 59, 999);
+    let start;
+    if (preset === 'today') {
+      start = new Date(now); start.setHours(0, 0, 0, 0);
+    } else if (preset === '7d') {
+      start = new Date(now); start.setDate(start.getDate() - 6); start.setHours(0, 0, 0, 0);
+    } else if (preset === '30d') {
+      start = new Date(now); start.setDate(start.getDate() - 29); start.setHours(0, 0, 0, 0);
+    } else {
+      return;
+    }
+    setDatePreset(preset);
+    setDateFrom(start.toISOString());
+    setDateTo(end.toISOString());
+    setDateMenuOpen(false);
+  };
+
+  const applyCustomDates = (from, to) => {
+    setDatePreset('custom');
+    // from: YYYY-MM-DD → start of day; to: YYYY-MM-DD → end of day
+    setDateFrom(from ? new Date(from + 'T00:00:00').toISOString() : '');
+    setDateTo(to ? new Date(to + 'T23:59:59.999').toISOString() : '');
+  };
+
+  const clearDates = () => {
+    setDatePreset('');
+    setDateFrom('');
+    setDateTo('');
+    setDateMenuOpen(false);
+  };
+
+  const dateLabel = () => {
+    if (datePreset === 'today') return t('dateToday');
+    if (datePreset === '7d') return t('date7d');
+    if (datePreset === '30d') return t('date30d');
+    if (datePreset === 'custom' && (dateFrom || dateTo)) {
+      const fmt = (iso) => iso ? new Date(iso).toLocaleDateString() : '…';
+      return `${fmt(dateFrom)} – ${fmt(dateTo)}`;
+    }
+    return t('filterDates');
+  };
+
   const handleLoadMore = async () => {
     setLoadingMore(true);
     try {
-      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly, search, selectedCategories);
+      const data = await fetchItems(filter, items.length, eventFilter, identifiedOnly, search, selectedCategories, dateFrom, dateTo);
       setItems(prev => [...prev, ...data.items]);
     } catch {}
     setLoadingMore(false);
@@ -224,6 +287,72 @@ export default function ItemsPage() {
             </div>
           )}
         </div>
+
+        {/* Date range */}
+        <div className="relative" ref={dateMenuRef}>
+          <button
+            data-testid="filter-dates"
+            type="button"
+            onClick={() => setDateMenuOpen(o => !o)}
+            className={`inline-flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-md border transition-colors ${
+              datePreset
+                ? 'bg-teal-50 border-teal-200 text-teal-700'
+                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Calendar size={14} />
+            {dateLabel()}
+            <ChevronDown size={13} className="opacity-60" />
+          </button>
+          {dateMenuOpen && (
+            <div className="absolute left-0 top-full mt-1 w-72 bg-white border border-slate-200 rounded-md shadow-lg z-10 p-2">
+              <div className="flex gap-1 mb-2">
+                {['today', '7d', '30d'].map(preset => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => applyDatePreset(preset)}
+                    className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                      datePreset === preset
+                        ? 'bg-teal-50 border-teal-200 text-teal-700'
+                        : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {t(preset === 'today' ? 'dateToday' : preset === '7d' ? 'date7d' : 'date30d')}
+                  </button>
+                ))}
+              </div>
+              <div className="border-t border-slate-100 pt-2">
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1.5 px-1">{t('dateCustom')}</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={dateFrom ? dateFrom.slice(0, 10) : ''}
+                    onChange={(e) => applyCustomDates(e.target.value, dateTo ? dateTo.slice(0, 10) : '')}
+                    className="flex-1 h-8 px-2 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  />
+                  <span className="text-slate-400 text-xs">–</span>
+                  <input
+                    type="date"
+                    value={dateTo ? dateTo.slice(0, 10) : ''}
+                    onChange={(e) => applyCustomDates(dateFrom ? dateFrom.slice(0, 10) : '', e.target.value)}
+                    className="flex-1 h-8 px-2 bg-white border border-slate-300 rounded text-xs text-slate-700 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  />
+                </div>
+              </div>
+              {datePreset && (
+                <button
+                  type="button"
+                  onClick={clearDates}
+                  className="w-full mt-2 px-2 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded border border-slate-200"
+                >
+                  {t('clearAll')}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
         {events.length > 0 && (
           <select
             value={eventFilter}
