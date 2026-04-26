@@ -1,7 +1,20 @@
 const translations = {
   en: {
     // Nav
+    navHome: 'Home',
     navDashboard: 'Dashboard',
+    homeTitle: 'Home',
+    homeSubtitle: 'Your pending work for today',
+    homeGreeting: "Hi {name}, here's what needs your attention",
+    homeAllClear: "You're all caught up — nothing pending right now.",
+    homePendingReview: 'Matches to review',
+    homePendingReviewEmpty: 'No matches awaiting review',
+    homeReadyDeliver: 'Ready to deliver',
+    homeReadyDeliverEmpty: 'Nothing waiting to be picked up',
+    homePendingContact: 'Owners to contact',
+    homePendingContactEmpty: 'No identified owners pending contact',
+    seeAll: 'See all',
+    justNow: 'just now',
     navFoundItems: 'Found Items',
     navMatches: 'Matches',
     navTeam: 'Team',
@@ -357,7 +370,20 @@ const translations = {
 
   es: {
     // Nav
+    navHome: 'Inicio',
     navDashboard: 'Panel',
+    homeTitle: 'Inicio',
+    homeSubtitle: 'Tu trabajo pendiente para hoy',
+    homeGreeting: 'Hola {name}, esto es lo que requiere tu atención',
+    homeAllClear: 'Todo al día — ahora mismo no hay nada pendiente.',
+    homePendingReview: 'Matches por revisar',
+    homePendingReviewEmpty: 'No hay matches pendientes de revisar',
+    homeReadyDeliver: 'Listos para entregar',
+    homeReadyDeliverEmpty: 'Nada esperando recogida',
+    homePendingContact: 'Propietarios por contactar',
+    homePendingContactEmpty: 'No hay propietarios identificados pendientes',
+    seeAll: 'Ver todos',
+    justNow: 'ahora',
     navFoundItems: 'Objetos encontrados',
     navMatches: 'Coincidencias',
     navTeam: 'Equipo',
@@ -713,7 +739,20 @@ const translations = {
 
   ca: {
     // Nav
+    navHome: 'Inici',
     navDashboard: 'Tauler',
+    homeTitle: 'Inici',
+    homeSubtitle: 'La teva feina pendent per avui',
+    homeGreeting: 'Hola {name}, això és el que requereix la teva atenció',
+    homeAllClear: 'Tot al dia — ara mateix no hi ha res pendent.',
+    homePendingReview: 'Matches per revisar',
+    homePendingReviewEmpty: 'No hi ha matches pendents de revisar',
+    homeReadyDeliver: 'Llestos per entregar',
+    homeReadyDeliverEmpty: 'Res esperant recollida',
+    homePendingContact: 'Propietaris per contactar',
+    homePendingContactEmpty: 'No hi ha propietaris identificats pendents',
+    seeAll: 'Veure tots',
+    justNow: 'ara mateix',
     navFoundItems: 'Objectes trobats',
     navMatches: 'Coincidències',
     navTeam: 'Equip',
