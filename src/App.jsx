@@ -5,6 +5,7 @@ import { I18nProvider } from './contexts/I18nContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import AcceptInvitePage from './pages/AcceptInvitePage';
+import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ItemsPage from './pages/ItemsPage';
 import NewItemPage from './pages/NewItemPage';
@@ -72,6 +73,14 @@ export default function App() {
         } />
 
         <Route path="/" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <HomePage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/dashboard" element={
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>
               <DashboardPage auth={auth} />

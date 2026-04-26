@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Package, GitCompare, Users, CreditCard,
-  LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine
+  LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine, Home
 } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
@@ -13,7 +13,8 @@ export default function Layout({ children, auth, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const NAV = [
-    { to: '/',           icon: LayoutDashboard, labelKey: 'navDashboard' },
+    { to: '/',           icon: Home,            labelKey: 'navHome' },
+    { to: '/dashboard',  icon: LayoutDashboard, labelKey: 'navDashboard' },
     { to: '/items',      icon: Package,         labelKey: 'navFoundItems' },
     { to: '/events',     icon: CalendarDays,    labelKey: 'navEvents' },
     { to: '/matches',    icon: GitCompare,       labelKey: 'navMatches' },
@@ -77,7 +78,7 @@ export default function Layout({ children, auth, onLogout }) {
               to={to}
               end={to === '/'}
               onClick={closeMobile}
-              data-testid={`nav-${to === '/' ? 'dashboard' : to.replace('/', '')}`}
+              data-testid={`nav-${to === '/' ? 'home' : to.replace('/', '')}`}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
