@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Package, IdCard, UserCheck, Search, X, SlidersHorizontal, Bell } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Package, IdCard, UserCheck, Search, X, SlidersHorizontal, Bell, PhoneCall } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -41,20 +41,23 @@ const toLocalYMD = (d) => {
 export default function ItemsPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const [searchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [events, setEvents] = useState([]);
 
-  // Filters — rehydrated from sessionStorage so they survive navigation within the tab
+  // Filters — rehydrated from sessionStorage; URL params override (deep links from Home)
   const stored = loadStoredFilters() || {};
+  const urlPendingContact = searchParams.get('pending_contact') === 'true';
   const [searchInput, setSearchInput] = useState(stored.search || '');
   const [search, setSearch] = useState(stored.search || '');
   const [selectedStatuses, setSelectedStatuses] = useState(stored.selectedStatuses || []);
   const [selectedCategories, setSelectedCategories] = useState(stored.selectedCategories || []);
   const [identifiedOnly, setIdentifiedOnly] = useState(stored.identifiedOnly || false);
   const [pendingMatchesOnly, setPendingMatchesOnly] = useState(stored.pendingMatchesOnly || false);
+  const [pendingContactOnly, setPendingContactOnly] = useState(urlPendingContact || stored.pendingContactOnly || false);
   const [eventFilter, setEventFilter] = useState(stored.eventFilter || '');
   const [dateFrom, setDateFrom] = useState(stored.dateFrom || '');
   const [dateTo, setDateTo] = useState(stored.dateTo || '');
@@ -65,12 +68,13 @@ export default function ItemsPage() {
   const filtersRef = useRef(null);
 
   const fetchItems = useCallback(async (offset = 0, opts) => {
-    const { statuses, categories, identified, pending, evtId, q, dFrom, dTo } = opts;
+    const { statuses, categories, identified, pending, pendingContact, evtId, q, dFrom, dTo } = opts;
     const params = { limit: PAGE_SIZE, offset };
     if (statuses.length > 0) params.status = statuses.join(',');
     if (categories.length > 0) params.category = categories.join(',');
     if (identified) params.identified_only = true;
     if (pending) params.has_pending_matches = true;
+    if (pendingContact) params.pending_contact_only = true;
     if (evtId) params.event_id = evtId;
     if (q) params.q = q;
     if (dFrom) params.date_from = new Date(`${dFrom}T00:00:00`).toISOString();
@@ -84,11 +88,12 @@ export default function ItemsPage() {
     categories: selectedCategories,
     identified: identifiedOnly,
     pending: pendingMatchesOnly,
+    pendingContact: pendingContactOnly,
     evtId: eventFilter,
     q: search,
     dFrom: dateFrom,
     dTo: dateTo,
-  }), [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, eventFilter, search, dateFrom, dateTo]);
+  }), [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, pendingContactOnly, eventFilter, search, dateFrom, dateTo]);
 
   useEffect(() => {
     setLoading(true);
@@ -122,11 +127,11 @@ export default function ItemsPage() {
     try {
       sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
         search, selectedStatuses, selectedCategories, identifiedOnly,
-        pendingMatchesOnly, eventFilter, dateFrom, dateTo, datePreset,
+        pendingMatchesOnly, pendingContactOnly, eventFilter, dateFrom, dateTo, datePreset,
       }));
     } catch {}
   }, [search, selectedStatuses, selectedCategories, identifiedOnly,
-      pendingMatchesOnly, eventFilter, dateFrom, dateTo, datePreset]);
+      pendingMatchesOnly, pendingContactOnly, eventFilter, dateFrom, dateTo, datePreset]);
 
   // Close filters popover on outside click
   useEffect(() => {
@@ -176,16 +181,18 @@ export default function ItemsPage() {
     if (selectedCategories.length > 0) n += 1;
     if (identifiedOnly) n += 1;
     if (pendingMatchesOnly) n += 1;
+    if (pendingContactOnly) n += 1;
     if (eventFilter) n += 1;
     if (datePreset) n += 1;
     return n;
-  }, [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, eventFilter, datePreset]);
+  }, [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, pendingContactOnly, eventFilter, datePreset]);
 
   const clearAll = () => {
     setSelectedStatuses([]);
     setSelectedCategories([]);
     setIdentifiedOnly(false);
     setPendingMatchesOnly(false);
+    setPendingContactOnly(false);
     setEventFilter('');
     clearDates();
   };
@@ -235,6 +242,9 @@ export default function ItemsPage() {
   }
   if (pendingMatchesOnly) {
     chips.push({ key: 'pending', label: t('chipPendingMatches'), onRemove: () => setPendingMatchesOnly(false) });
+  }
+  if (pendingContactOnly) {
+    chips.push({ key: 'pendingContact', label: t('chipPendingContact'), onRemove: () => setPendingContactOnly(false) });
   }
   if (eventFilter) {
     const evt = events.find(e => e.event_id === eventFilter);
@@ -433,6 +443,22 @@ export default function ItemsPage() {
                     type="checkbox"
                     checked={pendingMatchesOnly}
                     onChange={(e) => setPendingMatchesOnly(e.target.checked)}
+                    className="w-4 h-4 accent-teal-600"
+                  />
+                </label>
+              </div>
+
+              {/* Pending external contact (identified owners) */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <span className="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <PhoneCall size={14} className="text-slate-400" />
+                    {t('filterPendingContact')}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={pendingContactOnly}
+                    onChange={(e) => setPendingContactOnly(e.target.checked)}
                     className="w-4 h-4 accent-teal-600"
                   />
                 </label>

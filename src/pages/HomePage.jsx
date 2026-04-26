@@ -199,7 +199,7 @@ export default function HomePage({ auth }) {
           icon={IdCard}
           title={t('homePendingContact')}
           count={pc.total}
-          seeAllHref="/items"
+          seeAllHref="/items?pending_contact=true"
           emptyLabel={t('homePendingContactEmpty')}
         >
           {pc.items.map(item => (
