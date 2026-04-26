@@ -16,7 +16,7 @@ function timeAgo(dateStr, t) {
   return `${days}${t('daysAgo')}`;
 }
 
-function SectionCard({ icon: Icon, title, count, seeAllHref, emptyLabel, children, testId }) {
+function SectionCard({ icon: Icon, title, count, seeAllHref, emptyLabel, children, footer, testId }) {
   const navigate = useNavigate();
   const { t } = useI18n();
   return (
@@ -46,7 +46,10 @@ function SectionCard({ icon: Icon, title, count, seeAllHref, emptyLabel, childre
           {emptyLabel}
         </div>
       ) : (
-        <ul className="divide-y divide-slate-100">{children}</ul>
+        <>
+          <ul className="divide-y divide-slate-100">{children}</ul>
+          {footer}
+        </>
       )}
     </section>
   );
@@ -107,18 +110,43 @@ function ItemRow({ item, onClick }) {
   );
 }
 
+const READY_PAGE_SIZE = 20;
+
 export default function HomePage({ auth }) {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    api.get('/business/items/inbox')
+    api.get('/business/items/inbox', { params: { ready_limit: READY_PAGE_SIZE } })
       .then(res => setData(res.data))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, []);
+
+  const loadMoreReady = async () => {
+    if (!data) return;
+    setLoadingMore(true);
+    try {
+      const res = await api.get('/business/items/inbox', {
+        params: {
+          ready_offset: data.ready_to_deliver.matches.length,
+          ready_limit: READY_PAGE_SIZE,
+        },
+      });
+      setData(prev => ({
+        ...prev,
+        ready_to_deliver: {
+          ...res.data.ready_to_deliver,
+          matches: [...prev.ready_to_deliver.matches, ...res.data.ready_to_deliver.matches],
+        },
+      }));
+    } catch {} finally {
+      setLoadingMore(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -152,29 +180,16 @@ export default function HomePage({ auth }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <SectionCard
           testId="home-pending-review"
           icon={ClipboardCheck}
           title={t('homePendingReview')}
           count={pr.total}
-          seeAllHref="/matches"
+          seeAllHref="/matches?bucket=pending_review"
           emptyLabel={t('homePendingReviewEmpty')}
         >
           {pr.matches.map(m => (
-            <MatchRow key={m.match_id} m={m} onClick={() => navigate(`/matches/${m.found_item_id}`)} />
-          ))}
-        </SectionCard>
-
-        <SectionCard
-          testId="home-ready-deliver"
-          icon={PackageCheck}
-          title={t('homeReadyDeliver')}
-          count={rd.total}
-          seeAllHref="/matches"
-          emptyLabel={t('homeReadyDeliverEmpty')}
-        >
-          {rd.matches.map(m => (
             <MatchRow key={m.match_id} m={m} onClick={() => navigate(`/matches/${m.found_item_id}`)} />
           ))}
         </SectionCard>
@@ -192,6 +207,37 @@ export default function HomePage({ auth }) {
           ))}
         </SectionCard>
       </div>
+
+      <SectionCard
+        testId="home-ready-deliver"
+        icon={PackageCheck}
+        title={t('homeReadyDeliver')}
+        count={rd.total}
+        emptyLabel={t('homeReadyDeliverEmpty')}
+        footer={rd.matches.length < rd.total ? (
+          <div className="px-5 py-3 border-t border-slate-100">
+            <button
+              data-testid="home-ready-load-more"
+              type="button"
+              onClick={loadMoreReady}
+              disabled={loadingMore}
+              className="w-full py-2 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-50"
+            >
+              {loadingMore ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
+                </span>
+              ) : (
+                `${t('loadMore')} · ${rd.total - rd.matches.length} ${t('remaining')}`
+              )}
+            </button>
+          </div>
+        ) : null}
+      >
+        {rd.matches.map(m => (
+          <MatchRow key={m.match_id} m={m} onClick={() => navigate(`/matches/${m.found_item_id}`)} />
+        ))}
+      </SectionCard>
     </div>
   );
 }

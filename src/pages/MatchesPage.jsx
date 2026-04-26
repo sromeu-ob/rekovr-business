@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { GitCompare, ChevronRight, Package } from 'lucide-react';
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
@@ -7,13 +7,16 @@ import { useI18n } from '../contexts/I18nContext';
 export default function MatchesPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const [searchParams] = useSearchParams();
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending');
+  const initialBucket = searchParams.get('bucket') === 'pending_review' ? 'pending_review' : 'pending';
+  const [filter, setFilter] = useState(initialBucket);
 
   const FILTERS = [
-    { key: 'pending', labelKey: 'filterWithPending' },
-    { key: 'all',     labelKey: 'filterAll' },
+    { key: 'pending_review', labelKey: 'filterPendingReview' },
+    { key: 'pending',        labelKey: 'filterWithPending' },
+    { key: 'all',            labelKey: 'filterAll' },
   ];
 
   useEffect(() => {
@@ -23,9 +26,11 @@ export default function MatchesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const items = filter === 'pending'
-    ? allItems.filter(i => (i.match_pending || 0) > 0)
-    : allItems;
+  const items = filter === 'pending_review'
+    ? allItems.filter(i => (i.match_pending_review || 0) > 0)
+    : filter === 'pending'
+      ? allItems.filter(i => (i.match_pending || 0) > 0)
+      : allItems;
 
   const totalPending = allItems.reduce((s, i) => s + (i.match_pending || 0), 0);
 
@@ -64,10 +69,10 @@ export default function MatchesPage() {
         <div data-testid="matches-empty" className="flex flex-col items-center justify-center py-20 text-center">
           <GitCompare size={32} className="text-slate-300 mb-3" />
           <p className="text-sm font-medium text-slate-900">
-            {filter === 'pending' ? t('noPendingMatches') : t('noMatchesYet')}
+            {filter === 'all' ? t('noMatchesYet') : t('noPendingMatches')}
           </p>
           <p className="text-sm text-slate-500 mt-1 max-w-xs">
-            {filter === 'pending' ? t('noPendingMatchesDesc') : t('noMatchesYetDesc')}
+            {filter === 'all' ? t('noMatchesYetDesc') : t('noPendingMatchesDesc')}
           </p>
         </div>
       ) : (
