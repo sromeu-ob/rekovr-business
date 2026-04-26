@@ -27,8 +27,6 @@ const toLocalYMD = (d) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-const arraysEqual = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
-
 export default function ItemsPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -41,7 +39,7 @@ export default function ItemsPage() {
   // Filters
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState(['active']);
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [identifiedOnly, setIdentifiedOnly] = useState(false);
   const [eventFilter, setEventFilter] = useState('');
@@ -148,7 +146,7 @@ export default function ItemsPage() {
   // Active filter count for the badge (search excluded — it has its own input)
   const activeCount = useMemo(() => {
     let n = 0;
-    if (!arraysEqual(selectedStatuses, ['active'])) n += 1;
+    if (selectedStatuses.length > 0) n += 1;
     if (selectedCategories.length > 0) n += 1;
     if (identifiedOnly) n += 1;
     if (eventFilter) n += 1;
@@ -157,7 +155,7 @@ export default function ItemsPage() {
   }, [selectedStatuses, selectedCategories, identifiedOnly, eventFilter, datePreset]);
 
   const clearAll = () => {
-    setSelectedStatuses(['active']);
+    setSelectedStatuses([]);
     setSelectedCategories([]);
     setIdentifiedOnly(false);
     setEventFilter('');
@@ -213,7 +211,7 @@ export default function ItemsPage() {
   }
 
   const isEmpty = items.length === 0;
-  const onlyActiveDefault = arraysEqual(selectedStatuses, ['active']) && activeCount === 0 && !search;
+  const noFiltersApplied = activeCount === 0 && !search;
 
   return (
     <div>
@@ -449,10 +447,10 @@ export default function ItemsPage() {
         <div data-testid="items-empty" className="flex flex-col items-center justify-center py-20 text-center">
           <Package size={32} className="text-slate-300 mb-3" />
           <p className="text-sm font-medium text-slate-900">
-            {onlyActiveDefault ? t('noActiveItems') : t('noItemsMatching')}
+            {noFiltersApplied ? t('noItemsYet') : t('noItemsMatching')}
           </p>
           <p className="text-sm text-slate-500 mt-1">
-            {onlyActiveDefault ? t('allItemsRecovered') : t('tryAdjustFilters')}
+            {noFiltersApplied ? t('startRegistering') : t('tryAdjustFilters')}
           </p>
         </div>
       ) : (
