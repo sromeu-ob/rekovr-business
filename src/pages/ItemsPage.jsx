@@ -20,6 +20,17 @@ const CATEGORIES = [
 
 const PAGE_SIZE = 30;
 
+const FILTERS_STORAGE_KEY = 'items_filters_v1';
+
+const loadStoredFilters = () => {
+  try {
+    const raw = sessionStorage.getItem(FILTERS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 const toLocalYMD = (d) => {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -36,17 +47,18 @@ export default function ItemsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [events, setEvents] = useState([]);
 
-  // Filters
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [identifiedOnly, setIdentifiedOnly] = useState(false);
-  const [pendingMatchesOnly, setPendingMatchesOnly] = useState(false);
-  const [eventFilter, setEventFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [datePreset, setDatePreset] = useState('');
+  // Filters — rehydrated from sessionStorage so they survive navigation within the tab
+  const stored = loadStoredFilters() || {};
+  const [searchInput, setSearchInput] = useState(stored.search || '');
+  const [search, setSearch] = useState(stored.search || '');
+  const [selectedStatuses, setSelectedStatuses] = useState(stored.selectedStatuses || []);
+  const [selectedCategories, setSelectedCategories] = useState(stored.selectedCategories || []);
+  const [identifiedOnly, setIdentifiedOnly] = useState(stored.identifiedOnly || false);
+  const [pendingMatchesOnly, setPendingMatchesOnly] = useState(stored.pendingMatchesOnly || false);
+  const [eventFilter, setEventFilter] = useState(stored.eventFilter || '');
+  const [dateFrom, setDateFrom] = useState(stored.dateFrom || '');
+  const [dateTo, setDateTo] = useState(stored.dateTo || '');
+  const [datePreset, setDatePreset] = useState(stored.datePreset || '');
 
   // UI
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -104,6 +116,17 @@ export default function ItemsPage() {
     const t = setTimeout(() => setSearch(searchInput.trim()), 300);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  // Persist filters to sessionStorage so they survive in-tab navigation
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
+        search, selectedStatuses, selectedCategories, identifiedOnly,
+        pendingMatchesOnly, eventFilter, dateFrom, dateTo, datePreset,
+      }));
+    } catch {}
+  }, [search, selectedStatuses, selectedCategories, identifiedOnly,
+      pendingMatchesOnly, eventFilter, dateFrom, dateTo, datePreset]);
 
   // Close filters popover on outside click
   useEffect(() => {
