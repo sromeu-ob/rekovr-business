@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, IdCard, UserCheck, Search, X, SlidersHorizontal } from 'lucide-react';
+import { Plus, Package, IdCard, UserCheck, Search, X, SlidersHorizontal, Bell } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -42,6 +42,7 @@ export default function ItemsPage() {
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [identifiedOnly, setIdentifiedOnly] = useState(false);
+  const [pendingMatchesOnly, setPendingMatchesOnly] = useState(false);
   const [eventFilter, setEventFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -52,11 +53,12 @@ export default function ItemsPage() {
   const filtersRef = useRef(null);
 
   const fetchItems = useCallback(async (offset = 0, opts) => {
-    const { statuses, categories, identified, evtId, q, dFrom, dTo } = opts;
+    const { statuses, categories, identified, pending, evtId, q, dFrom, dTo } = opts;
     const params = { limit: PAGE_SIZE, offset };
     if (statuses.length > 0) params.status = statuses.join(',');
     if (categories.length > 0) params.category = categories.join(',');
     if (identified) params.identified_only = true;
+    if (pending) params.has_pending_matches = true;
     if (evtId) params.event_id = evtId;
     if (q) params.q = q;
     if (dFrom) params.date_from = new Date(`${dFrom}T00:00:00`).toISOString();
@@ -69,11 +71,12 @@ export default function ItemsPage() {
     statuses: selectedStatuses,
     categories: selectedCategories,
     identified: identifiedOnly,
+    pending: pendingMatchesOnly,
     evtId: eventFilter,
     q: search,
     dFrom: dateFrom,
     dTo: dateTo,
-  }), [selectedStatuses, selectedCategories, identifiedOnly, eventFilter, search, dateFrom, dateTo]);
+  }), [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, eventFilter, search, dateFrom, dateTo]);
 
   useEffect(() => {
     setLoading(true);
@@ -149,15 +152,17 @@ export default function ItemsPage() {
     if (selectedStatuses.length > 0) n += 1;
     if (selectedCategories.length > 0) n += 1;
     if (identifiedOnly) n += 1;
+    if (pendingMatchesOnly) n += 1;
     if (eventFilter) n += 1;
     if (datePreset) n += 1;
     return n;
-  }, [selectedStatuses, selectedCategories, identifiedOnly, eventFilter, datePreset]);
+  }, [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, eventFilter, datePreset]);
 
   const clearAll = () => {
     setSelectedStatuses([]);
     setSelectedCategories([]);
     setIdentifiedOnly(false);
+    setPendingMatchesOnly(false);
     setEventFilter('');
     clearDates();
   };
@@ -204,6 +209,9 @@ export default function ItemsPage() {
   }
   if (identifiedOnly) {
     chips.push({ key: 'identified', label: t('filterIdentified'), onRemove: () => setIdentifiedOnly(false) });
+  }
+  if (pendingMatchesOnly) {
+    chips.push({ key: 'pending', label: t('chipPendingMatches'), onRemove: () => setPendingMatchesOnly(false) });
   }
   if (eventFilter) {
     const evt = events.find(e => e.event_id === eventFilter);
@@ -386,6 +394,22 @@ export default function ItemsPage() {
                     type="checkbox"
                     checked={identifiedOnly}
                     onChange={(e) => setIdentifiedOnly(e.target.checked)}
+                    className="w-4 h-4 accent-teal-600"
+                  />
+                </label>
+              </div>
+
+              {/* Pending matches */}
+              <div className="px-4 py-3 border-b border-slate-100">
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <span className="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <Bell size={14} className="text-slate-400" />
+                    {t('filterPendingMatches')}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={pendingMatchesOnly}
+                    onChange={(e) => setPendingMatchesOnly(e.target.checked)}
                     className="w-4 h-4 accent-teal-600"
                   />
                 </label>
