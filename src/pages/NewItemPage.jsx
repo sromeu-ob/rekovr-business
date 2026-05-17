@@ -2,11 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Camera, Upload, X, Sparkles, MapPin, CheckCircle, Plus, ArrowLeft, Loader2, IdCard, ShieldCheck, AlertCircle } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
-import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
+import LocationSearchInput from '../components/LocationSearchInput';
+import { useReverseGeocode } from '../hooks/useReverseGeocode';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -15,6 +15,7 @@ export default function NewItemPage({ auth }) {
   const { itemId } = useParams();
   const isEdit = Boolean(itemId);
   const { t, language } = useI18n();
+  const reverseGeocode = useReverseGeocode();
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -105,7 +106,22 @@ export default function NewItemPage({ auth }) {
     setAddress(newAddress || `${newLat.toFixed(5)}, ${newLng.toFixed(5)}`);
   }, []);
 
-  // ── Interactive map with geocoder, drag, click, geolocation ────────────────
+  // Keep the latest reverseGeocode function reachable from the map init effect
+  // without re-running it whenever the provider changes.
+  const reverseGeocodeRef = useRef(reverseGeocode);
+  useEffect(() => { reverseGeocodeRef.current = reverseGeocode; }, [reverseGeocode]);
+
+  const setLocationWithReverseGeocode = useCallback(async (newLat, newLng) => {
+    updateLocationFromCoords(newLat, newLng, null);
+    try {
+      const resolved = await reverseGeocodeRef.current(newLat, newLng, { language });
+      setAddress(resolved);
+    } catch {
+      // keep fallback coordinates string
+    }
+  }, [updateLocationFromCoords, language]);
+
+  // ── Interactive map with drag, click, geolocation (search handled by overlay) ─
 
   useEffect(() => {
     if (loadingItem) return; // wait until item is loaded in edit mode
@@ -125,13 +141,6 @@ export default function NewItemPage({ auth }) {
     });
     mapRef.current = map;
 
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl,
-      marker: false,
-      placeholder: t('searchForAddress'),
-    });
-    map.addControl(geocoder, 'top-left');
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     const marker = new mapboxgl.Marker({ color: '#18181b', draggable: true })
@@ -150,20 +159,14 @@ export default function NewItemPage({ auth }) {
       );
     }
 
-    geocoder.on('result', (e) => {
-      const [gLng, gLat] = e.result.center;
-      marker.setLngLat([gLng, gLat]);
-      updateLocationFromCoords(gLat, gLng, e.result.place_name);
-    });
-
     marker.on('dragend', () => {
       const { lat: mLat, lng: mLng } = marker.getLngLat();
-      updateLocationFromCoords(mLat, mLng, null);
+      setLocationWithReverseGeocode(mLat, mLng);
     });
 
     map.on('click', (e) => {
       marker.setLngLat([e.lngLat.lng, e.lngLat.lat]);
-      updateLocationFromCoords(e.lngLat.lat, e.lngLat.lng, null);
+      setLocationWithReverseGeocode(e.lngLat.lat, e.lngLat.lng);
     });
 
     // Only use geolocation in create mode (don't override item's location)
@@ -173,7 +176,7 @@ export default function NewItemPage({ auth }) {
           const { latitude: geoLat, longitude: geoLng } = pos.coords;
           map.flyTo({ center: [geoLng, geoLat], zoom: 14 });
           marker.setLngLat([geoLng, geoLat]);
-          updateLocationFromCoords(geoLat, geoLng, null);
+          setLocationWithReverseGeocode(geoLat, geoLng);
         },
         () => {}
       );
@@ -181,6 +184,12 @@ export default function NewItemPage({ auth }) {
 
     return () => { map.remove(); mapRef.current = null; mapInitializedRef.current = false; };
   }, [success, loadingItem]); // re-init after "register another" reset or when item loaded
+
+  const handleSearchSelect = ({ latitude, longitude, address: newAddress }) => {
+    if (markerRef.current) markerRef.current.setLngLat([longitude, latitude]);
+    if (mapRef.current) mapRef.current.flyTo({ center: [longitude, latitude], zoom: 15 });
+    updateLocationFromCoords(latitude, longitude, newAddress);
+  };
 
   // ── Photo handling ───────────────────────────────────────────────────────────
 
@@ -550,11 +559,20 @@ export default function NewItemPage({ auth }) {
                 <MapPin size={12} className="inline mr-1" />
                 {t('locationRequired')} *
               </label>
-              <div
-                data-testid="map-container"
-                ref={mapContainerRef}
-                className="w-full h-[220px] lg:h-[260px] rounded-md overflow-hidden"
-              />
+              <div className="relative w-full h-[220px] lg:h-[260px] rounded-md overflow-hidden">
+                <div className="absolute top-2 left-2 right-2 z-10 max-w-md">
+                  <LocationSearchInput
+                    onSelect={handleSearchSelect}
+                    language={language}
+                    placeholder={t('searchForAddress')}
+                  />
+                </div>
+                <div
+                  data-testid="map-container"
+                  ref={mapContainerRef}
+                  className="w-full h-full"
+                />
+              </div>
               {address && (
                 <p className="mt-1.5 text-xs text-slate-400 truncate">{address}</p>
               )}
