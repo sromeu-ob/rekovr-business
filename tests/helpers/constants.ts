@@ -20,9 +20,9 @@ export const C2C_USER_PASSWORD = process.env.TEST_C2C_USER_PASSWORD!;
 export const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL!;
 export const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD!;
 
-// URLs
-export const API_URL = process.env.API_URL || 'https://api.rekovr.ai';
-export const BIZ_FRONTEND_URL = process.env.BIZ_FRONTEND_URL || 'https://business.rekovr.ai';
+// URLs — defaults point at TEST env to avoid accidentally hitting prod
+export const API_URL = process.env.API_URL || 'https://test-api.rekovr.ai';
+export const BIZ_FRONTEND_URL = process.env.BIZ_FRONTEND_URL || 'https://test-business.rekovr.ai';
 
 // MongoDB
 export const MONGODB_URI = process.env.MONGODB_URI!;
