@@ -21,13 +21,7 @@ api.interceptors.response.use(
 
 export function photoUrl(path) {
   if (!path) return '';
-  if (path.startsWith('http')) {
-    const m = path.match(/\/([^/?#]+)(?:\?|#|$)/);
-    const filename = m ? m[1] : null;
-    if (filename) {
-      return `${import.meta.env.VITE_API_URL}/api/media/${encodeURIComponent(filename)}`;
-    }
-  }
+  if (path.startsWith('http')) return path;
   return `${import.meta.env.VITE_API_URL}${path}`;
 }
 
