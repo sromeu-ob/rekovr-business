@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Package, IdCard, UserCheck, Search, X, SlidersHorizontal, Bell, PhoneCall } from 'lucide-react';
+import { Plus, Package, IdCard, UserCheck, Search, X, SlidersHorizontal, Bell, PhoneCall, ChevronUp, ChevronDown } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -62,14 +62,18 @@ export default function ItemsPage() {
   const [dateFrom, setDateFrom] = useState(stored.dateFrom || '');
   const [dateTo, setDateTo] = useState(stored.dateTo || '');
   const [datePreset, setDatePreset] = useState(stored.datePreset || '');
+  const [sortBy, setSortBy] = useState(stored.sortBy || 'created_at');
+  const [sortDir, setSortDir] = useState(stored.sortDir || 'desc');
 
   // UI
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersRef = useRef(null);
 
   const fetchItems = useCallback(async (offset = 0, opts) => {
-    const { statuses, categories, identified, pending, pendingContact, evtId, q, dFrom, dTo } = opts;
+    const { statuses, categories, identified, pending, pendingContact, evtId, q, dFrom, dTo, sBy, sDir } = opts;
     const params = { limit: PAGE_SIZE, offset };
+    if (sBy && sBy !== 'created_at') { params.sort_by = sBy; }
+    if (sDir && sDir !== 'desc') { params.sort_dir = sDir; }
     if (statuses.length > 0) params.status = statuses.join(',');
     if (categories.length > 0) params.category = categories.join(',');
     if (identified) params.identified_only = true;
@@ -93,7 +97,9 @@ export default function ItemsPage() {
     q: search,
     dFrom: dateFrom,
     dTo: dateTo,
-  }), [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, pendingContactOnly, eventFilter, search, dateFrom, dateTo]);
+    sBy: sortBy,
+    sDir: sortDir,
+  }), [selectedStatuses, selectedCategories, identifiedOnly, pendingMatchesOnly, pendingContactOnly, eventFilter, search, dateFrom, dateTo, sortBy, sortDir]);
 
   useEffect(() => {
     setLoading(true);
@@ -128,10 +134,12 @@ export default function ItemsPage() {
       sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
         search, selectedStatuses, selectedCategories, identifiedOnly,
         pendingMatchesOnly, pendingContactOnly, eventFilter, dateFrom, dateTo, datePreset,
+        sortBy, sortDir,
       }));
     } catch {}
   }, [search, selectedStatuses, selectedCategories, identifiedOnly,
-      pendingMatchesOnly, pendingContactOnly, eventFilter, dateFrom, dateTo, datePreset]);
+      pendingMatchesOnly, pendingContactOnly, eventFilter, dateFrom, dateTo, datePreset,
+      sortBy, sortDir]);
 
   // Close filters popover on outside click
   useEffect(() => {
@@ -253,6 +261,35 @@ export default function ItemsPage() {
 
   const isEmpty = items.length === 0;
   const noFiltersApplied = activeCount === 0 && !search;
+
+  // Column sorting — toggling the active column flips direction;
+  // a new column starts asc for text, desc for dates.
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortDir(field === 'date_time' || field === 'created_at' ? 'desc' : 'asc');
+    }
+  };
+
+  const SortableTh = ({ field, children }) => {
+    const active = sortBy === field;
+    return (
+      <th
+        onClick={() => handleSort(field)}
+        aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide cursor-pointer select-none hover:text-slate-700 transition-colors"
+      >
+        <span className="inline-flex items-center gap-1">
+          {children}
+          {active && (sortDir === 'asc'
+            ? <ChevronUp size={12} className="text-teal-600" />
+            : <ChevronDown size={12} className="text-teal-600" />)}
+        </span>
+      </th>
+    );
+  };
 
   return (
     <div>
@@ -532,10 +569,11 @@ export default function ItemsPage() {
             <table data-testid="items-table" className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">{t('colItem')}</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">{t('colCategory')}</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">{t('colDate')}</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">{t('colStatus')}</th>
+                  <SortableTh field="title">{t('colItem')}</SortableTh>
+                  <SortableTh field="category">{t('colCategory')}</SortableTh>
+                  <SortableTh field="date_time">{t('colDate')}</SortableTh>
+                  <SortableTh field="status">{t('colStatus')}</SortableTh>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">{t('colMatches')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -583,6 +621,15 @@ export default function ItemsPage() {
                       <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${STATUS_COLORS[item.status] || 'bg-slate-100 text-slate-500'}`}>
                         {item.status}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {item.pending_matches > 0 ? (
+                        <span className="inline-flex items-center justify-center min-w-[22px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold tabular-nums">
+                          {item.pending_matches}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -252,6 +252,46 @@ const STATUS_DOT = {
   expired:   'bg-slate-300',
 };
 
+const TL_DOT = {
+  registered:          'bg-slate-300',
+  match_created:       'bg-slate-400',
+  verification_scored: 'bg-teal-300',
+  info_requested:      'bg-amber-400',
+  match_accepted:      'bg-teal-500',
+  match_rejected:      'bg-rose-400',
+  delivered:           'bg-teal-500',
+};
+
+function timelineLabel(ev, t) {
+  const pct = (s) => (s != null ? Math.round(s * 100) : '—');
+  switch (ev.type) {
+    case 'registered':
+      return ev.actor_name
+        ? t('tlRegisteredBy').replace('{name}', ev.actor_name)
+        : t('tlRegistered');
+    case 'match_created':
+      return t('tlMatchCreated').replace('{score}', pct(ev.score));
+    case 'verification_scored':
+      return t('tlVerification').replace('{score}', pct(ev.verification_score));
+    case 'info_requested':
+      return ev.actor_name
+        ? t('tlInfoRequestedBy').replace('{name}', ev.actor_name)
+        : t('tlInfoRequested');
+    case 'match_accepted':
+      return ev.actor_name
+        ? t('tlAcceptedBy').replace('{name}', ev.actor_name)
+        : t('tlAccepted');
+    case 'match_rejected':
+      return ev.actor_name
+        ? t('tlRejectedBy').replace('{name}', ev.actor_name)
+        : t('tlRejected');
+    case 'delivered':
+      return t('tlDelivered').replace('{name}', ev.recipient_name || '—');
+    default:
+      return ev.type;
+  }
+}
+
 function FactRow({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center gap-3 py-3">
@@ -335,6 +375,7 @@ export default function ItemDetailPage() {
   const [matches, setMatches] = useState([]);
   const [matchTotal, setMatchTotal] = useState(0);
   const [discardedTotal, setDiscardedTotal] = useState(0);
+  const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewerIndex, setViewerIndex] = useState(null);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -396,6 +437,9 @@ export default function ItemDetailPage() {
       try {
         const itemRes = await api.get(`/business/items/${itemId}`);
         setItem(itemRes.data);
+        api.get(`/business/items/${itemId}/timeline`)
+          .then(r => setTimeline(r.data?.events || []))
+          .catch(() => {});
         if (['returned', 'recovered'].includes(itemRes.data?.status)) {
           // Delivered → the panel shows the resolution, not an open queue
           const [winRes, discRes] = await Promise.all([
@@ -575,6 +619,31 @@ export default function ItemDetailPage() {
           )}
 
           <JourneyRail step={journeyStep} muted={expired} t={t} />
+
+          {/* Audit trail — who did what and when */}
+          {timeline.length > 1 && (
+            <div className="mt-10" data-testid="item-timeline">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+                {t('timelineTitle')}
+              </p>
+              <div>
+                {timeline.map((ev, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${TL_DOT[ev.type] || 'bg-slate-300'}`} />
+                      {i < timeline.length - 1 && <span className="w-px flex-1 bg-slate-100 my-1" />}
+                    </div>
+                    <div className="pb-4 min-w-0">
+                      <p className="text-[13px] text-slate-700 leading-snug">{timelineLabel(ev, t)}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {new Date(ev.at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT — operations panel */}
@@ -761,7 +830,7 @@ export default function ItemDetailPage() {
           </PanelCard>
 
           {/* Delivery record */}
-          <DeliveryRecordCard record={deliveryRecord} />
+          <DeliveryRecordCard record={deliveryRecord} itemId={itemId} />
 
         </div>
       </div>

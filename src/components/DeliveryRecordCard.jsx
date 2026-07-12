@@ -1,14 +1,49 @@
-import { HandshakeIcon } from 'lucide-react';
+import { useState } from 'react';
+import { HandshakeIcon, Download, Loader2 } from 'lucide-react';
+import api from '../api';
 
 // Delivery record ("acta de lliurament"): canonical on the item detail page,
 // shown contextually on the resolution view of the matches page.
-export default function DeliveryRecordCard({ record }) {
+// When itemId is provided, the header offers the PDF export (custody document).
+export default function DeliveryRecordCard({ record, itemId }) {
+  const [downloading, setDownloading] = useState(false);
+
   if (!record) return null;
+
+  const downloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const res = await api.get(`/business/items/${itemId}/delivery-record/pdf`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `acta-lliurament-${itemId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {}
+    setDownloading(false);
+  };
+
   return (
     <div data-testid="delivery-record-panel" className="bg-white rounded-lg border border-slate-200">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
         <HandshakeIcon size={14} className="text-slate-400" strokeWidth={1.5} />
         <span className="text-xs font-semibold text-slate-600">Registre de lliurament</span>
+        {itemId && (
+          <button
+            onClick={downloadPdf}
+            disabled={downloading}
+            data-testid="download-record-pdf-btn"
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-teal-700 hover:text-teal-800 transition-colors disabled:opacity-50"
+          >
+            {downloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+            Descarregar acta
+          </button>
+        )}
       </div>
       <div className="px-4 py-3.5 grid grid-cols-2 gap-4">
         <div>

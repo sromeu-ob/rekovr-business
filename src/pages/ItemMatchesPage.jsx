@@ -220,6 +220,11 @@ function MatchCard({ match, lost, foundItem, canAct, isActioning, onAction, onHo
   // threshold and in `pending_review` when it doesn't (match_actions.py).
   const verificationPassed = hasVerification && match.status !== 'pending_review';
   const verificationPct = hasVerification ? Math.round(match.verification_score * 100) : null;
+  // Per-answer scores (opció B) — older matches won't have them; degrade silently.
+  const answerScores = (match.verification_answers || [])
+    .map(a => a.score)
+    .filter(s => typeof s === 'number');
+  const correctAnswers = answerScores.filter(s => s >= 0.7).length;
 
   const tDelta = timeDelta(lost?.date_time, foundItem?.date_time);
   const dDelta = distanceDelta(match.distance_km, language);
@@ -308,6 +313,14 @@ function MatchCard({ match, lost, foundItem, canAct, isActioning, onAction, onHo
               : <ShieldQuestion size={14} className="flex-shrink-0" strokeWidth={1.8} />}
             <span className="flex-1 tabular-nums">
               {verificationPassed ? t('verificationPassed') : t('verificationBelowThreshold')} · {verificationPct}
+              {answerScores.length > 0 && (
+                <span className="font-normal opacity-80">
+                  {' — '}
+                  {t('answersCorrectSummary')
+                    .replace('{x}', correctAnswers)
+                    .replace('{y}', answerScores.length)}
+                </span>
+              )}
             </span>
             <button
               onClick={fetchVerification}
@@ -656,7 +669,7 @@ export default function ItemMatchesPage() {
               )}
 
               {/* The acta, embedded: the second half of "who claimed it + who we gave it to" */}
-              <DeliveryRecordCard record={deliveryRecord} />
+              <DeliveryRecordCard record={deliveryRecord} itemId={itemId} />
               <button
                 onClick={() => navigate(`/items/${itemId}`)}
                 data-testid="view-full-item-btn"
