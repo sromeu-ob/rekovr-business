@@ -1,27 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Package, GitCompare, Users, CreditCard,
-  LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine, Home
+  LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine, Inbox
 } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
+import Wordmark from './Wordmark';
 
 export default function Layout({ children, auth, onLogout }) {
   const { user, organization, org_role } = auth;
   const { t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [queueCounts, setQueueCounts] = useState({ inbox: 0, matches: 0 });
 
-  const NAV = [
-    { to: '/',           icon: Home,            labelKey: 'navHome' },
-    { to: '/dashboard',  icon: LayoutDashboard, labelKey: 'navDashboard' },
-    { to: '/items',      icon: Package,         labelKey: 'navFoundItems' },
-    { to: '/events',     icon: CalendarDays,    labelKey: 'navEvents' },
-    { to: '/matches',    icon: GitCompare,       labelKey: 'navMatches' },
-    { to: '/pickups',    icon: ScanLine,        labelKey: 'navPickups' },
-    { to: '/team',       icon: Users,           labelKey: 'navTeam' },
-    { to: '/subscription', icon: CreditCard,   labelKey: 'navSubscription' },
-    { to: '/settings',   icon: Settings,        labelKey: 'navSettings', adminOnly: true },
+  // Live queue counters — one light fetch per app load, no polling.
+  useEffect(() => {
+    Promise.all([
+      api.get('/business/items/inbox', { params: { ready_limit: 1 } }).catch(() => null),
+      api.get('/business/items/matches/summary').catch(() => null),
+    ]).then(([inboxRes, summaryRes]) => {
+      const d = inboxRes?.data;
+      const inbox = d
+        ? (d.pending_review?.total || 0) + (d.ready_to_deliver?.total || 0) + (d.pending_contact?.total || 0)
+        : 0;
+      const matches = Array.isArray(summaryRes?.data)
+        ? summaryRes.data.reduce((s, i) => s + (i.match_pending || 0), 0)
+        : 0;
+      setQueueCounts({ inbox, matches });
+    });
+  }, []);
+
+  const NAV_SECTIONS = [
+    {
+      labelKey: 'navSectionOps',
+      items: [
+        { to: '/',        icon: Inbox,        labelKey: 'navHome', count: queueCounts.inbox, hot: true },
+        { to: '/items',   icon: Package,      labelKey: 'navFoundItems' },
+        { to: '/matches', icon: GitCompare,   labelKey: 'navMatches', count: queueCounts.matches },
+        { to: '/pickups', icon: ScanLine,     labelKey: 'navPickups' },
+        { to: '/events',  icon: CalendarDays, labelKey: 'navEvents' },
+      ],
+    },
+    {
+      labelKey: 'navSectionAnalytics',
+      items: [
+        { to: '/dashboard', icon: LayoutDashboard, labelKey: 'navDashboard' },
+      ],
+    },
+    {
+      labelKey: 'navSectionOrg',
+      items: [
+        { to: '/team',         icon: Users,      labelKey: 'navTeam' },
+        { to: '/subscription', icon: CreditCard, labelKey: 'navSubscription' },
+        { to: '/settings',     icon: Settings,   labelKey: 'navSettings', adminOnly: true },
+      ],
+    },
   ];
 
   const handleLogout = async () => {
@@ -36,15 +70,7 @@ export default function Layout({ children, auth, onLogout }) {
 
       {/* Brand */}
       <div className="px-5 py-4 border-b border-slate-800">
-        <span
-          className="text-sm tracking-tight text-white"
-          style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800 }}
-        >
-          re<span style={{ position: 'relative', display: 'inline-block' }}>
-            <span style={{ display: 'inline-block', color: 'inherit', clipPath: 'inset(0 61% 0 0)' }}>k</span>
-            <span style={{ position: 'absolute', left: 0, top: 0, display: 'inline-block', color: '#0D9488', clipPath: 'inset(0 0 0 42%)' }}>k</span>
-          </span>ovr<span style={{ color: '#14B8A6' }}>.</span>
-        </span>
+        <Wordmark dark className="text-sm" />
         <span className="ml-2 text-xs text-slate-500 uppercase tracking-wide">Business</span>
       </div>
 
@@ -69,28 +95,48 @@ export default function Layout({ children, auth, onLogout }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        {NAV
-          .filter(n => !n.adminOnly || org_role === 'admin')
-          .map(({ to, icon: Icon, labelKey }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              onClick={closeMobile}
-              data-testid={`nav-${to === '/' ? 'home' : to.replace('/', '')}`}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-teal-900/40 text-teal-300'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`
-              }
-            >
-              <Icon size={15} />
-              {t(labelKey)}
-            </NavLink>
-          ))}
+      <nav className="flex-1 px-3 py-2 overflow-y-auto">
+        {NAV_SECTIONS.map(section => {
+          const items = section.items.filter(n => !n.adminOnly || org_role === 'admin');
+          if (items.length === 0) return null;
+          return (
+            <div key={section.labelKey}>
+              <p className="px-3 pt-3.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">
+                {t(section.labelKey)}
+              </p>
+              <div className="space-y-0.5">
+                {items.map(({ to, icon: Icon, labelKey, count, hot }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={to === '/'}
+                    onClick={closeMobile}
+                    data-testid={`nav-${to === '/' ? 'home' : to.replace('/', '')}`}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-teal-900/40 text-teal-300'
+                          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      }`
+                    }
+                  >
+                    <Icon size={15} />
+                    <span className="flex-1 truncate">{t(labelKey)}</span>
+                    {count > 0 && (
+                      <span
+                        className={`min-w-[19px] h-[17px] px-1.5 rounded-full text-[10px] font-bold tabular-nums inline-flex items-center justify-center ${
+                          hot ? 'bg-orange-900/60 text-orange-300' : 'bg-teal-900/60 text-teal-300'
+                        }`}
+                      >
+                        {count > 99 ? '99+' : count}
+                      </span>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
       {/* User */}

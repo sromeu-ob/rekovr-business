@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Loader2, ArrowRight } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
+import Wordmark from '../components/Wordmark';
 
 export default function LoginPage({ onLogin }) {
   const { t } = useI18n();
@@ -55,7 +56,7 @@ export default function LoginPage({ onLogin }) {
           {/* Brand */}
           <div className="mb-8 text-center">
             <div className="inline-flex items-center gap-2 mb-1">
-              <span className="text-xl font-semibold text-slate-900">Rekovr</span>
+              <Wordmark className="text-xl" />
               <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                 Business
               </span>
@@ -119,7 +120,7 @@ export default function LoginPage({ onLogin }) {
         {/* Brand */}
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 mb-2">
-            <span className="text-xl font-semibold text-slate-900">Rekovr</span>
+            <Wordmark className="text-xl" />
             <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
               Business
             </span>

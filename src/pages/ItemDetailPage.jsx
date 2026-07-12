@@ -1,17 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, MapPin, Clock, Tag, Package, Sparkles, ChevronRight,
+  ArrowLeft, MapPin, Clock, Tag, Sparkles, ChevronRight, CalendarDays,
   Pencil, HandshakeIcon, X, AlertTriangle, CheckCircle2, Loader2,
-  Link, QrCode, Copy, Check, IdCard, UserCheck, Eye, EyeOff, Phone,
+  Link, QrCode, Copy, Check, IdCard, UserCheck, Eye, EyeOff, Phone, Package,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import ImageViewer from '../components/ImageViewer';
 import SignaturePad from '../components/SignaturePad';
+import DeliveryRecordCard from '../components/DeliveryRecordCard';
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
+import { ScoreRing } from '../components/ui';
+import { timeAgo } from '../lib/timeAgo';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -20,24 +23,28 @@ function ItemMap({ lng, lat }) {
 
   useEffect(() => {
     if (!containerRef.current || !lng || !lat) return;
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [lng, lat],
-      zoom: 14,
-      interactive: false,
-    });
-    new mapboxgl.Marker({ color: '#18181b' })
+    let map;
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [lng, lat],
+        zoom: 14,
+        interactive: false,
+      });
+    } catch (err) {
+      // WebGL unavailable (headless browsers, VMs, old kiosks) — degrade to no map
+      console.warn('Mapbox map unavailable:', err?.message);
+      return;
+    }
+    new mapboxgl.Marker({ color: '#0f172a' })
       .setLngLat([lng, lat])
       .addTo(map);
     return () => map.remove();
   }, [lng, lat]);
 
-  return <div ref={containerRef} className="w-full h-44 rounded-lg overflow-hidden" />;
+  return <div ref={containerRef} className="w-full h-40 rounded-lg overflow-hidden border border-slate-100" />;
 }
-
-const getLocalizedReasoning = (match, lang) =>
-  match?.[`reasoning_${lang}`] || match?.reasoning_en || match?.reasoning || '';
 
 // ── Direct Delivery Modal ────────────────────────────────────────────────────
 
@@ -232,32 +239,86 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
   );
 }
 
-const MATCH_LIMIT = 10;
+// ── Page building blocks ─────────────────────────────────────────────────────
+
+const MATCH_LIMIT = 5;
 const ACTIVE_STATUSES = 'pending,pending_verification,pending_review';
 
-const STATUS_STYLE = {
-  active:    'bg-emerald-50 text-emerald-700',
-  matched:   'bg-amber-50 text-amber-700',
-  recovered: 'bg-slate-100 text-slate-600',
-  returned:  'bg-slate-100 text-slate-600',
-  archived:  'bg-slate-100 text-slate-400',
+const STATUS_DOT = {
+  active:    'bg-emerald-500',
+  matched:   'bg-amber-400',
+  recovered: 'bg-slate-400',
+  returned:  'bg-slate-400',
+  expired:   'bg-slate-300',
 };
 
-const MATCH_STATUS_STYLE = {
-  pending_verification: 'bg-amber-50 text-amber-700',
-  pending_review:       'bg-amber-50 text-amber-700',
-  pending:   'bg-amber-50 text-amber-700',
-  accepted:  'bg-slate-100 text-slate-600',
-  rejected:  'bg-red-50 text-red-600',
-  dismissed: 'bg-slate-100 text-slate-400',
-  paid:      'bg-emerald-50 text-emerald-700',
-  recovered: 'bg-emerald-50 text-emerald-700',
-};
+function FactRow({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-center gap-3 py-3">
+      <Icon size={15} className="text-slate-300 flex-shrink-0" strokeWidth={1.5} />
+      <span className="text-[13px] text-slate-400 flex-1">{label}</span>
+      <span className="text-[13px] font-medium text-slate-900 text-right">{value}</span>
+    </div>
+  );
+}
+
+function JourneyRail({ step, muted, t }) {
+  const labels = [t('railRegistered'), t('railMatch'), t('railDelivered')];
+  return (
+    <div className="mt-6">
+      <div className="flex items-center">
+        {[0, 1, 2].map(i => (
+          <Fragment key={i}>
+            {i > 0 && (
+              <div className={`flex-1 h-[2px] rounded-full mx-1.5 ${!muted && i <= step ? 'bg-teal-500' : 'bg-slate-100'}`} />
+            )}
+            <span
+              className={`rounded-full flex-shrink-0 transition-all ${
+                muted
+                  ? 'w-2 h-2 bg-slate-200'
+                  : i < step
+                    ? 'w-2.5 h-2.5 bg-teal-500'
+                    : i === step
+                      ? 'w-2.5 h-2.5 bg-teal-500 ring-4 ring-teal-100'
+                      : 'w-2 h-2 bg-slate-200'
+              }`}
+            />
+          </Fragment>
+        ))}
+      </div>
+      <div className="flex justify-between mt-2">
+        {labels.map((label, i) => (
+          <span
+            key={i}
+            className={`text-[10px] font-semibold uppercase tracking-wider ${
+              i === 1 ? 'text-center' : i === 2 ? 'text-right' : ''
+            } ${!muted && i <= step ? 'text-slate-900' : 'text-slate-300'}`}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PanelCard({ icon: Icon, title, chip, children, testId }) {
+  return (
+    <div data-testid={testId} className="bg-white rounded-lg border border-slate-200">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+        <Icon size={14} className="text-slate-400" strokeWidth={1.5} />
+        <span className="text-xs font-semibold text-slate-600">{title}</span>
+        {chip && <span className="ml-auto">{chip}</span>}
+      </div>
+      <div className="px-4 py-3.5">{children}</div>
+    </div>
+  );
+}
 
 export default function ItemDetailPage() {
   const { itemId } = useParams();
   const navigate = useNavigate();
-  const { t, language } = useI18n();
+  const { t } = useI18n();
 
   const MATCH_STATUS_LABEL = {
     pending_verification: t('statusVerification'),
@@ -273,12 +334,11 @@ export default function ItemDetailPage() {
   const [item, setItem] = useState(null);
   const [matches, setMatches] = useState([]);
   const [matchTotal, setMatchTotal] = useState(0);
-  const [matchFilter, setMatchFilter] = useState('active');
-  const [matchOffset, setMatchOffset] = useState(0);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [discardedTotal, setDiscardedTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [viewerIndex, setViewerIndex] = useState(null);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [eventName, setEventName] = useState(null);
   const [showDirectDelivery, setShowDirectDelivery] = useState(false);
   const [deliveryRecord, setDeliveryRecord] = useState(null);
   const [revealedDocNumber, setRevealedDocNumber] = useState(null);
@@ -331,27 +391,36 @@ export default function ItemDetailPage() {
     }
   };
 
-  const fetchMatches = async (filter, offset = 0, append = false) => {
-    const params = { found_item_id: itemId, limit: MATCH_LIMIT, offset };
-    if (filter === 'active') params.status = ACTIVE_STATUSES;
-    const res = await api.get('/business/items/matches/list', { params });
-    if (append) {
-      setMatches(prev => [...prev, ...res.data.matches]);
-    } else {
-      setMatches(res.data.matches);
-    }
-    setMatchTotal(res.data.total);
-    setMatchOffset(offset + res.data.matches.length);
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [itemRes] = await Promise.all([
-          api.get(`/business/items/${itemId}`),
-          fetchMatches('active', 0),
-        ]);
+        const itemRes = await api.get(`/business/items/${itemId}`);
         setItem(itemRes.data);
+        if (['returned', 'recovered'].includes(itemRes.data?.status)) {
+          // Delivered → the panel shows the resolution, not an open queue
+          const [winRes, discRes] = await Promise.all([
+            api.get('/business/items/matches/list', {
+              params: { found_item_id: itemId, limit: MATCH_LIMIT, status: 'accepted,paid,recovered' },
+            }),
+            api.get('/business/items/matches/list', {
+              params: { found_item_id: itemId, limit: 1, status: 'dismissed,rejected' },
+            }),
+          ]);
+          setMatches(winRes.data.matches);
+          setMatchTotal(winRes.data.total);
+          setDiscardedTotal(discRes.data.total);
+        } else {
+          const matchRes = await api.get('/business/items/matches/list', {
+            params: { found_item_id: itemId, limit: MATCH_LIMIT, status: ACTIVE_STATUSES },
+          });
+          setMatches(matchRes.data.matches);
+          setMatchTotal(matchRes.data.total);
+        }
+        if (itemRes.data?.event_id) {
+          api.get(`/business/events/${itemRes.data.event_id}`)
+            .then(r => setEventName(r.data?.name || null))
+            .catch(() => {});
+        }
         if (['returned', 'recovered'].includes(itemRes.data?.status)) {
           api.get(`/business/items/${itemId}/delivery-record`)
             .then(r => setDeliveryRecord(r.data))
@@ -365,29 +434,6 @@ export default function ItemDetailPage() {
     };
     fetchData();
   }, [itemId]);
-
-  const handleFilterChange = async (filter) => {
-    setMatchFilter(filter);
-    setLoadingMatches(true);
-    try {
-      await fetchMatches(filter, 0);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingMatches(false);
-    }
-  };
-
-  const handleLoadMore = async () => {
-    setLoadingMore(true);
-    try {
-      await fetchMatches(matchFilter, matchOffset, true);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -405,27 +451,35 @@ export default function ItemDetailPage() {
     );
   }
 
+  const hasPhotos = item.photos?.length > 0;
+  const delivered = ['returned', 'recovered'].includes(item.status);
+  const expired = item.status === 'expired';
+  const journeyStep = delivered ? 2 : matchTotal > 0 ? 1 : 0;
+
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+    <div className="max-w-6xl mx-auto">
+
+      {/* Top bar: back + breadcrumb + status · actions */}
+      <div className="flex flex-wrap items-center gap-3 mb-8">
         <button
           onClick={() => navigate(-1)}
-          className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
+          className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors flex-shrink-0"
         >
-          <ArrowLeft size={16} className="text-slate-600" />
+          <ArrowLeft size={15} />
         </button>
-        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-          {t('foundBadge')}
-        </span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${STATUS_STYLE[item.status] || 'bg-slate-100 text-slate-400'}`}>
-          {item.status}
+        <p className="text-xs text-slate-400 min-w-0 truncate">
+          {t('navFoundItems')} / <span className="font-semibold text-slate-900">{item.title}</span>
+        </p>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-semibold text-slate-900 flex-shrink-0">
+          <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[item.status] || 'bg-slate-300'}`} />
+          <span className="capitalize">{item.status}</span>
+          {item.created_at && <span className="text-slate-400 font-medium">· {timeAgo(item.created_at, t)}</span>}
         </span>
         <div className="ml-auto flex items-center gap-2">
           {item.status === 'active' && (
             <button
               onClick={() => setShowDirectDelivery(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-md text-sm font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors"
             >
               <HandshakeIcon size={13} />
               Entrega directa
@@ -433,7 +487,7 @@ export default function ItemDetailPage() {
           )}
           <button
             onClick={() => navigate(`/items/${itemId}/edit`)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-md text-sm font-medium transition-colors"
           >
             <Pencil size={13} />
             {t('editItem')}
@@ -441,315 +495,276 @@ export default function ItemDetailPage() {
         </div>
       </div>
 
-      {/* Photos */}
-      {item.photos?.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
-          {item.photos.map((photo, i) => (
-            <img
-              key={i}
-              src={photoUrl(photo)}
-              alt=""
-              className="w-28 h-28 rounded-lg object-cover flex-shrink-0 border border-slate-100 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setViewerIndex(i)}
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
 
-      {viewerIndex !== null && item.photos?.length > 0 && (
-        <ImageViewer
-          images={item.photos.map(p => photoUrl(p))}
-          initialIndex={viewerIndex}
-          onClose={() => setViewerIndex(null)}
-        />
-      )}
-
-      {/* Item Info */}
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-slate-900">
-          {item.title}
-        </h1>
-
-        {/* Metadata row — badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          {item.date_time && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
-              <Clock className="w-3 h-3 text-slate-500 flex-shrink-0" strokeWidth={1.5} />
-              {new Date(item.date_time).toLocaleString()}
-            </span>
-          )}
-          {item.category && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium capitalize">
-              <Tag className="w-3 h-3 text-slate-500 flex-shrink-0" strokeWidth={1.5} />
-              {item.category}
-            </span>
-          )}
-        </div>
-
-        {item.description && (
-          <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>
-        )}
-
-        {/* Identified owner preview (full details in Phase 5) */}
-        {item.identified_owner && (
-          <div className="border border-teal-100 bg-teal-50/40 rounded-md p-4" data-testid="identified-owner-preview">
-            <div className="flex items-start gap-2.5">
-              <IdCard size={16} className="text-teal-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs font-medium text-teal-700 uppercase tracking-wide">{t('identifiedOwner')}</p>
-                  {item.identified_owner.matched_user_id && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
-                      <UserCheck size={10} />
-                      {t('identifiedOwnerMatched')}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm font-medium text-slate-800">{item.identified_owner.owner_name}</p>
-                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500">
-                  <span>
-                    {item.identified_owner.doc_type_label || t(
-                      item.identified_owner.doc_type === 'id_card' ? 'docTypeIdCard'
-                      : item.identified_owner.doc_type === 'passport' ? 'docTypePassport'
-                      : item.identified_owner.doc_type === 'driving_license' ? 'docTypeDrivingLicense'
-                      : 'docTypeOther'
-                    )}
-                  </span>
-                  {item.identified_owner.doc_number_masked && (
-                    <span className="font-mono">
-                      {revealedDocNumber || item.identified_owner.doc_number_masked}
-                    </span>
-                  )}
-                </div>
-                {item.identified_owner.notes && (
-                  <p className="mt-1.5 text-xs text-slate-500 italic">{item.identified_owner.notes}</p>
-                )}
-
-                {/* Sensitive actions */}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={handleRevealDocNumber}
-                    disabled={revealing}
-                    data-testid="reveal-doc-btn"
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors disabled:opacity-50"
-                  >
-                    {revealing ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : revealedDocNumber ? (
-                      <EyeOff size={12} />
-                    ) : (
-                      <Eye size={12} />
-                    )}
-                    {revealedDocNumber ? t('revealDocHide') : t('revealDocShow')}
-                  </button>
-
-                  {!item.identified_owner.externally_contacted_at ? (
-                    <button
-                      onClick={() => setShowContactedForm(v => !v)}
-                      data-testid="mark-contacted-btn"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
-                    >
-                      <Phone size={12} />
-                      {t('markContacted')}
-                    </button>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
-                      <Check size={12} />
-                      {t('contactedOn')} {new Date(item.identified_owner.externally_contacted_at).toLocaleDateString()}
-                      <button
-                        onClick={handleUnmarkContacted}
-                        disabled={contactedBusy}
-                        className="ml-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
-                        aria-label={t('undoContacted')}
-                      >
-                        <X size={11} />
-                      </button>
-                    </span>
-                  )}
-                </div>
-
-                {revealError && (
-                  <p className="mt-2 text-xs text-red-600">{revealError}</p>
-                )}
-
-                {item.identified_owner.externally_contacted_notes && !showContactedForm && (
-                  <p className="mt-2 text-xs text-slate-500 italic">
-                    {t('contactedNotes')}: {item.identified_owner.externally_contacted_notes}
-                  </p>
-                )}
-
-                {showContactedForm && !item.identified_owner.externally_contacted_at && (
-                  <div className="mt-3 flex flex-col gap-2 p-2.5 bg-white border border-slate-200 rounded-md">
-                    <input
-                      type="text"
-                      value={contactedNotes}
-                      onChange={(e) => setContactedNotes(e.target.value)}
-                      placeholder={t('contactedNotesPlaceholder')}
-                      className="px-2.5 py-1.5 text-xs border border-slate-200 rounded focus:outline-none focus:border-teal-500"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleMarkContacted}
-                        disabled={contactedBusy}
-                        className="flex-1 px-2.5 py-1.5 rounded text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
-                      >
-                        {contactedBusy ? <Loader2 size={11} className="animate-spin inline" /> : t('confirm')}
-                      </button>
-                      <button
-                        onClick={() => { setShowContactedForm(false); setContactedNotes(''); }}
-                        className="px-2.5 py-1.5 rounded text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      >
-                        {t('cancel')}
-                      </button>
-                    </div>
+        {/* LEFT — evidence */}
+        <div>
+          {hasPhotos && (
+            <div className="mb-6">
+              <div
+                className="relative rounded-xl overflow-hidden bg-slate-100 aspect-[16/9] cursor-pointer"
+                onClick={() => setViewerIndex(heroIndex)}
+              >
+                <img
+                  src={photoUrl(item.photos[heroIndex])}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                {item.photos.length > 1 && (
+                  <div className="absolute bottom-3 right-3 px-2 py-0.5 rounded-full bg-slate-900/55 text-[10px] font-semibold text-white tabular-nums">
+                    {heroIndex + 1} / {item.photos.length}
                   </div>
                 )}
               </div>
+              {item.photos.length > 1 && (
+                <div className="flex gap-2 mt-2.5 overflow-x-auto pb-1">
+                  {item.photos.map((photo, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setHeroIndex(i)}
+                      className={`w-[52px] h-[52px] rounded-lg overflow-hidden flex-shrink-0 transition-all ${
+                        i === heroIndex ? 'ring-2 ring-slate-900 ring-offset-2' : 'opacity-55 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={photoUrl(photo)} alt="" loading="lazy" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Map */}
-        {item.location?.coordinates && (
-          <div>
-            <ItemMap
-              lng={item.location.coordinates[0]}
-              lat={item.location.coordinates[1]}
+          {viewerIndex !== null && hasPhotos && (
+            <ImageViewer
+              images={item.photos.map(p => photoUrl(p))}
+              initialIndex={viewerIndex}
+              onClose={() => setViewerIndex(null)}
             />
+          )}
+
+          <h1 data-testid="item-detail-title" className="text-2xl font-semibold text-slate-900 tracking-tight">
+            {item.title}
+          </h1>
+          {item.description && (
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-prose">{item.description}</p>
+          )}
+
+          {/* Facts */}
+          <div className="mt-6 divide-y divide-slate-100 border-y border-slate-100">
+            {item.date_time && (
+              <FactRow icon={Clock} label={t('dateTimeLabel')} value={new Date(item.date_time).toLocaleString()} />
+            )}
+            {item.category && (
+              <FactRow icon={Tag} label={t('categoryLabel')} value={<span className="capitalize">{item.category}</span>} />
+            )}
+            {eventName && (
+              <FactRow icon={CalendarDays} label={t('eventLabel')} value={eventName} />
+            )}
             {item.address && (
-              <p className="flex items-center gap-1.5 mt-2 text-xs text-slate-500">
-                <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" strokeWidth={1.5} />
-                {item.address}
-              </p>
+              <FactRow icon={MapPin} label={t('locationLabel')} value={item.address} />
             )}
           </div>
-        )}
-      </div>
 
-      {/* Matches Section */}
-      <div className="mt-10">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.5} />
-            {t('navMatches')} {matchTotal > 0 && <span className="text-slate-400 normal-case tracking-normal">({matchTotal})</span>}
-          </p>
-          <div className="flex bg-slate-100 rounded-md p-0.5 gap-0.5">
-            {['active', 'all'].map(f => (
-              <button
-                key={f}
-                onClick={() => handleFilterChange(f)}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  matchFilter === f
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {f === 'active' ? t('filterActive') : t('filterAll')}
-              </button>
-            ))}
-          </div>
+          {item.location?.coordinates && (
+            <div className="mt-4">
+              <ItemMap
+                lng={item.location.coordinates[0]}
+                lat={item.location.coordinates[1]}
+              />
+            </div>
+          )}
+
+          <JourneyRail step={journeyStep} muted={expired} t={t} />
         </div>
 
-        {loadingMatches ? (
-          <div className="flex justify-center py-10">
-            <div className="w-4 h-4 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
-          </div>
-        ) : matches.length > 0 ? (
-          <>
-            <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 overflow-hidden">
-              {matches.map(match => {
-                const otherItem = match.lost_item;
-                return (
-                  <button
-                    key={match.match_id}
-                    onClick={() => navigate(`/matches/${itemId}`)}
-                    className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center gap-3"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-slate-900 truncate">
-                          {otherItem?.title || t('possibleMatch')}
-                        </span>
-                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded-md flex-shrink-0 ${MATCH_STATUS_STYLE[match.status] || 'bg-slate-100 text-slate-400'}`}>
-                          {MATCH_STATUS_LABEL[match.status] || match.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        {t('matchScore')}: <span className="font-medium text-slate-900">{Math.round(match.score * 100)}%</span>
-                      </p>
-                      {getLocalizedReasoning(match, language) && (
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{getLocalizedReasoning(match, language)}</p>
-                      )}
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-200 flex-shrink-0" />
-                  </button>
-                );
-              })}
-            </div>
-            {matches.length < matchTotal && (
-              <button
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="w-full mt-3 py-2.5 text-sm font-medium text-slate-500 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors disabled:opacity-50"
-              >
-                {loadingMore ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-3.5 h-3.5 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+        {/* RIGHT — operations panel */}
+        <div className="space-y-4 lg:sticky lg:top-8">
+
+          {/* Identified owner */}
+          {item.identified_owner && (
+            <PanelCard
+              icon={IdCard}
+              title={t('identifiedOwner')}
+              testId="identified-owner-preview"
+              chip={item.identified_owner.matched_user_id && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
+                  <UserCheck size={10} />
+                  {t('identifiedOwnerMatched')}
+                </span>
+              )}
+            >
+              <p className="text-sm font-semibold text-slate-900">{item.identified_owner.owner_name}</p>
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500">
+                <span>
+                  {item.identified_owner.doc_type_label || t(
+                    item.identified_owner.doc_type === 'id_card' ? 'docTypeIdCard'
+                    : item.identified_owner.doc_type === 'passport' ? 'docTypePassport'
+                    : item.identified_owner.doc_type === 'driving_license' ? 'docTypeDrivingLicense'
+                    : 'docTypeOther'
+                  )}
+                </span>
+                {item.identified_owner.doc_number_masked && (
+                  <span className="font-mono">
+                    {revealedDocNumber || item.identified_owner.doc_number_masked}
                   </span>
-                ) : (
-                  `${t('loadMore')} (${matchTotal - matches.length})`
                 )}
-              </button>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12 border border-slate-200 rounded-lg">
-            <Package className="w-8 h-8 text-slate-300 mx-auto mb-3" strokeWidth={1.5} />
-            <p className="text-sm font-medium text-slate-900">{t('noMatchesYet')}</p>
-            <p className="text-sm text-slate-500 mt-1">{t('notifyWhenCandidate')}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Delivery Record */}
-      {deliveryRecord && (
-        <div className="mt-10 rounded-xl border border-slate-200 overflow-hidden">
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100 bg-slate-50">
-            <HandshakeIcon size={15} className="text-teal-600" strokeWidth={1.5} />
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Registre de lliurament</p>
-              <p className="text-[11px] text-slate-400">Signatura i identificació del receptor capturades</p>
-            </div>
-          </div>
-          <div className="bg-white p-5 grid grid-cols-2 gap-5">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-1">Receptor</p>
-              <p className="text-sm font-semibold text-slate-900">{deliveryRecord.recipient_name}</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-1">DNI / NIE</p>
-              <p className="text-sm font-mono text-slate-700">{deliveryRecord.recipient_dni}</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-1">Data i hora</p>
-              <p className="text-xs text-slate-500">{deliveryRecord.signed_at ? new Date(deliveryRecord.signed_at).toLocaleString() : '—'}</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-1">Tipus</p>
-              <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                deliveryRecord.delivery_type === 'direct' ? 'bg-violet-50 text-violet-700' : 'bg-teal-50 text-teal-700'
-              }`}>{deliveryRecord.delivery_type === 'direct' ? 'Directa' : 'Match'}</span>
-            </div>
-            {deliveryRecord.signature_data_url && (
-              <div className="col-span-2">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400 mb-2">Signatura</p>
-                <img src={deliveryRecord.signature_data_url} alt="signatura"
-                  className="h-16 max-w-[280px] object-contain bg-slate-50 rounded-lg border border-slate-200 p-2" />
               </div>
+              {item.identified_owner.notes && (
+                <p className="mt-1.5 text-xs text-slate-500 italic">{item.identified_owner.notes}</p>
+              )}
+
+              {/* Sensitive actions */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleRevealDocNumber}
+                  disabled={revealing}
+                  data-testid="reveal-doc-btn"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors disabled:opacity-50"
+                >
+                  {revealing ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : revealedDocNumber ? (
+                    <EyeOff size={12} />
+                  ) : (
+                    <Eye size={12} />
+                  )}
+                  {revealedDocNumber ? t('revealDocHide') : t('revealDocShow')}
+                </button>
+
+                {!item.identified_owner.externally_contacted_at ? (
+                  <button
+                    onClick={() => setShowContactedForm(v => !v)}
+                    data-testid="mark-contacted-btn"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <Phone size={12} />
+                    {t('markContacted')}
+                  </button>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-700">
+                    <Check size={12} />
+                    {t('contactedOn')} {new Date(item.identified_owner.externally_contacted_at).toLocaleDateString()}
+                    <button
+                      onClick={handleUnmarkContacted}
+                      disabled={contactedBusy}
+                      className="ml-1 text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                      aria-label={t('undoContacted')}
+                    >
+                      <X size={11} />
+                    </button>
+                  </span>
+                )}
+              </div>
+
+              {revealError && (
+                <p className="mt-2 text-xs text-red-600">{revealError}</p>
+              )}
+
+              {item.identified_owner.externally_contacted_notes && !showContactedForm && (
+                <p className="mt-2 text-xs text-slate-500 italic">
+                  {t('contactedNotes')}: {item.identified_owner.externally_contacted_notes}
+                </p>
+              )}
+
+              {showContactedForm && !item.identified_owner.externally_contacted_at && (
+                <div className="mt-3 flex flex-col gap-2 p-2.5 bg-white border border-slate-200 rounded-md">
+                  <input
+                    type="text"
+                    value={contactedNotes}
+                    onChange={(e) => setContactedNotes(e.target.value)}
+                    placeholder={t('contactedNotesPlaceholder')}
+                    className="px-2.5 py-1.5 text-xs border border-slate-200 rounded focus:outline-none focus:border-teal-500"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleMarkContacted}
+                      disabled={contactedBusy}
+                      className="flex-1 px-2.5 py-1.5 rounded text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {contactedBusy ? <Loader2 size={11} className="animate-spin inline" /> : t('confirm')}
+                    </button>
+                    <button
+                      onClick={() => { setShowContactedForm(false); setContactedNotes(''); }}
+                      className="px-2.5 py-1.5 rounded text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    >
+                      {t('cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </PanelCard>
+          )}
+
+          {/* Matches — state-aware: open queue vs delivered resolution */}
+          <PanelCard
+            icon={Sparkles}
+            title={t('navMatches')}
+            testId="item-matches-panel"
+            chip={!delivered && matchTotal > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700">
+                {matchTotal} {t('pending')}
+              </span>
             )}
-          </div>
+          >
+            {matches.length === 0 ? (
+              delivered ? (
+                <p className="text-xs text-slate-500 leading-relaxed" data-testid="closed-without-match">
+                  {t('deliveredWithoutMatch')}
+                </p>
+              ) : (
+                <div className="py-4 text-center">
+                  <Package size={22} className="text-slate-200 mx-auto mb-2" strokeWidth={1.5} />
+                  <p className="text-xs font-medium text-slate-600">{t('noMatchesYet')}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{t('notifyWhenCandidate')}</p>
+                </div>
+              )
+            ) : (
+              <>
+                <div className="divide-y divide-slate-100 -my-1">
+                  {matches.map(match => (
+                    <button
+                      key={match.match_id}
+                      onClick={() => navigate(`/matches/${itemId}`)}
+                      data-testid={`match-row-${match.match_id}`}
+                      className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-slate-50 transition-colors -mx-1 px-1 rounded-md"
+                    >
+                      <ScoreRing score={match.score} size={34} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-slate-900 truncate">
+                          {match.lost_item?.title || t('possibleMatch')}
+                        </p>
+                        <p className="text-[11px] text-slate-400 truncate">
+                          {MATCH_STATUS_LABEL[match.status] || match.status}
+                          {match.verification_score != null && ` · ${t('statusVerification')} ${Math.round(match.verification_score * 100)}`}
+                        </p>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-200 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2.5 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => navigate(`/matches/${itemId}`)}
+                    data-testid="review-candidates-btn"
+                    className="text-xs font-semibold text-teal-700 hover:text-teal-800 transition-colors"
+                  >
+                    {delivered ? t('viewResolution') : t('reviewCandidates')} →
+                  </button>
+                  {delivered && discardedTotal > 0 && (
+                    <span className="text-[11px] text-slate-400">
+                      {t('discardedCountLabel').replace('{n}', discardedTotal)}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </PanelCard>
+
+          {/* Delivery record */}
+          <DeliveryRecordCard record={deliveryRecord} />
+
         </div>
-      )}
+      </div>
 
       {showDirectDelivery && (
         <DirectDeliveryModal

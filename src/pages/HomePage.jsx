@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Inbox, ClipboardCheck, PackageCheck, IdCard, ArrowRight, Package, CheckCircle2 } from 'lucide-react';
+import { ClipboardCheck, PackageCheck, IdCard, ArrowRight, Package, CheckCircle2 } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
 
@@ -163,15 +163,14 @@ export default function HomePage({ auth }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-1">
-        <Inbox size={20} className="text-slate-700" />
+      <div className="mb-8">
         <h1 data-testid="home-heading" className="text-2xl font-semibold text-slate-900">
           {t('homeTitle')}
         </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          {auth?.user?.name ? t('homeGreeting').replace('{name}', auth.user.name.split(' ')[0]) : t('homeSubtitle')}
+        </p>
       </div>
-      <p className="text-sm text-slate-500 mb-8">
-        {auth?.user?.name ? t('homeGreeting').replace('{name}', auth.user.name.split(' ')[0]) : t('homeSubtitle')}
-      </p>
 
       {allClear && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-5 py-4 mb-6 flex items-center gap-3">

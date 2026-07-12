@@ -1,10 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, X, MessageSquare, Package, Loader2, MapPin, Tag, Clock, ShieldQuestion, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Check, X, MessageSquare, Package, Loader2, MapPin, Tag, Clock, ShieldQuestion, ShieldCheck, ChevronDown, ChevronUp, HandshakeIcon } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
+import { ScoreRing } from '../components/ui';
+import DeliveryRecordCard from '../components/DeliveryRecordCard';
+import { timeDelta, distanceDelta } from '../lib/deltas';
+import { timeAgo } from '../lib/timeAgo';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -35,16 +39,23 @@ function MatchesMap({ foundItem, matches, hoveredMatchId, t }) {
 
     const allCoords = [foundCoords, ...features.map(f => f.geometry.coordinates)];
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: foundCoords,
-      zoom: 13,
-      interactive: true,
-    });
+    let map;
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: foundCoords,
+        zoom: 13,
+        interactive: true,
+      });
+    } catch (err) {
+      // WebGL unavailable (headless browsers, VMs, old kiosks) — degrade to no map
+      console.warn('Mapbox map unavailable:', err?.message);
+      return;
+    }
     mapRef.current = map;
 
-    new mapboxgl.Marker({ color: '#18181b' })
+    new mapboxgl.Marker({ color: '#0f172a' })
       .setLngLat(foundCoords)
       .addTo(map);
 
@@ -61,7 +72,7 @@ function MatchesMap({ foundItem, matches, hoveredMatchId, t }) {
           type: 'circle',
           source: 'lost-items',
           paint: {
-            'circle-color': '#3b82f6',
+            'circle-color': '#0d9488',
             'circle-opacity': [
               'case', ['boolean', ['feature-state', 'hovered'], false],
               0.35, 0.12,
@@ -87,7 +98,7 @@ function MatchesMap({ foundItem, matches, hoveredMatchId, t }) {
               'case', ['boolean', ['feature-state', 'hovered'], false],
               2.5, 1.5,
             ],
-            'circle-stroke-color': '#3b82f6',
+            'circle-stroke-color': '#0d9488',
             'circle-stroke-opacity': [
               'case', ['boolean', ['feature-state', 'hovered'], false],
               0.9, 0.4,
@@ -175,38 +186,6 @@ const FILTERS = [
 
 const PAGE_SIZE = 20;
 
-function ScoreBar({ score, label }) {
-  if (score == null) return <span className="text-xs text-slate-400">—</span>;
-  const pct = score <= 1 ? Math.round(score * 100) : Math.round(score);
-  const color = pct >= 75 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-400';
-  return (
-    <div className="flex items-center gap-2">
-      {label && <span className="text-xs text-slate-500 font-medium">{label}</span>}
-      <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-xs font-medium text-slate-700">{pct}%</span>
-    </div>
-  );
-}
-
-function VerificationBadge({ score }) {
-  if (score == null) return null;
-  const pct = Math.round(score * 100);
-  const style = pct >= 85
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-    : pct >= 50
-      ? 'bg-amber-50 text-amber-700 border-amber-100'
-      : 'bg-red-50 text-red-600 border-red-100';
-  const Icon = pct >= 85 ? ShieldCheck : ShieldQuestion;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border ${style}`}>
-      <Icon size={11} />
-      {pct}%
-    </span>
-  );
-}
-
 function StatusBadge({ status, statusStyles }) {
   const s = statusStyles[status] || { bg: 'bg-slate-100', text: 'text-slate-500', label: status };
   return (
@@ -216,23 +195,36 @@ function StatusBadge({ status, statusStyles }) {
   );
 }
 
-function DistanceBadge({ km }) {
-  if (km == null) return null;
-  const label = km < 1 ? `${Math.round(km * 1000)} m` : `${km} km`;
-  const color = km <= 1 ? 'text-emerald-600 bg-emerald-50' : km <= 5 ? 'text-amber-600 bg-amber-50' : 'text-slate-500 bg-slate-100';
+const DELTA_TONE = {
+  ok:      'bg-teal-50 text-teal-700',
+  warn:    'bg-amber-50 text-amber-700',
+  neutral: 'bg-slate-100 text-slate-600',
+};
+
+function DeltaChip({ icon: Icon, tone = 'neutral', children }) {
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${color}`}>
-      <MapPin size={11} />
-      {label}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium tabular-nums ${DELTA_TONE[tone]}`}>
+      {Icon && <Icon size={11} strokeWidth={2} />}
+      {children}
     </span>
   );
 }
 
-function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, statusStyles, language }) {
+
+function MatchCard({ match, lost, foundItem, canAct, isActioning, onAction, onHover, t, statusStyles, language }) {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationData, setVerificationData] = useState(null);
   const [loadingVerification, setLoadingVerification] = useState(false);
   const hasVerification = match.verification_score != null;
+  // The scoring flow leaves the match in `pending` when it clears the
+  // threshold and in `pending_review` when it doesn't (match_actions.py).
+  const verificationPassed = hasVerification && match.status !== 'pending_review';
+  const verificationPct = hasVerification ? Math.round(match.verification_score * 100) : null;
+
+  const tDelta = timeDelta(lost?.date_time, foundItem?.date_time);
+  const dDelta = distanceDelta(match.distance_km, language);
+  const sameCategory = !!lost?.category && lost.category === foundItem?.category;
+  const reasoning = getLocalizedReasoning(match, language);
 
   const fetchVerification = async () => {
     if (verificationData) { setShowVerification(v => !v); return; }
@@ -254,17 +246,28 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
       onMouseEnter={() => onHover?.(match.match_id)}
       onMouseLeave={() => onHover?.(null)}
     >
-      {/* Top row: score + verification + distance + status */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ScoreBar score={match.score} label={t('match')} />
-          {hasVerification && <VerificationBadge score={match.verification_score} />}
-          <DistanceBadge km={match.distance_km} />
+      {/* Head: score ring + claim identity + status */}
+      <div className="flex items-center gap-3.5">
+        <ScoreRing score={match.score} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-slate-900 truncate">{lost?.title || t('possibleMatch')}</p>
+          <p className="text-xs text-slate-400 mt-0.5 truncate">
+            {t('claimedByIndividual')}{match.created_at ? ` · ${timeAgo(match.created_at, t)}` : ''}
+          </p>
         </div>
         <StatusBadge status={match.status} statusStyles={statusStyles} />
       </div>
 
-      {/* Lost item info */}
+      {/* Objective evidence deltas */}
+      {(tDelta || dDelta || sameCategory) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {tDelta && <DeltaChip icon={Clock} tone={tDelta.tone}>{tDelta.label}</DeltaChip>}
+          {dDelta && <DeltaChip icon={MapPin} tone={dDelta.tone}>{dDelta.label}</DeltaChip>}
+          {sameCategory && <DeltaChip tone="neutral">{t('sameCategory')}</DeltaChip>}
+        </div>
+      )}
+
+      {/* The owner's claim */}
       <div className="flex gap-4">
         {lost?.photos?.length > 0 ? (
           <img
@@ -278,11 +281,10 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-900 truncate">{lost?.title || '—'}</p>
           {lost?.description && (
-            <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{lost.description}</p>
+            <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">{lost.description}</p>
           )}
-          {lost?.category && (
+          {lost?.category && !sameCategory && (
             <div className="flex flex-wrap items-center gap-2 mt-1.5">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium capitalize">
                 <Tag className="w-3 h-3 text-slate-500 flex-shrink-0" strokeWidth={1.5} />
@@ -293,29 +295,34 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
         </div>
       </div>
 
-      {/* AI reasoning */}
-      {getLocalizedReasoning(match, language) && (
-        <p className="text-xs text-slate-500 italic bg-slate-50 rounded-md px-3 py-2">
-          {getLocalizedReasoning(match, language)}
-        </p>
-      )}
-
-      {/* Expandable verification details */}
+      {/* Verification verdict */}
       {hasVerification && (
         <div>
-          <button
-            onClick={fetchVerification}
-            className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            {loadingVerification ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : showVerification ? (
-              <ChevronUp size={12} />
-            ) : (
-              <ChevronDown size={12} />
-            )}
-            {showVerification ? t('hideVerificationDetails') : t('viewVerificationDetails')}
-          </button>
+          <div className={`flex items-center gap-2 px-3 py-2.5 rounded-md border text-xs font-medium ${
+            verificationPassed
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+              : 'bg-amber-50 border-amber-100 text-amber-700'
+          }`}>
+            {verificationPassed
+              ? <ShieldCheck size={14} className="flex-shrink-0" strokeWidth={1.8} />
+              : <ShieldQuestion size={14} className="flex-shrink-0" strokeWidth={1.8} />}
+            <span className="flex-1 tabular-nums">
+              {verificationPassed ? t('verificationPassed') : t('verificationBelowThreshold')} · {verificationPct}
+            </span>
+            <button
+              onClick={fetchVerification}
+              className="flex items-center gap-1 font-medium opacity-80 hover:opacity-100 transition-opacity"
+            >
+              {loadingVerification ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : showVerification ? (
+                <ChevronUp size={12} />
+              ) : (
+                <ChevronDown size={12} />
+              )}
+              {showVerification ? t('hideVerificationDetails') : t('viewVerificationDetails')}
+            </button>
+          </div>
           {showVerification && verificationData && (
             <div className="mt-3 border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100">
               {(verificationData.questions || []).map((q, i) => {
@@ -359,7 +366,14 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
         </div>
       )}
 
-      {/* Actions */}
+      {/* AI reasoning — quote, not a grey block: evidence outranks commentary */}
+      {reasoning && (
+        <p className="text-xs text-slate-400 italic leading-relaxed border-l-2 border-teal-100 pl-3">
+          «{reasoning}»
+        </p>
+      )}
+
+      {/* Actions — one primary, the rest ghost */}
       {canAct && (
         <div className="flex gap-2 pt-1">
           <button
@@ -375,7 +389,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
             data-testid={`reject-btn-${match.match_id}`}
             onClick={() => onAction('reject')}
             disabled={isActioning}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-slate-100 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
           >
             <X size={14} />
             {t('reject')}
@@ -385,7 +399,7 @@ function MatchCard({ match, lost, canAct, isActioning, onAction, onHover, t, sta
               data-testid={`request-info-btn-${match.match_id}`}
               onClick={() => onAction('request-info')}
               disabled={isActioning}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
             >
               <MessageSquare size={14} />
               <span className="hidden sm:inline">{t('moreInfo')}</span>
@@ -421,6 +435,14 @@ export default function ItemMatchesPage() {
   const [filter, setFilter] = useState('active');
   const [actionLoading, setActionLoading] = useState(null);
   const [hoveredMatchId, setHoveredMatchId] = useState(null);
+  // Resolution view (delivered items): winner shown by default,
+  // discarded candidates collapsed behind a counter link.
+  const [discarded, setDiscarded] = useState(null);
+  const [discardedTotal, setDiscardedTotal] = useState(0);
+  const [loadingDiscarded, setLoadingDiscarded] = useState(false);
+  const [deliveryRecord, setDeliveryRecord] = useState(null);
+
+  const delivered = ['returned', 'recovered'].includes(foundItem?.status);
 
   const fetchMatches = useCallback(async (filterKey, offset = 0) => {
     const f = FILTERS.find(f => f.key === filterKey) || FILTERS[0];
@@ -432,22 +454,51 @@ export default function ItemMatchesPage() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      api.get(`/business/items/${itemId}`),
-      fetchMatches(filter),
-    ])
-      .then(([itemRes, matchRes]) => {
+    setDiscarded(null);
+    (async () => {
+      try {
+        const itemRes = await api.get(`/business/items/${itemId}`);
         setFoundItem(itemRes.data);
-        setMatches(matchRes.matches);
-        setTotal(matchRes.total);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+        if (['returned', 'recovered'].includes(itemRes.data?.status)) {
+          // Delivered → the page is an audit trail: winning match + discarded count
+          const [winRes, discRes, recordRes] = await Promise.all([
+            api.get('/business/items/matches/list', {
+              params: { found_item_id: itemId, limit: PAGE_SIZE, status: 'accepted,paid,recovered' },
+            }),
+            api.get('/business/items/matches/list', {
+              params: { found_item_id: itemId, limit: 1, status: 'dismissed,rejected' },
+            }),
+            api.get(`/business/items/${itemId}/delivery-record`).catch(() => null),
+          ]);
+          setMatches(winRes.data.matches);
+          setTotal(winRes.data.total);
+          setDiscardedTotal(discRes.data.total);
+          setDeliveryRecord(recordRes?.data || null);
+        } else {
+          const data = await fetchMatches(filter);
+          setMatches(data.matches);
+          setTotal(data.total);
+        }
+      } catch {}
+      setLoading(false);
+    })();
   }, [itemId, filter, fetchMatches]);
 
   const handleFilterChange = (key) => {
     setFilter(key);
     setMatches([]);
+  };
+
+  const handleToggleDiscarded = async () => {
+    if (discarded) { setDiscarded(null); return; }
+    setLoadingDiscarded(true);
+    try {
+      const res = await api.get('/business/items/matches/list', {
+        params: { found_item_id: itemId, limit: 50, status: 'dismissed,rejected' },
+      });
+      setDiscarded(res.data.matches);
+    } catch {}
+    setLoadingDiscarded(false);
   };
 
   const handleLoadMore = async () => {
@@ -500,28 +551,32 @@ export default function ItemMatchesPage() {
         <div>
           <h1 data-testid="item-matches-heading" className="text-2xl font-semibold text-slate-900">{t('matchCandidates')}</h1>
           <p className="text-sm text-slate-500">
-            {total} {total !== 1 ? t('candidates') : t('candidate')} {t('forThisItem')}{filter !== 'all' ? ` (${filter})` : ''}
+            {delivered
+              ? t('resolutionSubtitle')
+              : `${total} ${total !== 1 ? t('candidates') : t('candidate')} ${t('forThisItem')}${filter !== 'all' ? ` (${filter})` : ''}`}
           </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-1 bg-slate-100 rounded-md p-0.5 w-fit mb-6">
-        {FILTERS.map(f => (
-          <button
-            key={f.key}
-            data-testid={`filter-${f.key}`}
-            onClick={() => handleFilterChange(f.key)}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-              filter === f.key
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            {t(f.labelKey)}
-          </button>
-        ))}
-      </div>
+      {/* Filters — only while the item is still open; delivered items show the resolution */}
+      {!delivered && (
+        <div className="flex gap-1 bg-slate-100 rounded-md p-0.5 w-fit mb-6">
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              data-testid={`filter-${f.key}`}
+              onClick={() => handleFilterChange(f.key)}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                filter === f.key
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {t(f.labelKey)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* LEFT: Found item (org's item) — sticky on desktop */}
@@ -568,9 +623,89 @@ export default function ItemMatchesPage() {
           </div>
         </div>
 
-        {/* RIGHT: Candidate matches */}
+        {/* RIGHT: Candidate matches (open item) or resolution + discarded (delivered item) */}
         <div className="flex-1 space-y-3">
-          {matches.length === 0 ? (
+          {delivered ? (
+            <>
+              {matches.length === 0 ? (
+                <div data-testid="resolution-empty" className="text-center py-12 bg-white border border-slate-200 rounded-lg px-6">
+                  <HandshakeIcon size={28} className="text-slate-300 mx-auto mb-3" strokeWidth={1.5} />
+                  <p className="text-sm font-medium text-slate-900">{t('deliveredWithoutMatch')}</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {t('resolutionTitle')}
+                  </p>
+                  {matches.map((match) => (
+                    <MatchCard
+                      key={match.match_id}
+                      match={match}
+                      lost={match.lost_item}
+                      foundItem={foundItem}
+                      canAct={false}
+                      isActioning={false}
+                      onAction={() => {}}
+                      onHover={setHoveredMatchId}
+                      t={t}
+                      statusStyles={STATUS_STYLES}
+                      language={language}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* The acta, embedded: the second half of "who claimed it + who we gave it to" */}
+              <DeliveryRecordCard record={deliveryRecord} />
+              <button
+                onClick={() => navigate(`/items/${itemId}`)}
+                data-testid="view-full-item-btn"
+                className="text-xs font-semibold text-teal-700 hover:text-teal-800 transition-colors"
+              >
+                {t('viewFullItem')} →
+              </button>
+
+              {discardedTotal > 0 && (
+                <div className="pt-4">
+                  <button
+                    onClick={handleToggleDiscarded}
+                    data-testid="toggle-discarded-btn"
+                    className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
+                  >
+                    {loadingDiscarded ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : discarded ? (
+                      <ChevronUp size={12} />
+                    ) : (
+                      <ChevronDown size={12} />
+                    )}
+                    {discarded
+                      ? t('hideDiscarded')
+                      : t('viewDiscarded').replace('{n}', discardedTotal)}
+                  </button>
+                  {discarded && (
+                    <div className="mt-3 space-y-3">
+                      {discarded.map((match) => (
+                        <MatchCard
+                          key={match.match_id}
+                          match={match}
+                          lost={match.lost_item}
+                          foundItem={foundItem}
+                          canAct={false}
+                          isActioning={false}
+                          onAction={() => {}}
+                          onHover={setHoveredMatchId}
+                          t={t}
+                          statusStyles={STATUS_STYLES}
+                          language={language}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : matches.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-sm font-medium text-slate-900">
                 {filter === 'active' ? t('noPendingMatchesForItem') : t('noMatchCandidates')}
@@ -596,6 +731,7 @@ export default function ItemMatchesPage() {
                     key={match.match_id}
                     match={match}
                     lost={lost}
+                    foundItem={foundItem}
                     canAct={canAct}
                     isActioning={isActioning}
                     onAction={(action) => handleAction(match.match_id, action)}
