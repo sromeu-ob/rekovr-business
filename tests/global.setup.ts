@@ -122,9 +122,18 @@ setup('authenticate B2B admin', async ({ page }) => {
   await page.getByTestId('login-password-input').fill(BIZ_ADMIN_PASSWORD);
   await page.getByTestId('login-submit-btn').click();
 
-  // Wait for redirect to dashboard (URL will be http://localhost:3002/)
-  // Wait for redirect to dashboard
-  await expect(page.getByTestId('dashboard-heading')).toBeVisible({ timeout: 15_000 });
+  // Accounts that belong to several orgs land on an organization picker first
+  const orgButton = page.getByRole('button', { name: BIZ_ORG_NAME });
+  try {
+    await orgButton.click({ timeout: 5_000 });
+  } catch {
+    // single-org accounts skip the picker
+  }
+
+  // Wait for redirect to the authenticated app (home or dashboard heading)
+  await expect(
+    page.getByTestId('home-heading').or(page.getByTestId('dashboard-heading')).first(),
+  ).toBeVisible({ timeout: 15_000 });
 
   await page.context().storageState({ path: adminAuthFile });
   console.log('  B2B admin session saved');
