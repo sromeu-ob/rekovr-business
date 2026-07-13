@@ -15,6 +15,7 @@ import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
 import { ScoreRing } from '../components/ui';
 import { timeAgo } from '../lib/timeAgo';
+import { matchStatusLabel, coverageSubtext, matchStatusHint } from '../lib/matchStatus';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -360,20 +361,10 @@ export default function ItemDetailPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
 
-  const MATCH_STATUS_LABEL = {
-    pending_verification: t('statusVerification'),
-    pending_review:       t('statusUnderReview'),
-    pending:   t('statusPending'),
-    accepted:  t('statusAccepted'),
-    rejected:  t('statusRejected'),
-    dismissed: t('statusDismissed'),
-    paid:      t('statusPaid'),
-    recovered: t('statusRecovered'),
-  };
-
   const [item, setItem] = useState(null);
   const [matches, setMatches] = useState([]);
   const [matchTotal, setMatchTotal] = useState(0);
+  const [committedTotal, setCommittedTotal] = useState(0);
   const [discardedTotal, setDiscardedTotal] = useState(0);
   const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -454,11 +445,19 @@ export default function ItemDetailPage() {
           setMatchTotal(winRes.data.total);
           setDiscardedTotal(discRes.data.total);
         } else {
-          const matchRes = await api.get('/business/items/matches/list', {
-            params: { found_item_id: itemId, limit: MATCH_LIMIT, status: ACTIVE_STATUSES },
-          });
-          setMatches(matchRes.data.matches);
-          setMatchTotal(matchRes.data.total);
+          // Open item — a committed match (accepted/paid) is a resolution in
+          // course and always surfaces first, above remaining candidates.
+          const [commRes, actRes] = await Promise.all([
+            api.get('/business/items/matches/list', {
+              params: { found_item_id: itemId, limit: MATCH_LIMIT, status: 'accepted,paid' },
+            }),
+            api.get('/business/items/matches/list', {
+              params: { found_item_id: itemId, limit: MATCH_LIMIT, status: ACTIVE_STATUSES },
+            }),
+          ]);
+          setMatches([...commRes.data.matches, ...actRes.data.matches].slice(0, MATCH_LIMIT));
+          setMatchTotal(actRes.data.total);
+          setCommittedTotal(commRes.data.total);
         }
         if (itemRes.data?.event_id) {
           api.get(`/business/events/${itemRes.data.event_id}`)
@@ -498,7 +497,7 @@ export default function ItemDetailPage() {
   const hasPhotos = item.photos?.length > 0;
   const delivered = ['returned', 'recovered'].includes(item.status);
   const expired = item.status === 'expired';
-  const journeyStep = delivered ? 2 : matchTotal > 0 ? 1 : 0;
+  const journeyStep = delivered ? 2 : (matchTotal > 0 || committedTotal > 0) ? 1 : 0;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -802,8 +801,9 @@ export default function ItemDetailPage() {
                         <p className="text-[13px] font-semibold text-slate-900 truncate">
                           {match.lost_item?.title || t('possibleMatch')}
                         </p>
-                        <p className="text-[11px] text-slate-400 truncate">
-                          {MATCH_STATUS_LABEL[match.status] || match.status}
+                        <p className="text-[11px] text-slate-400 truncate" title={matchStatusHint(match, t)}>
+                          {matchStatusLabel(match, t)}
+                          {coverageSubtext(match, t) && ` · ${coverageSubtext(match, t)}`}
                           {match.verification_score != null && ` · ${t('statusVerification')} ${Math.round(match.verification_score * 100)}`}
                         </p>
                       </div>

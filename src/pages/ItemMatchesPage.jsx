@@ -9,6 +9,7 @@ import { ScoreRing } from '../components/ui';
 import DeliveryRecordCard from '../components/DeliveryRecordCard';
 import { timeDelta, distanceDelta } from '../lib/deltas';
 import { timeAgo } from '../lib/timeAgo';
+import { matchStatusLabel, coverageSubtext, matchStatusHint } from '../lib/matchStatus';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -177,7 +178,10 @@ function MatchesMap({ foundItem, matches, hoveredMatchId, t }) {
 const getLocalizedReasoning = (match, lang) =>
   match?.[`reasoning_${lang}`] || match?.reasoning_en || match?.reasoning || '';
 
-const PENDING_STATUSES = 'pending,pending_verification,pending_review';
+// "Active" for an open item = anything still in course, including a committed
+// match (accepted/paid) — that one is the MOST active thing an item can have.
+const PENDING_STATUSES = 'pending,pending_verification,pending_review,accepted,paid';
+const COMMITTED_STATUSES = new Set(['accepted', 'paid']);
 
 const FILTERS = [
   { key: 'active', labelKey: 'filterActive', statuses: PENDING_STATUSES },
@@ -186,11 +190,14 @@ const FILTERS = [
 
 const PAGE_SIZE = 20;
 
-function StatusBadge({ status, statusStyles }) {
+function StatusBadge({ status, statusStyles, label, hint }) {
   const s = statusStyles[status] || { bg: 'bg-slate-100', text: 'text-slate-500', label: status };
   return (
-    <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${s.bg} ${s.text}`}>
-      {s.label}
+    <span
+      title={hint || undefined}
+      className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${s.bg} ${s.text} ${hint ? 'cursor-help' : ''}`}
+    >
+      {label || s.label}
     </span>
   );
 }
@@ -259,8 +266,16 @@ function MatchCard({ match, lost, foundItem, canAct, isActioning, onAction, onHo
           <p className="text-xs text-slate-400 mt-0.5 truncate">
             {t('claimedByIndividual')}{match.created_at ? ` · ${timeAgo(match.created_at, t)}` : ''}
           </p>
+          {coverageSubtext(match, t) && (
+            <p className="text-[11px] text-slate-400 truncate mt-0.5">{coverageSubtext(match, t)}</p>
+          )}
         </div>
-        <StatusBadge status={match.status} statusStyles={statusStyles} />
+        <StatusBadge
+          status={match.status}
+          statusStyles={statusStyles}
+          label={matchStatusLabel(match, t)}
+          hint={matchStatusHint(match, t)}
+        />
       </div>
 
       {/* Objective evidence deltas */}
@@ -489,7 +504,11 @@ export default function ItemMatchesPage() {
           setDeliveryRecord(recordRes?.data || null);
         } else {
           const data = await fetchMatches(filter);
-          setMatches(data.matches);
+          // Committed matches (resolution in course) surface above candidates;
+          // backend order (score desc) is kept within each group.
+          const committed = data.matches.filter(m => COMMITTED_STATUSES.has(m.status));
+          const rest = data.matches.filter(m => !COMMITTED_STATUSES.has(m.status));
+          setMatches([...committed, ...rest]);
           setTotal(data.total);
         }
       } catch {}

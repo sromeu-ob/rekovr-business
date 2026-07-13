@@ -21,8 +21,9 @@ export default function Layout({ children, auth, onLogout }) {
       api.get('/business/items/matches/summary').catch(() => null),
     ]).then(([inboxRes, summaryRes]) => {
       const d = inboxRes?.data;
+      // Actionable buckets only — active waits don't count as work.
       const inbox = d
-        ? (d.pending_review?.total || 0) + (d.ready_to_deliver?.total || 0) + (d.pending_contact?.total || 0)
+        ? (d.to_decide?.total || 0) + (d.ready_to_deliver?.total || 0) + (d.pending_contact?.total || 0)
         : 0;
       const matches = Array.isArray(summaryRes?.data)
         ? summaryRes.data.reduce((s, i) => s + (i.match_pending || 0), 0)
