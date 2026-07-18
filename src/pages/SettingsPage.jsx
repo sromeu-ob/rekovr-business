@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { QrCode, Save, RotateCcw, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { QrCode, Save, RotateCcw, Loader2, CheckCircle, AlertTriangle, Truck } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
+import { COUNTRIES } from '../lib/countries';
 
 function Toggle({ enabled, onChange, testId }) {
   return (
@@ -101,12 +102,19 @@ export default function SettingsPage({ auth }) {
     config.pickup_instructions !== original.pickup_instructions
   );
 
+  const ORIGIN_FIELDS = ['name', 'address_line1', 'address_line2', 'city', 'postal_code', 'country', 'telephone', 'email'];
+  const originChanged = orgConfig && orgOriginal && ORIGIN_FIELDS.some(
+    f => (orgConfig.shipping_origin?.[f] || '') !== (orgOriginal.shipping_origin?.[f] || '')
+  );
+
   const hasOrgChanges = orgConfig && orgOriginal && (
     orgConfig.charge_users_for_recovery !== orgOriginal.charge_users_for_recovery ||
     orgConfig.verification_enabled !== orgOriginal.verification_enabled ||
     orgConfig.auto_accept_enabled !== orgOriginal.auto_accept_enabled ||
     orgConfig.auto_accept_match_threshold !== orgOriginal.auto_accept_match_threshold ||
-    orgConfig.auto_accept_verification_threshold !== orgOriginal.auto_accept_verification_threshold
+    orgConfig.auto_accept_verification_threshold !== orgOriginal.auto_accept_verification_threshold ||
+    orgConfig.shipping_enabled !== orgOriginal.shipping_enabled ||
+    originChanged
   );
 
   async function handleSave() {
@@ -149,6 +157,18 @@ export default function SettingsPage({ auth }) {
       updates.auto_accept_match_threshold = orgConfig.auto_accept_match_threshold;
     if (orgConfig.auto_accept_verification_threshold !== orgOriginal.auto_accept_verification_threshold)
       updates.auto_accept_verification_threshold = orgConfig.auto_accept_verification_threshold;
+    // Send the origin whenever any of its fields changed, or when enabling
+    // shipping (the backend requires an origin to be present to enable it).
+    if (originChanged || (orgConfig.shipping_enabled && !orgOriginal.shipping_enabled)) {
+      const o = orgConfig.shipping_origin || {};
+      updates.shipping_origin = {
+        name: o.name || '', address_line1: o.address_line1 || '', address_line2: o.address_line2 || '',
+        city: o.city || '', postal_code: o.postal_code || '', country: (o.country || '').toUpperCase(),
+        telephone: o.telephone || '', email: o.email || '',
+      };
+    }
+    if (orgConfig.shipping_enabled !== orgOriginal.shipping_enabled)
+      updates.shipping_enabled = orgConfig.shipping_enabled;
     if (!Object.keys(updates).length) return;
     setOrgSaving(true);
     setOrgError(null);
@@ -246,6 +266,88 @@ export default function SettingsPage({ auth }) {
                   enabled={!!orgConfig.charge_users_for_recovery}
                   onChange={(v) => setOrgConfig(c => ({ ...c, charge_users_for_recovery: v }))}
                 />
+              </div>
+            </div>
+          )}
+
+          <SectionActions
+            saving={orgSaving}
+            saved={orgSaved}
+            hasChanges={hasOrgChanges}
+            onSave={handleOrgSave}
+            onReset={handleOrgReset}
+            error={orgError}
+            t={t}
+          />
+        </div>
+
+        {/* Home delivery */}
+        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <Truck className="w-4 h-4 text-slate-500" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">{t('shipSettingsTitle')}</h2>
+              <p className="text-sm text-slate-500 mt-0.5">{t('shipSettingsDesc')}</p>
+            </div>
+          </div>
+
+          {orgConfig && (
+            <div className="px-6 py-5 space-y-6">
+
+              {/* Enable toggle */}
+              <div className="flex items-center justify-between gap-6">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{t('shipSettingsEnable')}</p>
+                  <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">{t('shipSettingsEnableDesc')}</p>
+                </div>
+                <Toggle
+                  testId="shipping-enabled-toggle"
+                  enabled={!!orgConfig.shipping_enabled}
+                  onChange={(v) => setOrgConfig(c => ({ ...c, shipping_enabled: v }))}
+                />
+              </div>
+
+              {/* Origin address */}
+              <div className="border-t border-slate-100 pt-5">
+                <p className="text-sm font-medium text-slate-900">{t('shipSettingsOrigin')}</p>
+                <p className="text-sm text-slate-500 mt-0.5 mb-3 leading-relaxed">{t('shipSettingsOriginDesc')}</p>
+
+                {(() => {
+                  const o = orgConfig.shipping_origin || {};
+                  const setO = (field, value) =>
+                    setOrgConfig(c => ({ ...c, shipping_origin: { ...(c.shipping_origin || {}), [field]: value } }));
+                  const inputCls = 'w-full h-9 px-3 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 placeholder:text-slate-400 transition-colors';
+                  return (
+                    <div className="space-y-2.5">
+                      <input className={inputCls} data-testid="ship-origin-name" placeholder={t('shipOriginName')}
+                        value={o.name || ''} onChange={e => setO('name', e.target.value)} />
+                      <input className={inputCls} data-testid="ship-origin-line1" placeholder={t('shipOriginLine1')}
+                        value={o.address_line1 || ''} onChange={e => setO('address_line1', e.target.value)} />
+                      <input className={inputCls} placeholder={t('shipOriginLine2')}
+                        value={o.address_line2 || ''} onChange={e => setO('address_line2', e.target.value)} />
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <input className={inputCls} data-testid="ship-origin-city" placeholder={t('shipOriginCity')}
+                          value={o.city || ''} onChange={e => setO('city', e.target.value)} />
+                        <input className={inputCls} data-testid="ship-origin-postal" placeholder={t('shipOriginPostal')}
+                          value={o.postal_code || ''} onChange={e => setO('postal_code', e.target.value)} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <select className={inputCls} data-testid="ship-origin-country"
+                          value={(o.country || '').toUpperCase()} onChange={e => setO('country', e.target.value)}>
+                          <option value="">{t('shipOriginCountry')}</option>
+                          {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                        </select>
+                        <input className={inputCls} placeholder={t('shipOriginPhone')}
+                          value={o.telephone || ''} onChange={e => setO('telephone', e.target.value)} />
+                      </div>
+                      <input className={inputCls} type="email" placeholder={t('shipOriginEmail')}
+                        value={o.email || ''} onChange={e => setO('email', e.target.value)} />
+                    </div>
+                  );
+                })()}
+                <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">{t('shipSettingsOriginNote')}</p>
               </div>
             </div>
           )}

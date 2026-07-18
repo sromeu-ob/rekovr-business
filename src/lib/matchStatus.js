@@ -8,7 +8,11 @@
 // operator, regardless of who paid.
 export function matchStatusLabel(match, t) {
   const status = typeof match === 'string' ? match : match?.status;
-  if (status === 'paid') return t('mstPaid');
+  if (status === 'paid') {
+    // A paid delivery match isn't waiting at the desk — it ships.
+    if (match?.delivery_method === 'delivery') return t('mstPaidShip');
+    return t('mstPaid');
+  }
   return {
     pending_verification: t('statusVerification'),
     pending_review:       t('statusUnderReview'),
@@ -33,6 +37,7 @@ export function coverageSubtext(match, t) {
 export function matchStatusHint(match, t) {
   const status = typeof match === 'string' ? match : match?.status;
   if (status === 'paid') {
+    if (match?.delivery_method === 'delivery') return t('mshPaidShip');
     if (match?.payment_covered_reason === 'org_covered') return t('mshPaidCovered');
     if (match?.payment_covered_reason === 'beta_free') return t('mshPaidBeta');
     return t('mshPaidUser');

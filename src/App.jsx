@@ -20,6 +20,9 @@ import EventsPage from './pages/EventsPage';
 import EventDetailPage from './pages/EventDetailPage';
 import EventFormPage from './pages/EventFormPage';
 import ConfirmPickupPage from './pages/ConfirmPickupPage';
+import ShipmentsPage from './pages/ShipmentsPage';
+import ShipmentDetailPage from './pages/ShipmentDetailPage';
+import DesignSystemPage from './pages/DesignSystemPage';
 
 function ProtectedRoute({ children, auth }) {
   if (!auth) return <Navigate to="/login" replace />;
@@ -194,10 +197,34 @@ export default function App() {
           </ProtectedRoute>
         } />
 
+        <Route path="/shipments" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <ShipmentsPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/shipments/:shipmentId" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <ShipmentDetailPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
         <Route path="/settings" element={
           <ProtectedRoute auth={auth}>
             <AppShell auth={auth} onLogout={handleLogout}>
               <SettingsPage auth={auth} />
+            </AppShell>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/design-system" element={
+          <ProtectedRoute auth={auth}>
+            <AppShell auth={auth} onLogout={handleLogout}>
+              <DesignSystemPage />
             </AppShell>
           </ProtectedRoute>
         } />
