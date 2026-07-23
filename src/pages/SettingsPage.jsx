@@ -114,6 +114,7 @@ export default function SettingsPage({ auth }) {
     orgConfig.auto_accept_match_threshold !== orgOriginal.auto_accept_match_threshold ||
     orgConfig.auto_accept_verification_threshold !== orgOriginal.auto_accept_verification_threshold ||
     orgConfig.shipping_enabled !== orgOriginal.shipping_enabled ||
+    orgConfig.shipping_fee !== orgOriginal.shipping_fee ||
     originChanged
   );
 
@@ -169,6 +170,10 @@ export default function SettingsPage({ auth }) {
     }
     if (orgConfig.shipping_enabled !== orgOriginal.shipping_enabled)
       updates.shipping_enabled = orgConfig.shipping_enabled;
+    // Send explicitly (including null) so the backend can tell "clear to plan
+    // default" from "unchanged". NaN from an in-progress edit is coerced to null.
+    if (orgConfig.shipping_fee !== orgOriginal.shipping_fee)
+      updates.shipping_fee = Number.isNaN(orgConfig.shipping_fee) ? null : orgConfig.shipping_fee;
     if (!Object.keys(updates).length) return;
     setOrgSaving(true);
     setOrgError(null);
@@ -307,6 +312,37 @@ export default function SettingsPage({ auth }) {
                   enabled={!!orgConfig.shipping_enabled}
                   onChange={(v) => setOrgConfig(c => ({ ...c, shipping_enabled: v }))}
                 />
+              </div>
+
+              {/* Your per-shipment commission */}
+              <div className="border-t border-slate-100 pt-5">
+                <label className="block text-sm font-medium text-slate-900 mb-0.5">{t('shipCommission')}</label>
+                <p className="text-sm text-slate-500 mt-0.5 mb-3 leading-relaxed">{t('shipCommissionDesc')}</p>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-40">
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      data-testid="shipping-fee-input"
+                      className="w-full h-9 pl-3 pr-24 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 placeholder:text-slate-400 transition-colors tabular-nums"
+                      placeholder={orgConfig.shipping_fee_default != null ? String(orgConfig.shipping_fee_default) : ''}
+                      value={orgConfig.shipping_fee ?? ''}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setOrgConfig(c => ({ ...c, shipping_fee: raw === '' ? null : parseFloat(raw) }));
+                      }}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
+                      {t('shipCommissionUnit')}
+                    </span>
+                  </div>
+                </div>
+                {orgConfig.shipping_fee == null && orgConfig.shipping_fee_default != null && (
+                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                    {t('shipCommissionUsingDefault').replace('{default}', orgConfig.shipping_fee_default)}
+                  </p>
+                )}
               </div>
 
               {/* Origin address */}
