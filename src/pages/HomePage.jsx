@@ -84,7 +84,7 @@ function DecideRow({ m, onClick, t }) {
           {hasVerification ? (
             <>
               <span className={passed ? 'text-emerald-700 font-semibold' : 'text-amber-700 font-semibold'}>
-                {passed ? t('verificationPassed') : t('verificationBelowThreshold')} · {pct}
+                {passed ? t('verificationPassed') : t('verificationBelowThreshold')} · {pct}%
               </span>
               {m.answers_total > 0 && (
                 <> — {t('answersCorrectSummary').replace('{x}', m.answers_correct).replace('{y}', m.answers_total)}</>
@@ -211,7 +211,7 @@ const ACT_DOT = {
 };
 
 function activityLabel(ev, t) {
-  const pct = (s) => (s != null ? Math.round(s * 100) : '—');
+  const pct = (s) => (s != null ? `${Math.round(s * 100)}%` : '—');
   switch (ev.type) {
     case 'match_created':
       return t('tlMatchCreated').replace('{score}', pct(ev.score));
