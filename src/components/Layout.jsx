@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Package, GitCompare, Users, CreditCard,
-  LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine, Inbox
+  LogOut, Building2, Menu, X, Settings, CalendarDays, ScanLine, Inbox, Truck
 } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
@@ -12,23 +12,30 @@ export default function Layout({ children, auth, onLogout }) {
   const { user, organization, org_role } = auth;
   const { t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [queueCounts, setQueueCounts] = useState({ inbox: 0, matches: 0 });
+  const [queueCounts, setQueueCounts] = useState({ inbox: 0, matches: 0, shipments: 0, shipmentsHot: false });
 
   // Live queue counters — one light fetch per app load, no polling.
   useEffect(() => {
     Promise.all([
       api.get('/business/items/inbox', { params: { ready_limit: 1 } }).catch(() => null),
       api.get('/business/items/matches/summary').catch(() => null),
-    ]).then(([inboxRes, summaryRes]) => {
+      api.get('/business/shipments').catch(() => null),
+    ]).then(([inboxRes, summaryRes, shipRes]) => {
       const d = inboxRes?.data;
       // Actionable buckets only — active waits don't count as work.
       const inbox = d
-        ? (d.to_decide?.total || 0) + (d.ready_to_deliver?.total || 0) + (d.pending_contact?.total || 0)
+        ? (d.to_decide?.total || 0) + (d.ready_to_deliver?.total || 0) + (d.to_ship?.total || 0) + (d.pending_contact?.total || 0)
         : 0;
       const matches = Array.isArray(summaryRes?.data)
         ? summaryRes.data.reduce((s, i) => s + (i.match_pending || 0), 0)
         : 0;
-      setQueueCounts({ inbox, matches });
+      // Parcels needing an operator: to pack, ready to send, or in trouble.
+      const shipList = shipRes?.data?.shipments || [];
+      const ACTIONABLE = ['awaiting_packing', 'packed', 'exception', 'returned'];
+      const HOT = ['exception', 'returned'];
+      const shipments = shipList.filter(s => ACTIONABLE.includes(s.status)).length;
+      const shipmentsHot = shipList.some(s => HOT.includes(s.status));
+      setQueueCounts({ inbox, matches, shipments, shipmentsHot });
     });
   }, []);
 
@@ -40,6 +47,7 @@ export default function Layout({ children, auth, onLogout }) {
         { to: '/items',   icon: Package,      labelKey: 'navFoundItems' },
         { to: '/matches', icon: GitCompare,   labelKey: 'navMatches', count: queueCounts.matches },
         { to: '/pickups', icon: ScanLine,     labelKey: 'navPickups' },
+        { to: '/shipments', icon: Truck,     labelKey: 'navShipments', count: queueCounts.shipments, hot: queueCounts.shipmentsHot },
         { to: '/events',  icon: CalendarDays, labelKey: 'navEvents' },
       ],
     },

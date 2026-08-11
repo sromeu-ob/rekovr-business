@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, PackageCheck, IdCard, ArrowRight, Package,
-  CheckCircle2, Clock, Activity, ChevronRight, CreditCard,
+  CheckCircle2, Clock, Activity, ChevronRight, CreditCard, Truck, MapPin,
 } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../contexts/I18nContext';
@@ -84,7 +84,7 @@ function DecideRow({ m, onClick, t }) {
           {hasVerification ? (
             <>
               <span className={passed ? 'text-emerald-700 font-semibold' : 'text-amber-700 font-semibold'}>
-                {passed ? t('verificationPassed') : t('verificationBelowThreshold')} · {pct}
+                {passed ? t('verificationPassed') : t('verificationBelowThreshold')} · {pct}%
               </span>
               {m.answers_total > 0 && (
                 <> — {t('answersCorrectSummary').replace('{x}', m.answers_correct).replace('{y}', m.answers_total)}</>
@@ -119,6 +119,30 @@ function DeliverRow({ m, onClick, t }) {
         </p>
       </div>
       <AgeChip dateStr={m.created_at} />
+      <ChevronRight size={15} className="text-slate-200 flex-shrink-0" />
+    </button>
+  );
+}
+
+function ShipRow({ s, onClick, t }) {
+  const dest = [s.destination?.city, s.destination?.country].filter(Boolean).join(', ');
+  return (
+    <button type="button" onClick={onClick} className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors">
+      {s.found_photo ? (
+        <img src={s.found_photo} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+      ) : (
+        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+          <Package size={14} className="text-slate-300" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[13.5px] font-semibold text-slate-900 truncate">{s.found_title || '—'}</p>
+        <p className="text-[11.5px] text-slate-400 truncate mt-px flex items-center gap-1">
+          <MapPin size={10} className="flex-shrink-0" />
+          {dest || t('homeToShipMeta')}
+        </p>
+      </div>
+      <AgeChip dateStr={s.created_at} />
       <ChevronRight size={15} className="text-slate-200 flex-shrink-0" />
     </button>
   );
@@ -187,7 +211,7 @@ const ACT_DOT = {
 };
 
 function activityLabel(ev, t) {
-  const pct = (s) => (s != null ? Math.round(s * 100) : '—');
+  const pct = (s) => (s != null ? `${Math.round(s * 100)}%` : '—');
   switch (ev.type) {
     case 'match_created':
       return t('tlMatchCreated').replace('{score}', pct(ev.score));
@@ -256,11 +280,12 @@ export default function HomePage({ auth }) {
 
   const td = data?.to_decide || { total: 0, matches: [] };
   const rd = data?.ready_to_deliver || { total: 0, matches: [] };
+  const ts = data?.to_ship || { total: 0, shipments: [] };
   const pc = data?.pending_contact || { total: 0, items: [] };
   const wv = data?.waiting_verification || { total: 0, matches: [] };
   const wp = data?.waiting_payment || { total: 0, matches: [] };
 
-  const actionable = td.total + rd.total + pc.total;
+  const actionable = td.total + rd.total + ts.total + pc.total;
   const waits = wv.total + wp.total;
   const allClear = actionable === 0;
 
@@ -343,6 +368,20 @@ export default function HomePage({ auth }) {
               >
                 {rd.matches.map(m => (
                   <DeliverRow key={m.match_id} m={m} onClick={() => goToMatch(m)} t={t} />
+                ))}
+              </QueueCard>
+
+              <QueueCard
+                testId="home-to-ship"
+                icon={Truck}
+                title={t('homeToShip')}
+                count={ts.total}
+                tone="teal"
+                seeAllHref="/shipments"
+                emptyLabel={t('homeToShipEmpty')}
+              >
+                {ts.shipments.map(s => (
+                  <ShipRow key={s.shipment_id} s={s} onClick={() => navigate('/shipments')} t={t} />
                 ))}
               </QueueCard>
 

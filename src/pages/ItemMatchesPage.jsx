@@ -327,7 +327,7 @@ function MatchCard({ match, lost, foundItem, canAct, isActioning, onAction, onHo
               ? <ShieldCheck size={14} className="flex-shrink-0" strokeWidth={1.8} />
               : <ShieldQuestion size={14} className="flex-shrink-0" strokeWidth={1.8} />}
             <span className="flex-1 tabular-nums">
-              {verificationPassed ? t('verificationPassed') : t('verificationBelowThreshold')} · {verificationPct}
+              {verificationPassed ? t('verificationPassed') : t('verificationBelowThreshold')} · {verificationPct}%
               {answerScores.length > 0 && (
                 <span className="font-normal opacity-80">
                   {' — '}

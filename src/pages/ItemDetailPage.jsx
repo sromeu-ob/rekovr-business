@@ -264,7 +264,7 @@ const TL_DOT = {
 };
 
 function timelineLabel(ev, t) {
-  const pct = (s) => (s != null ? Math.round(s * 100) : '—');
+  const pct = (s) => (s != null ? `${Math.round(s * 100)}%` : '—');
   switch (ev.type) {
     case 'registered':
       return ev.actor_name
@@ -804,7 +804,7 @@ export default function ItemDetailPage() {
                         <p className="text-[11px] text-slate-400 truncate" title={matchStatusHint(match, t)}>
                           {matchStatusLabel(match, t)}
                           {coverageSubtext(match, t) && ` · ${coverageSubtext(match, t)}`}
-                          {match.verification_score != null && ` · ${t('statusVerification')} ${Math.round(match.verification_score * 100)}`}
+                          {match.verification_score != null && ` · ${t('statusVerification')} ${Math.round(match.verification_score * 100)}%`}
                         </p>
                       </div>
                       <ChevronRight size={14} className="text-slate-200 flex-shrink-0" />
