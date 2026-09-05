@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
 import { PenLine, RotateCcw } from 'lucide-react';
+import { useI18n } from '../contexts/I18nContext';
 
 export default function SignaturePad({ onChange }) {
+  const { t } = useI18n();
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -62,12 +64,12 @@ export default function SignaturePad({ onChange }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <PenLine size={13} className="text-stone-400" strokeWidth={1.5} />
-          <span className="text-xs font-medium uppercase tracking-wide text-stone-500">Signatura</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-stone-500">{t('ddSignatureLabel')}</span>
         </div>
         {hasSignature && (
           <button type="button" onClick={clear}
             className="flex items-center gap-1 text-xs text-stone-400 hover:text-stone-700 transition-colors">
-            <RotateCcw size={12} /> Esborrar
+            <RotateCcw size={12} /> {t('ddSignatureClear')}
           </button>
         )}
       </div>
@@ -87,7 +89,7 @@ export default function SignaturePad({ onChange }) {
         />
       </div>
       {!hasSignature && (
-        <p className="text-xs text-stone-400 text-center mt-1.5">Signa aquí amb el dit o el ratolí</p>
+        <p className="text-xs text-stone-400 text-center mt-1.5">{t('ddSignatureHint')}</p>
       )}
     </div>
   );

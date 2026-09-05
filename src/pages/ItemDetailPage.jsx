@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, Clock, Tag, Sparkles, ChevronRight, CalendarDays,
   Pencil, HandshakeIcon, X, AlertTriangle, CheckCircle2, Loader2,
   Link, QrCode, Copy, Check, IdCard, UserCheck, Eye, EyeOff, Phone, Package,
+  Mail, Hourglass,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import mapboxgl from 'mapbox-gl';
@@ -13,6 +14,7 @@ import SignaturePad from '../components/SignaturePad';
 import DeliveryRecordCard from '../components/DeliveryRecordCard';
 import api, { photoUrl } from '../api';
 import { useI18n } from '../contexts/I18nContext';
+import ClaimInviteModal from '../components/ClaimInviteModal';
 import { ScoreRing } from '../components/ui';
 import { timeAgo } from '../lib/timeAgo';
 import { matchStatusLabel, coverageSubtext, matchStatusHint } from '../lib/matchStatus';
@@ -50,6 +52,7 @@ function ItemMap({ lng, lat }) {
 // ── Direct Delivery Modal ────────────────────────────────────────────────────
 
 function QRDisplay({ url }) {
+  const { t } = useI18n();
   const canvasRef = useRef(null);
   useEffect(() => {
     if (canvasRef.current && url) {
@@ -59,12 +62,13 @@ function QRDisplay({ url }) {
   return (
     <div className="flex flex-col items-center gap-2">
       <canvas ref={canvasRef} className="rounded-lg border border-slate-200" />
-      <p className="text-xs text-slate-400 text-center">El receptor escaneja el QR amb el mòbil per signar</p>
+      <p className="text-xs text-slate-400 text-center">{t('ddQrHint')}</p>
     </div>
   );
 }
 
 function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
+  const { t } = useI18n();
   const [signMode, setSignMode] = useState('B');
   const [name, setName] = useState('');
   const [dni, setDni] = useState('');
@@ -116,9 +120,9 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
   }
 
   const MODES = [
-    { id: 'B', icon: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>, label: 'Signar aquí', desc: 'El receptor signa al teu dispositiu' },
-    { id: 'A', icon: () => <Link size={16} strokeWidth={1.5} />, label: 'Enviar link', desc: 'Envia un link per SMS o email' },
-    { id: 'C', icon: () => <QrCode size={16} strokeWidth={1.5} />, label: 'Mostrar QR', desc: 'El receptor escaneja el QR' },
+    { id: 'B', icon: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>, label: t('ddModeInlineLabel'), desc: t('ddModeInlineDesc') },
+    { id: 'A', icon: () => <Link size={16} strokeWidth={1.5} />, label: t('ddModeLinkLabel'), desc: t('ddModeLinkDesc') },
+    { id: 'C', icon: () => <QrCode size={16} strokeWidth={1.5} />, label: t('ddModeQrLabel'), desc: t('ddModeQrDesc') },
   ];
 
   return (
@@ -127,8 +131,8 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Entrega directa</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Sense match ni pagament previ</p>
+            <h3 className="text-base font-semibold text-slate-900">{t('ddTitle')}</h3>
+            <p className="text-xs text-slate-400 mt-0.5">{t('ddSubtitle')}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
             <X size={16} />
@@ -138,7 +142,7 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
         <div className="p-5 space-y-5">
           {/* Mode selector */}
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">Mode de signatura</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">{t('ddSignModeLabel')}</p>
             <div className="grid grid-cols-3 gap-2">
               {MODES.map(m => (
                 <button key={m.id} onClick={() => { setSignMode(m.id); setSessionUrl(null); setError(null); }}
@@ -162,19 +166,19 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1.5">Nom complet</label>
-                  <input value={name} onChange={e => setName(e.target.value)} placeholder="Joan García"
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1.5">{t('ddFullName')}</label>
+                  <input value={name} onChange={e => setName(e.target.value)} placeholder={t('ddFullNamePlaceholder')}
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-teal-500 focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1.5">DNI / NIE</label>
-                  <input value={dni} onChange={e => setDni(e.target.value)} placeholder="12345678A"
+                  <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1.5">{t('ddDocument')}</label>
+                  <input value={dni} onChange={e => setDni(e.target.value)} placeholder={t('ddDocumentPlaceholder')}
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-teal-500 focus:outline-none" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1.5">Notes (opcional)</label>
-                <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Identificació verificada presencialment"
+                <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1.5">{t('ddNotes')}</label>
+                <input value={notes} onChange={e => setNotes(e.target.value)} placeholder={t('ddNotesPlaceholder')}
                   className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:bg-white focus:border-teal-500 focus:outline-none" />
               </div>
               <SignaturePad onChange={setSigDataUrl} />
@@ -187,7 +191,7 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
               <button onClick={handleDirectDeliver} disabled={!canConfirmB || submitting}
                 className="w-full py-3 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                 {submitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                Confirmar entrega
+                {t('ddConfirm')}
               </button>
             </div>
           )}
@@ -216,18 +220,18 @@ function DirectDeliveryModal({ itemId, onClose, onDelivered }) {
                   {signMode === 'C' && <QRDisplay url={sessionUrl} />}
                   {signMode === 'A' && (
                     <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">Link de signatura</p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">{t('ddSignatureLink')}</p>
                       <p className="text-xs font-mono text-slate-700 break-all leading-relaxed">{sessionUrl}</p>
                       <button onClick={copyUrl}
                         className="mt-3 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors">
                         {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                        {copied ? 'Copiat!' : 'Copiar link'}
+                        {copied ? t('ddCopied') : t('ddCopyLink')}
                       </button>
                     </div>
                   )}
                   <div className="bg-amber-50/60 border border-amber-100 rounded-md p-3">
                     <p className="text-xs text-amber-900 leading-relaxed">
-                      <strong>Vàlid 15 minuts.</strong> Un cop el receptor hagi signat, l'objecte es marcarà com a lliurat automàticament.
+                      <strong>{t('ddValidWarning')}</strong> {t('ddValidWarningBody')}
                     </p>
                   </div>
                 </>
@@ -343,6 +347,17 @@ function JourneyRail({ step, muted, t }) {
   );
 }
 
+//: How each invitation state reads at a glance. `usable` is the only one the
+//: operator might still act on; the rest are history.
+const INVITE_TONE = {
+  usable: { icon: Hourglass, chip: 'bg-teal-50 text-teal-600', label: 'claimInviteStateWaiting' },
+  pending: { icon: Hourglass, chip: 'bg-teal-50 text-teal-600', label: 'claimInviteStateWaiting' },
+  already_accepted: { icon: CheckCircle2, chip: 'bg-emerald-50 text-emerald-600', label: 'claimInviteStateAccepted' },
+  expired: { icon: Clock, chip: 'bg-slate-100 text-slate-400', label: 'claimInviteStateExpired' },
+  cancelled: { icon: X, chip: 'bg-slate-100 text-slate-400', label: 'claimInviteStateCancelled' },
+};
+
+
 function PanelCard({ icon: Icon, title, chip, children, testId }) {
   return (
     <div data-testid={testId} className="bg-white rounded-lg border border-slate-200">
@@ -372,6 +387,22 @@ export default function ItemDetailPage() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [eventName, setEventName] = useState(null);
   const [showDirectDelivery, setShowDirectDelivery] = useState(false);
+  const [showClaimInvite, setShowClaimInvite] = useState(false);
+  const [invites, setInvites] = useState([]);
+
+  // Invitations sent for this item. The token never leaves the server; the
+  // panel only shows who was invited and how it went.
+  const loadInvites = useCallback(async () => {
+    try {
+      const res = await api.get(`/business/items/${itemId}/invites`);
+      setInvites(res.data.invites || []);
+    } catch {
+      // A panel that cannot list invitations is still a usable panel.
+      setInvites([]);
+    }
+  }, [itemId]);
+
+  useEffect(() => { loadInvites(); }, [loadInvites]);
   const [deliveryRecord, setDeliveryRecord] = useState(null);
   const [revealedDocNumber, setRevealedDocNumber] = useState(null);
   const [revealing, setRevealing] = useState(false);
@@ -521,11 +552,21 @@ export default function ItemDetailPage() {
         <div className="ml-auto flex items-center gap-2">
           {item.status === 'active' && (
             <button
+              onClick={() => setShowClaimInvite(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-md text-sm font-medium transition-colors"
+              data-testid="claim-invite-open-btn"
+            >
+              <Mail size={13} />
+              {t('claimInviteAction')}
+            </button>
+          )}
+          {item.status === 'active' && (
+            <button
               onClick={() => setShowDirectDelivery(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-medium transition-colors"
             >
               <HandshakeIcon size={13} />
-              Entrega directa
+              {t('ddAction')}
             </button>
           )}
           <button
@@ -763,6 +804,50 @@ export default function ItemDetailPage() {
             </PanelCard>
           )}
 
+          {/* Claim invitations sent for this item */}
+          {invites.length > 0 && (
+            <PanelCard
+              icon={Mail}
+              title={t('claimInvitePanelTitle')}
+              testId="claim-invites-panel"
+            >
+              <div className="flex flex-col divide-y divide-slate-100 -my-1">
+                {invites.map((inv) => {
+                  const tone = INVITE_TONE[inv.state] || INVITE_TONE.pending;
+                  return (
+                    <div key={inv.invite_id} className="flex items-start gap-2.5 py-2.5"
+                      data-testid={`claim-invite-row-${inv.invite_id}`}>
+                      <span className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${tone.chip}`}>
+                        <tone.icon size={13} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-xs font-medium text-slate-900 truncate">{inv.email}</span>
+                        <span className="block text-[11px] text-slate-400 mt-0.5">
+                          {t(tone.label)}
+                          {inv.created_at && ` · ${timeAgo(inv.created_at, t)}`}
+                        </span>
+                        {inv.verifiable === false && (
+                          <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-amber-700">
+                            <AlertTriangle size={10} />
+                            {t('claimInviteWasUnverifiable')}
+                          </span>
+                        )}
+                      </span>
+                      {inv.state === 'already_accepted' && inv.match_id && (
+                        <button
+                          onClick={() => navigate(`/matches/${inv.match_id}`)}
+                          className="text-[11px] font-semibold text-teal-700 hover:text-teal-800 flex-shrink-0"
+                        >
+                          {t('claimInviteOpenMatch')}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </PanelCard>
+          )}
+
           {/* Matches — state-aware: open queue vs delivered resolution */}
           <PanelCard
             icon={Sparkles}
@@ -834,6 +919,15 @@ export default function ItemDetailPage() {
 
         </div>
       </div>
+
+      {showClaimInvite && (
+        <ClaimInviteModal
+          item={item}
+          open
+          onClose={() => setShowClaimInvite(false)}
+          onInvited={loadInvites}
+        />
+      )}
 
       {showDirectDelivery && (
         <DirectDeliveryModal
